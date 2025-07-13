@@ -1,0 +1,53 @@
+{
+  "name": "warcraft-recorder-engine",
+  "version": "1.0.0",
+  "description": "A native Node.js addon for Warcraft gameplay recording",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "build": "node-gyp rebuild",
+    "prebuild": "node-gyp clean",
+    "example": "tsc example.ts && node example.js",
+    "example:js": "node index.js",
+    "example:ts": "ts-node example.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "binding.gyp",
+    "src/",
+    "build/Release/wcr-obs-engine.node"
+  ],
+  "keywords": [
+    "warcraft",
+    "recording",
+    "gaming",
+    "native",
+    "addon",
+    "napi"
+  ],
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/warcraft-recorder-engine.git"
+  },
+  "homepage": "https://github.com/yourusername/warcraft-recorder-engine#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/warcraft-recorder-engine/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.13",
+    "node-gyp": "^11.2.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.4.0"
+  }
+}
