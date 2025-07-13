@@ -1,6 +1,6 @@
 {
     "targets": [{
-        "target_name": "wcr-obs-engine",
+        "target_name": "warcraft-recorder-obs-engine",
         "cflags!": [ "-fno-exceptions" ],
         "cflags_cc!": [ "-fno-exceptions" ],
         "sources": [

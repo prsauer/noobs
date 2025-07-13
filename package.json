@@ -1,7 +1,7 @@
 {
   "name": "warcraft-recorder-obs-engine",
-  "version": "0.0.1",
-  "description": "A native Node.js addon for Warcraft gameplay recording",
+  "version": "0.0.2",
+  "description": "A native Node.js addon with libobs bindings for Warcraft Recorder.",
   "main": "index.js",
   "types": "index.d.ts",
   "engines": {
@@ -13,22 +13,12 @@
   "files": [
     "index.js",
     "index.d.ts",
-    "build/Release/wcr-obs-engine.node"
+    "build/Release/warcraft-recorder-obs-engine.node"
   ],
-  "author": "",
+  "author": "Warcraft Recorder LTD",
   "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/aza547/warcraft-recorder-obs-engine.git"
-  },
-  "homepage": "https://github.com/aza547/warcraft-recorder-obs-engine#readme",
-  "bugs": {
-    "url": "https://github.com/aza547/warcraft-recorder-obs-engine/issues"
-  },
   "devDependencies": {
-    "@types/node": "^24.0.13",
-    "node-gyp": "^11.2.0",
-    "typescript": "^5.8.3"
+    "node-gyp": "^11.2.0"
   },
   "dependencies": {
     "node-addon-api": "^8.4.0"

@@ -1,6 +1,6 @@
-interface WarcraftRecorderEngine {
+interface WCREngine {
   getUptime(): number;
 }
 
-declare const addon: WarcraftRecorderEngine;
-export = addon;
+declare const obs: WCREngine;
+export = obs;

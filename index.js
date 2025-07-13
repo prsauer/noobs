@@ -1,4 +1,2 @@
-const obs = require('./build/Release/wcr-obs-engine.node')
-
-console.log('addon', obs.getUptime())
+const obs = require('./build/Release/warcraft-recorder-obs-engine.node')
 module.exports = obs
