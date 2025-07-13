@@ -4,8 +4,10 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/include/**",
                 "${workspaceFolder}/node_modules/**",
-                "C:/Users/Alex/AppData/Local/node-gyp/Cache/22.12.0/include/node"
+                "C:/Users/Alex/AppData/Local/node-gyp/Cache/22.12.0/include/node",
+                "${workspaceFolder}/include"
             ],
             "defines": [
                 "_DEBUG",

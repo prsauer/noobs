@@ -15,7 +15,9 @@
     "index.d.ts",
     "build/Release/warcraft-recorder-obs-engine.node",
     "binding.gyp",
-    "src/**/*"
+    "src/**/*",
+    "bin/**/*",
+    "obs-plugins/**/*"
   ],
   "author": "Warcraft Recorder LTD",
   "license": "ISC",

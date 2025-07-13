@@ -3,10 +3,16 @@
 #include <tlhelp32.h>
 #include <string>
 #include <vector>
+#include <obs.h>
 
 Napi::Number GetUptime(const Napi::CallbackInfo& info) {
   DWORD ticks = GetTickCount();
   return Napi::Number::New(info.Env(), static_cast<double>(ticks));
+}
+
+Napi::Value StartOBS(const Napi::CallbackInfo& info) {
+  obs_startup("en-US", "obs", NULL);
+  return info.Env().Undefined();
 }
 
 class ProcessListWorker : public Napi::AsyncWorker {
