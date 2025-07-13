@@ -8,6 +8,7 @@ interface ProcessInfo {
 interface WCREngine {
   getUptime(): number;
   listProcesses(): Promise<ProcessInfo[]>;
+  StartOBS(): undefined;
 }
 
 declare const obs: WCREngine;

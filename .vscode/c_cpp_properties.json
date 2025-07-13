@@ -7,7 +7,8 @@
                 "${workspaceFolder}/include/**",
                 "${workspaceFolder}/node_modules/**",
                 "C:/Users/Alex/AppData/Local/node-gyp/Cache/22.12.0/include/node",
-                "${workspaceFolder}/include"
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/util"
             ],
             "defines": [
                 "_DEBUG",

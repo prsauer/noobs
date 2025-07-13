@@ -4,15 +4,241 @@
 #include <string>
 #include <vector>
 #include <obs.h>
+#include <iostream>
+
+void load_module(const char* module) {
+    obs_module_t *ptr = NULL;
+    int success = obs_open_module(&ptr, module, "D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/");
+    std::cout << "Loading module: "  << module << std::endl;
+
+    if (success != MODULE_SUCCESS) {
+        std::cerr << "Failed to open module!" << std::endl;
+    } else {
+        std::cout << "Module opened successfully!" << std::endl;
+    }
+
+    bool initmod = obs_init_module(ptr);
+
+    if (!initmod) {
+        std::cerr << "Module initialization failed!" << std::endl;
+    } else {
+        std::cout << "Module initialized successfully!" << std::endl;
+    }
+}
+
+void logsignalstart(void *param, calldata_t *data) {
+    blog(LOG_INFO, "GOT START SIGNAL!!!!!");
+}
+
+void logsignalstop(void *param, calldata_t *data) {
+    blog(LOG_INFO, "GOT STOP SIGNAL!!!!!");
+}
+
+void output_signal_handler(void *data, calldata_t *cd) {
+    std::cout << "\n=== OUTPUT SIGNAL ===" << std::endl;
+    
+    // Try to get common signal parameters
+    obs_output_t *output = (obs_output_t*)calldata_ptr(cd, "output");
+    const char *signal_name = calldata_string(cd, "last_error");
+    long long code = calldata_int(cd, "code");
+    const char *error = calldata_string(cd, "error");
+    const char *path = calldata_string(cd, "path");
+    
+    std::cout << "last_error: " << (signal_name ? signal_name : "unknown") << std::endl;
+    std::cout << "Output: " << output << std::endl;
+    std::cout << "Code: " << code << std::endl;
+    
+    if (error) std::cout << "Error: " << error << std::endl;
+    if (path) std::cout << "Path: " << path << std::endl;
+    
+    std::cout << "===================\n" << std::endl;
+}
+
+Napi::Value StartOBS(const Napi::CallbackInfo& info) {
+  std::cout << "Starting..." << std::endl;
+  obs_startup("en-US", NULL, NULL);
+  std::cout << "OBS has started!" << std::endl;
+
+  obs_add_data_path("D:/checkouts/warcraft-recorder-obs-engine/effects/");
+  obs_add_data_path("D:/checkouts/warcraft-recorder-obs-engine/effects/libobs");
+
+  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/obs-x264.dll");
+  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/obs-ffmpeg.dll");
+  // load_module("D:/checkouts/cpp-httplib/plugins/64bit/win-capture.dll");
+
+  bool init = obs_initialized();
+
+    if (!init) {
+      std::cerr << "OBS initialization failed!" << std::endl;
+    } else {
+      std::cout << "OBS is initialized!" << std::endl;
+    }
+
+    // std::cout << "AHK" << std::endl;
+
+     const char* version = obs_get_version_string();
+    std::cout << "OBS version is: " << version <<  std::endl;
+
+    const char* n = "obs_x264";
+    const char * encoder = obs_get_encoder_codec(n);
+
+    if (encoder == nullptr) {
+      std::cerr << "Failed to get encoder codec!" << std::endl;
+    } else {
+      std::cout << "Codec is: " << encoder <<  std::endl;
+    }
+
+    
+    std::cout << "Setup video info" << std::endl;
+
+    obs_video_info ovi = {};
+
+    ovi.base_width = 1920;
+    ovi.base_height = 1080;
+    ovi.output_width = 1920;
+    ovi.output_height = 1080;
+    ovi.fps_num = 60;
+    ovi.fps_den = 1;
+
+    ovi.output_format = VIDEO_FORMAT_NV12;
+    ovi.colorspace = VIDEO_CS_DEFAULT;
+    ovi.range = VIDEO_RANGE_DEFAULT;
+    ovi.scale_type = OBS_SCALE_BILINEAR;
+    ovi.adapter = 0;
+    ovi.gpu_conversion = true;
+    ovi.graphics_module = "libobs-d3d11.dll"; 
+
+    int reset = obs_reset_video(&ovi);
+
+    if (reset != 0) {
+        std::cerr << "Failed to reset video!" << reset << std::endl;
+    } else {
+        std::cout << "Video reset successfully!" << std::endl;
+    }
+    struct obs_video_info *ovi2 = (struct obs_video_info *)malloc(sizeof(struct obs_video_info));
+    bool testvideosettings = obs_get_video_info(ovi2);
+
+    if (testvideosettings) {
+      std::cout << "Got video settings" << std::endl;
+    } else {
+      std::cerr << "Failed to get video settings!" << std::endl;
+    }
+
+    
+    struct obs_audio_info aoi = {0};
+    aoi.samples_per_sec = 48000;
+    aoi.speakers = SPEAKERS_STEREO;
+    reset = obs_reset_audio(&aoi);
+
+    if (!reset) {
+        std::cerr << "Failed to reset audio!" << std::endl;
+    } else {
+        std::cout << "Audio reset successfully!" << std::endl;
+    }
+
+    std::cout << "Create output" << std::endl;
+    obs_output_t *output = obs_output_create("ffmpeg_output", "simple_output", NULL, NULL);
+    std::cout << "Created output" << std::endl;
+
+    std::cout << "Set output settings" << std::endl;
+    obs_data_t *settings = obs_data_create();
+obs_data_set_string(settings, "url", "D:/checkouts/warcraft-recorder-obs-engine/recording.mp4");  // Use "url" not "path"
+obs_data_set_string(settings, "format_name", "mp4");
+    obs_output_update(output, settings);
+    obs_data_release(settings);
+
+    std::cout << "Create venc" << std::endl;
+    obs_encoder_t *venc = obs_video_encoder_create("obs_x264", "simple_h264_stream", NULL, NULL);
+
+    std::cout << "Set video encoder settings" << std::endl;
+    obs_data_t *venc_settings = obs_data_create();
+    obs_data_set_string(venc_settings, "preset", "fast");
+    obs_data_set_int(venc_settings, "bitrate", 2500);
+    obs_data_set_string(venc_settings, "profile", "main");
+    obs_data_set_string(venc_settings, "rate_control", "CBR");
+    obs_encoder_update(venc, venc_settings);
+    obs_data_release(venc_settings);
+    obs_output_set_video_encoder(output, venc);
+
+
+    std::cout << "Create aenc" << std::endl;
+    obs_encoder_t *aenc = obs_audio_encoder_create("ffmpeg_aac", "simple_aac", NULL, 0, NULL);
+    obs_output_set_audio_encoder(output, aenc, 0);
+    
+    std::cout << "Create scene and src" << std::endl;
+    obs_scene_t *scene = obs_scene_create("Scene");
+  
+    std::cout << "Create display capture source" << std::endl;
+    obs_source_t *source = obs_source_create("color_source", "Color", NULL, NULL);
+
+    if (source) {
+      obs_scene_add(scene, source);
+      std::cout << "Added display capture to scene" << std::endl;
+    } else {
+        std::cerr << "Failed to create display capture source!" << std::endl;
+    }
+
+    obs_source_t *scene_source = obs_scene_get_source(scene);
+    obs_set_output_source(0, scene_source);  // 0 = video track
+
+    std::cout << "Get video" << std::endl;
+    video_t *video = obs_get_video();
+    std::cout << "Got video" << std::endl;
+    obs_encoder_set_video(venc, obs_get_video());
+    obs_encoder_set_audio(aenc, obs_get_audio());
+
+
+
+    signal_handler_t *sh = obs_output_get_signal_handler(output);
+    signal_handler_connect(sh, "starting", output_signal_handler, NULL);
+    signal_handler_connect(sh, "start", output_signal_handler, NULL);
+    signal_handler_connect(sh, "stop", output_signal_handler, NULL);
+
+
+    std::cout << "Start rec" << std::endl;
+    bool started = obs_output_start(output);
+
+    if (started) {
+        std::cout << "Recording started successfully!" << std::endl;
+    } else {
+        std::cerr << "Failed to start recording!" << std::endl;
+    }
+
+    blog(LOG_WARNING, "is active? %d", obs_output_active(output));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(5500)); 
+
+    const char* a = obs_output_get_last_error(output);
+    blog(LOG_WARNING, "last err? %s", a);
+
+        blog(LOG_WARNING, "is active? %d", obs_output_active(output));
+    obs_output_stop(output);
+        blog(LOG_WARNING, "is active? %d", obs_output_active(output));
+    std::this_thread::sleep_for(std::chrono::milliseconds(5500)); 
+        blog(LOG_WARNING, "is active? %d", obs_output_active(output));
+
+    std::cout << "END FN" << std::endl;
+  return info.Env().Undefined();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Napi::Number GetUptime(const Napi::CallbackInfo& info) {
   DWORD ticks = GetTickCount();
   return Napi::Number::New(info.Env(), static_cast<double>(ticks));
-}
-
-Napi::Value StartOBS(const Napi::CallbackInfo& info) {
-  obs_startup("en-US", "obs", NULL);
-  return info.Env().Undefined();
 }
 
 class ProcessListWorker : public Napi::AsyncWorker {
@@ -116,6 +342,7 @@ Napi::Value ListProcesses(const Napi::CallbackInfo& info) {
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("getUptime", Napi::Function::New(env, GetUptime));
+  exports.Set("StartOBS", Napi::Function::New(env, StartOBS));
   exports.Set("listProcesses", Napi::Function::New(env, ListProcesses));
   return exports;
 }
