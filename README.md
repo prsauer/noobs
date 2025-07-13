@@ -5,13 +5,13 @@ A native Node.js addon for Warcraft gameplay recording built with N-API.
 ## Installation
 
 ```bash
-npm install warcraft-recorder-engine
+npm install warcraft-recorder-obs-engine
 ```
 
 ## Usage
 
 ```javascript
-const warcraftRecorder = require('warcraft-recorder-engine');
+const warcraftRecorder = require('warcraft-recorder-obs-engine');
 
 // Get a greeting from the native addon
 const message = warcraftRecorder.hello();
@@ -23,7 +23,7 @@ console.log(message); // "hello from napi"
 This package includes TypeScript definitions:
 
 ```typescript
-import * as warcraftRecorder from 'warcraft-recorder-engine';
+import * as warcraftRecorder from 'warcraft-recorder-obs-engine';
 
 const message: string = warcraftRecorder.hello();
 console.log(message);
