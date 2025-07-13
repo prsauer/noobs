@@ -13,7 +13,8 @@
   "files": [
     "index.js",
     "index.d.ts",
-    "build/Release/warcraft-recorder-obs-engine.node"
+    "build/Release/warcraft-recorder-obs-engine.node",
+    "src/**/*"
   ],
   "author": "Warcraft Recorder LTD",
   "license": "ISC",
