@@ -333,6 +333,9 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
     obs_output_stop(output);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
 
+    // Leaves the last frame present on the screen
+    obs_display_remove_draw_callback(display, draw_callback, NULL);
+    obs_display_destroy(display);
 
     std::cout << "END FN" << std::endl;
 
