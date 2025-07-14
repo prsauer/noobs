@@ -44,7 +44,7 @@ void WindowThread(std::promise<HWND> hwndPromise) {
 
 void load_module(const char* module) {
     obs_module_t *ptr = NULL;
-    int success = obs_open_module(&ptr, module, "D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/");
+    int success = obs_open_module(&ptr, module, NULL);
     std::cout << "Loading module: "  << module << std::endl;
 
     if (success != MODULE_SUCCESS) {
@@ -72,32 +72,27 @@ void output_signal_handler(void *data, calldata_t *cd) {
     
     // Try to get common signal parameters
     obs_output_t *output = (obs_output_t*)calldata_ptr(cd, "output");
-    const char *signal_name = calldata_string(cd, "signal");
     long long code = calldata_int(cd, "code");
-    const char *error = calldata_string(cd, "error");
-    const char *path = calldata_string(cd, "path");
+
+    auto now = std::chrono::system_clock::now();
+    std::time_t time = std::chrono::system_clock::to_time_t(now);
     
-    std::cout << "signal: " << (signal_name ? signal_name : "unknown") << std::endl;
-    std::cout << "Output: " << output << std::endl;
+    std::cout << "Signal: " << (const char *)data << std::endl;
     std::cout << "Code: " << code << std::endl;
-    
-    if (error) std::cout << "Error: " << error << std::endl;
-    if (path) std::cout << "Path: " << path << std::endl;
+    std::cout << "Time: " << std::ctime(&time) << std::endl;;
     
     std::cout << "===================\n" << std::endl;
 }
 
-static void listEncoders(obs_encoder_type type)
+static void listEncoders()
 {
-	constexpr uint32_t hide_flags = OBS_ENCODER_CAP_DEPRECATED | OBS_ENCODER_CAP_INTERNAL;
-
 	size_t idx = 0;
 	const char *encoder_type;
 
 	while (obs_enum_encoder_types(idx++, &encoder_type)) {
-		if (obs_get_encoder_caps(encoder_type) & hide_flags || obs_get_encoder_type(encoder_type) != type) {
-			continue;
-		}
+		// if (obs_get_encoder_caps(encoder_type) & hide_flags || obs_get_encoder_type(encoder_type) != type) {
+		// 	continue;
+		// }
 
 		blog(LOG_INFO, "\t- %s (%s)", encoder_type, obs_encoder_get_display_name(encoder_type));
 	}
@@ -134,6 +129,16 @@ static void listOutputTypes()
 }
 
 Napi::Value StartOBS(const Napi::CallbackInfo& info) {
+
+  wchar_t path_utf16[MAX_PATH];
+  GetModuleFileNameW(NULL, path_utf16, MAX_PATH);
+  std::wcout << L"Executable path: " << path_utf16 << std::endl;
+
+  SetCurrentDirectoryA("D:/checkouts/warcraft-recorder-obs-engine/build/bin/64bit");
+
+  GetModuleFileNameW(NULL, path_utf16, MAX_PATH);
+  std::wcout << L"Executable path: " << path_utf16 << std::endl;
+
   std::cout << "Starting..." << std::endl;
   obs_startup("en-US", NULL, NULL);
   std::cout << "OBS has started!" << std::endl;
@@ -142,8 +147,18 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
   obs_add_data_path("D:/checkouts/warcraft-recorder-obs-engine/effects/libobs");
 
   load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/obs-x264.dll");
+
+  // todo - This loads AMF but needs obs-amf-test.exe to be next to the exe wihhc is probably node.exe and not in the place libobs expects
   load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/obs-ffmpeg.dll");
-  load_module("D:/checkouts/cpp-httplib/plugins/64bit/win-capture.dll");
+  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/win-capture.dll");
+
+  // obs_add_module_path(
+  //   "D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/", 
+  //   "D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/%module%"
+  // );
+
+  // obs_load_all_modules();
+
 
   // obs-ffmpeg-nvenc.c
   // obs-qsv11
@@ -218,27 +233,40 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
     }
 
     std::cout << "Create output" << std::endl;
-    obs_output_t *output = obs_output_create("ffmpeg_output", "simple_output", NULL, NULL);
-    std::cout << "Created output" << std::endl;
+    obs_output_t *output = obs_output_create("ffmpeg_muxer", "recording_output", NULL, NULL);
+
+    if (!output) {
+        std::cerr << "Failed to create output!" << std::endl;
+
+    } else {
+      std::cout << "Created output" << std::endl;
+    }
 
     std::cout << "Set output settings" << std::endl;
     obs_data_t *settings = obs_data_create();
-    obs_data_set_string(settings, "url", "D:/checkouts/warcraft-recorder-obs-engine/recording.mp4");  // Use "url" not "path"
+    obs_data_set_string(settings, "path", "D:/checkouts/warcraft-recorder-obs-engine/recording.mp4");  // Use "url" for ffmpeg_output not "path"
+
+    obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
+    obs_data_set_string(settings, "extension", "mp4");
     obs_data_set_string(settings, "format_name", "mp4");
+    obs_data_set_bool(settings, "allow_spaces", false);
+		obs_data_set_bool(settings, "allow_overwrite", true);
+
     obs_output_update(output, settings);
     obs_data_release(settings);
 
     std::cout << "Create venc" << std::endl;
-    obs_encoder_t *venc = obs_video_encoder_create("obs_x264", "simple_h264_stream", NULL, NULL);
-
+    obs_encoder_t *venc = obs_video_encoder_create("h264_texture_amf", "simple_h264_stream", NULL, NULL);
     std::cout << "Set video encoder settings" << std::endl;
-    obs_data_t *venc_settings = obs_data_create();
-    obs_data_set_string(venc_settings, "preset", "fast");
-    obs_data_set_int(venc_settings, "bitrate", 2500);
-    obs_data_set_string(venc_settings, "profile", "main");
-    obs_data_set_string(venc_settings, "rate_control", "CBR");
-    obs_encoder_update(venc, venc_settings);
-    obs_data_release(venc_settings);
+    obs_data_t* amf_settings = obs_data_create();
+    obs_data_set_string(amf_settings, "preset", "speed");  // Faster preset
+    //obs_data_set_int(amf_settings, "bitrate", 2500);
+    obs_data_set_string(amf_settings, "rate_control", "CQP");
+    obs_data_set_int(amf_settings, "cqp", 30);
+    obs_data_set_string(amf_settings, "profile", "main");
+    obs_encoder_update(venc, amf_settings);
+    obs_data_release(amf_settings);
+
     obs_output_set_video_encoder(output, venc);
 
 
@@ -283,15 +311,14 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
 
 
     signal_handler_t *sh = obs_output_get_signal_handler(output);
-    signal_handler_connect(sh, "starting", output_signal_handler, NULL);
-    signal_handler_connect(sh, "start", output_signal_handler, NULL);
-    signal_handler_connect(sh, "stop", output_signal_handler, NULL);
+    
+    signal_handler_connect(sh, "starting", output_signal_handler,  (void *)"starting");
+    signal_handler_connect(sh, "start", output_signal_handler,  (void *)"start");
+    signal_handler_connect(sh, "stopping", output_signal_handler,  (void *)"stopping");
+    signal_handler_connect(sh, "stop", output_signal_handler,  (void *)"stop");
 
-    std::cout << "List  a encoders" << std::endl;
-    listEncoders(OBS_ENCODER_AUDIO);
-    std::cout << "List  v encoders" << std::endl;
-    listEncoders(OBS_ENCODER_VIDEO);
-
+    std::cout << "List encoders" << std::endl;
+    listEncoders();
     std::cout << "List  src types" << std::endl;
     listSourceTypes();
     std::cout << "List  input types" << std::endl;
@@ -334,8 +361,8 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
     std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
 
     // Leaves the last frame present on the screen
-    obs_display_remove_draw_callback(display, draw_callback, NULL);
-    obs_display_destroy(display);
+    // obs_display_remove_draw_callback(display, draw_callback, NULL);
+    // obs_display_destroy(display);
 
     std::cout << "END FN" << std::endl;
 
