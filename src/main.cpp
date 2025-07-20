@@ -6,6 +6,7 @@
 #include <obs.h>
 #include <iostream>
 #include <future>
+#include <chrono>
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DESTROY) {
@@ -79,7 +80,7 @@ void output_signal_handler(void *data, calldata_t *cd) {
     
     std::cout << "Signal: " << (const char *)data << std::endl;
     std::cout << "Code: " << code << std::endl;
-    std::cout << "Time: " << std::ctime(&time) << std::endl;;
+    std::cout << "Time: " << std::ctime(&time) << std::endl;
     
     std::cout << "===================\n" << std::endl;
 }
@@ -129,15 +130,10 @@ static void listOutputTypes()
 }
 
 Napi::Value StartOBS(const Napi::CallbackInfo& info) {
-
   wchar_t path_utf16[MAX_PATH];
   GetModuleFileNameW(NULL, path_utf16, MAX_PATH);
   std::wcout << L"Executable path: " << path_utf16 << std::endl;
-
-  SetCurrentDirectoryA("D:/checkouts/warcraft-recorder-obs-engine/build/bin/64bit");
-
-  GetModuleFileNameW(NULL, path_utf16, MAX_PATH);
-  std::wcout << L"Executable path: " << path_utf16 << std::endl;
+  // SetCurrentDirectoryA("D:/checkouts/warcraft-recorder-obs-engine/build/bin/64bit");
 
   std::cout << "Starting..." << std::endl;
   obs_startup("en-US", NULL, NULL);
@@ -233,7 +229,7 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
     }
 
     std::cout << "Create output" << std::endl;
-    obs_output_t *output = obs_output_create("ffmpeg_muxer", "recording_output", NULL, NULL);
+    obs_output_t *output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
 
     if (!output) {
         std::cerr << "Failed to create output!" << std::endl;
@@ -244,16 +240,25 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
 
     std::cout << "Set output settings" << std::endl;
     obs_data_t *settings = obs_data_create();
-    obs_data_set_string(settings, "path", "D:/checkouts/warcraft-recorder-obs-engine/recording.mp4");  // Use "url" for ffmpeg_output not "path"
-
+    obs_data_set_int(settings, "max_time_sec", 30);
+    obs_data_set_int(settings, "max_size_mb", 512);
+    obs_data_set_string(settings, "directory", "D:/checkouts/warcraft-recorder-obs-engine"); // or wherever
     obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
     obs_data_set_string(settings, "extension", "mp4");
-    obs_data_set_string(settings, "format_name", "mp4");
-    obs_data_set_bool(settings, "allow_spaces", false);
-		obs_data_set_bool(settings, "allow_overwrite", true);
-
     obs_output_update(output, settings);
     obs_data_release(settings);
+    
+    // obs_data_t *settings = obs_data_create();
+    // obs_data_set_string(settings, "path", "D:/checkouts/warcraft-recorder-obs-engine/recording.mp4");  // Use "url" for ffmpeg_output not "path"
+
+    // obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
+    // obs_data_set_string(settings, "extension", "mp4");
+    // obs_data_set_string(settings, "format_name", "mp4");
+    // obs_data_set_bool(settings, "allow_spaces", false);
+		// obs_data_set_bool(settings, "allow_overwrite", true);
+
+    // obs_output_update(output, settings);
+    // obs_data_release(settings);
 
     std::cout << "Create venc" << std::endl;
     obs_encoder_t *venc = obs_video_encoder_create("h264_texture_amf", "simple_h264_stream", NULL, NULL);
@@ -357,6 +362,16 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
+
+
+    std::cout << "calling save proc handler" << std::endl;
+    calldata_t cd = {0};
+    proc_handler_t *ph = obs_output_get_proc_handler(output);
+    proc_handler_call(ph, "save", &cd);
+    calldata_free(&cd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
+
+
     obs_output_stop(output);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
 
