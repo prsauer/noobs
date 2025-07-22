@@ -269,6 +269,7 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
     obs_data_set_string(amf_settings, "rate_control", "CQP");
     obs_data_set_int(amf_settings, "cqp", 30);
     obs_data_set_string(amf_settings, "profile", "main");
+    obs_data_set_int(amf_settings, "keyint_sec", 1); // Set keyframe interval to 1 second
     obs_encoder_update(venc, amf_settings);
     obs_data_release(amf_settings);
 
@@ -321,6 +322,7 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
     signal_handler_connect(sh, "start", output_signal_handler,  (void *)"start");
     signal_handler_connect(sh, "stopping", output_signal_handler,  (void *)"stopping");
     signal_handler_connect(sh, "stop", output_signal_handler,  (void *)"stop");
+    signal_handler_connect(sh, "saved", output_signal_handler,  (void *)"saved");
 
     std::cout << "List encoders" << std::endl;
     listEncoders();
@@ -365,9 +367,11 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
 
 
     std::cout << "calling save proc handler" << std::endl;
-    calldata_t cd = {0};
+    calldata cd;
+    calldata_init(&cd);
+    calldata_set_int(&cd, "offset_seconds", 3);
     proc_handler_t *ph = obs_output_get_proc_handler(output);
-    proc_handler_call(ph, "save", &cd);
+    proc_handler_call(ph, "convert", &cd);
     calldata_free(&cd);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
 
@@ -381,7 +385,7 @@ Napi::Value StartOBS(const Napi::CallbackInfo& info) {
 
     std::cout << "END FN" << std::endl;
 
-     winThread.join();  // or detach() if you don’t care about waiting
+    winThread.detach();  // or detach() if you don’t care about waiting
   return info.Env().Undefined();
 }
 
