@@ -17,7 +17,8 @@
     "binding.gyp",
     "src/**/*",
     "bin/**/*",
-    "obs-plugins/**/*"
+    "obs-plugins/**/*",
+    "include/**/*"
   ],
   "author": "Warcraft Recorder LTD",
   "license": "ISC",
