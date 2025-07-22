@@ -129,11 +129,31 @@ static void listOutputTypes()
   }
 }
 
+
+static void printCwd()
+{
+  // Print the current directory
+  char cwd[MAX_PATH];
+  if (GetCurrentDirectoryA(MAX_PATH, cwd)) {
+    std::cout << "Current directory: " << cwd << std::endl;
+  } else {
+    std::cerr << "Failed to get current directory!" << std::endl;
+  }
+}
+
 Napi::Value StartOBS(const Napi::CallbackInfo& info) {
   wchar_t path_utf16[MAX_PATH];
   GetModuleFileNameW(NULL, path_utf16, MAX_PATH);
   std::wcout << L"Executable path: " << path_utf16 << std::endl;
-  // SetCurrentDirectoryA("D:/checkouts/warcraft-recorder-obs-engine/build/bin/64bit");
+
+  printCwd();
+  std::cout << "Set CWD" << std::endl;
+
+  if (!SetCurrentDirectoryA("D:/checkouts/warcraft-recorder-obs-engine")) {
+      std::cerr << "Failed to set CWD. Error: " << GetLastError() << std::endl;
+  }
+
+  printCwd();
 
   std::cout << "Starting..." << std::endl;
   obs_startup("en-US", NULL, NULL);
