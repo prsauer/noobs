@@ -334,9 +334,10 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
   // Add preview functions
   exports.Set("ObsShowPreview", Napi::Function::New(env, ObsShowPreview));
-  exports.Set("ObsResizePreview", Napi::Function::New(env, ObsResizePreview));
   exports.Set("ObsHidePreview", Napi::Function::New(env, ObsHidePreview));
-
+  exports.Set("ObsResizePreview", Napi::Function::New(env, ObsResizePreview));
+  exports.Set("ObsMovePreview", Napi::Function::New(env, ObsMovePreview));
+  
   exports.Set("getUptime", Napi::Function::New(env, GetUptime));
   exports.Set("listProcesses", Napi::Function::New(env, ListProcesses));
   return exports;

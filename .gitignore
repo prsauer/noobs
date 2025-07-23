@@ -1,2 +1,6 @@
 build/
 node_modules/
+bin/
+obs-plugins/
+data/
+effects/
