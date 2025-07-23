@@ -14,6 +14,10 @@ interface WCREngine {
   ObsStartBuffer(): undefined;
   ObsStartRecording(): undefined;
   ObsStopRecording(): undefined;
+
+  ObsShowPreview(hwnd: Buffer): undefined;
+  ObsHidePreview(): undefined;
+  ObsSetPreviewSize(width: number, height: number): undefined;
 }
 
 declare const obs: WCREngine;

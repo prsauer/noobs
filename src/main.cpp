@@ -140,10 +140,10 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   if (!obs) 
     throw std::runtime_error("Obs not initialized");
 
-  if (info.Length() < 1 || !info[0].IsNumber()) {
-    Napi::TypeError::New(info.Env(), "Expected HWND as number").ThrowAsJavaScriptException();
-    return info.Env().Undefined();
-  }
+  // if (info.Length() < 1 || !info[0].IsNumber()) {
+  //   Napi::TypeError::New(info.Env(), "Expected HWND as number").ThrowAsJavaScriptException();
+  //   return info.Env().Undefined();
+  // }
 
   // Get HWND from JavaScript (passed as a number)
   uint64_t hwndValue = info[0].As<Napi::Number>().Int64Value();
