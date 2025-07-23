@@ -465,6 +465,12 @@ void ObsInterface::startBuffering() {
   if (!output)
     throw std::runtime_error("Output is not initialized!");
 
+  bool is_active = obs_output_active(output);
+      
+  if (is_active)
+    blog(LOG_WARNING, "Output is already active");
+    return;
+
   bool success = obs_output_start(output);
 
   if (!success)
@@ -493,7 +499,7 @@ void ObsInterface::stopRecording() {
   bool is_active = obs_output_active(output);
 
   if (!is_active)
-    throw std::runtime_error("Output is not active");
+    return
 
   obs_output_stop(output);
 }
