@@ -289,9 +289,12 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
 void ObsInterface::showPreview(HWND* hwnd) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
-  if (display)
-    return;
+  if (display) {
+    blog(LOG_INFO, "Have display, so do nothing");
+   // return;
+  }
 
+  blog(LOG_INFO, "Create display");
   gs_init_data gs_data = {};
 
   gs_data.adapter = 0;
@@ -301,7 +304,7 @@ void ObsInterface::showPreview(HWND* hwnd) {
   gs_data.zsformat = GS_ZS_NONE;
   gs_data.num_backbuffers = 1;
   gs_data.window.hwnd = hwnd;
-    blog(LOG_INFO, "ObsInterface::showPreview has hwnd %d", hwnd);
+  blog(LOG_INFO, "ObsInterface::showPreview has hwnd %d", hwnd);
 
 
   display = obs_display_create(&gs_data, 0x0);
