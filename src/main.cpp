@@ -47,11 +47,6 @@ void WindowThread(std::promise<HWND> hwndPromise) {
     }
 }
 
-void draw_callback(void* data, uint32_t cx, uint32_t cy) {
-    // Render the OBS preview scene here
-    obs_render_main_texture();
-}
-
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
   obs = new ObsInterface();
 
@@ -140,6 +135,53 @@ Napi::Value ObsStopRecording(const Napi::CallbackInfo& info) {
   obs->stopRecording();
   return info.Env().Undefined();
 }
+
+Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
+  if (!obs) 
+    throw std::runtime_error("Obs not initialized");
+
+  if (info.Length() < 1 || !info[0].IsNumber()) {
+    Napi::TypeError::New(info.Env(), "Expected HWND as number").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  // Get HWND from JavaScript (passed as a number)
+  uint64_t hwndValue = info[0].As<Napi::Number>().Int64Value();
+  HWND hwnd = reinterpret_cast<HWND>(hwndValue);
+
+  std::cout << "Received HWND: " << hwnd << " (0x" << std::hex << hwndValue << std::dec << ")" << std::endl;
+
+  obs->showPreview(&hwnd);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsResizePreview(const Napi::CallbackInfo& info) {
+  if (!obs) 
+    throw std::runtime_error("Obs not initialized");
+
+  if (info.Length() < 2) {
+    Napi::TypeError::New(info.Env(), "Expected width and height").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  int width = info[0].As<Napi::Number>().Int32Value();
+  int height = info[1].As<Napi::Number>().Int32Value();
+
+  obs->resizePreview(width, height);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
+  if (!obs) 
+    throw std::runtime_error("Obs not initialized");
+
+  obs->hidePreview();
+  return info.Env().Undefined();
+}
+
+
+
+
 
 
 Napi::Number GetUptime(const Napi::CallbackInfo& info) {
@@ -252,6 +294,11 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("ObsStartBuffer", Napi::Function::New(env, ObsStartBuffer));
   exports.Set("ObsStartRecording", Napi::Function::New(env, ObsStartRecording));
   exports.Set("ObsStopRecording", Napi::Function::New(env, ObsStopRecording));
+
+  // Add preview functions
+  exports.Set("ObsShowPreview", Napi::Function::New(env, ObsShowPreview));
+  exports.Set("ObsResizePreview", Napi::Function::New(env, ObsResizePreview));
+  exports.Set("ObsHidePreview", Napi::Function::New(env, ObsHidePreview));
 
   exports.Set("getUptime", Napi::Function::New(env, GetUptime));
   exports.Set("listProcesses", Napi::Function::New(env, ListProcesses));

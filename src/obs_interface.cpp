@@ -281,6 +281,42 @@ void ObsInterface::obs_log_handler(int lvl, const char *msg, va_list args, void 
   std::cout.flush();
 }
 
+void draw_callback(void* data, uint32_t cx, uint32_t cy) {
+    // Render the OBS preview scene here
+    obs_render_main_texture();
+}
+
+void ObsInterface::showPreview(HWND* hwnd) {
+  if (display)
+    return;
+
+  gs_init_data gs_data = {};
+
+  gs_data.adapter = 0;
+  gs_data.cx = 1920;  // Window width
+  gs_data.cy = 1080;  // Window height
+  gs_data.format = GS_BGRA;
+  gs_data.zsformat = GS_ZS_NONE;
+  gs_data.num_backbuffers = 1;
+  gs_data.window.hwnd = hwnd;
+
+  display = obs_display_create(&gs_data, 0x0);
+  obs_display_add_draw_callback(display, draw_callback, NULL);
+}
+
+void ObsInterface::resizePreview(int width, int height) {
+  // TODO
+}
+
+void ObsInterface::hidePreview() {
+  if (!display)
+    return;
+
+  obs_display_remove_draw_callback(display, draw_callback, NULL);
+  obs_display_destroy(display);
+  display = nullptr;
+}
+
 ObsInterface::ObsInterface() {
   blog(LOG_INFO, "OBS constructor called");
   init_obs();

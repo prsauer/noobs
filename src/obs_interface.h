@@ -9,10 +9,15 @@ class ObsInterface {
     void startRecording(int offset);
     void stopRecording();
 
+    void showPreview(HWND* hwnd);
+    void resizePreview(int width, int height);
+    void hidePreview();
+
     std::vector<std::string> get_available_video_encoders();
 
     // TODO
-    // Draw preview
+    // Show preview
+    // Hide preview
     // Configure video 
     // Configure audio
     // List audio source
@@ -26,6 +31,7 @@ class ObsInterface {
     obs_source_t *audio_source;
     obs_encoder_t *video_encoder;
     obs_encoder_t *audio_encoder;
+    obs_display_t *display;
 
     void init_obs();
     void reset_video();
