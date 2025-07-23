@@ -15,7 +15,10 @@ async function test() {
 
 
   console.log("Starting obs...");
-  wcr.StartOBS();
+  wcr.ObsInit();
+
+  console.log("Stopping obs...");
+  wcr.ObsShutdown();
 
   console.log("Test Done");
 }
