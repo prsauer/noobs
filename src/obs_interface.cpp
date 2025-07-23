@@ -464,19 +464,22 @@ ObsInterface::~ObsInterface() {
 void ObsInterface::startBuffering() {
   blog(LOG_INFO, "ObsInterface::startBuffering called");
 
-  if (!output)
+  if (!output) {
     throw std::runtime_error("Output is not initialized!");
+  }
 
   bool is_active = obs_output_active(output);
       
-  if (is_active)
+  if (is_active) {
     blog(LOG_WARNING, "Output is already active");
     return;
+  }
 
   bool success = obs_output_start(output);
 
-  if (!success)
+  if (!success) {
     throw std::runtime_error("Failed to start buffering!");
+  }
     
   blog(LOG_INFO, "ObsInterface::startBuffering exited");
 }
