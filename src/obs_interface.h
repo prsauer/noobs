@@ -32,6 +32,7 @@ class ObsInterface {
     obs_encoder_t *video_encoder = nullptr;
     obs_encoder_t *audio_encoder = nullptr;
     obs_display_t *display = nullptr;
+    HWND previewHwnd = nullptr;
 
     void init_obs();
     void reset_video();

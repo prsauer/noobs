@@ -291,25 +291,51 @@ void ObsInterface::showPreview(HWND hwnd) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
   if (display) {
-    blog(LOG_INFO, "Have display, so do nothing");
-   // return;
+    blog(LOG_INFO, "Display already exists, returning early");
+    return;  // Return early if display already exists
   }
 
-  blog(LOG_INFO, "Create display");
-  gs_init_data gs_data = {};
+  // Create an embedded child window for OBS preview
+  HWND previewWindow = CreateWindowEx(
+    0,                    // No extended styles
+    "STATIC",            // Simple static control class (ANSI string)
+    "OBS Preview",       // Window name (ANSI string)
+    WS_CHILD | WS_VISIBLE | WS_BORDER,  // Child + visible + border
+    20, 20,              // Position within parent (x, y)
+    640, 480,            // Size (width, height)
+    hwnd,                // Parent window (your Electron app)
+    NULL,                // No menu
+    GetModuleHandle(NULL), 
+    NULL
+  );
 
+  if (!previewWindow) {
+    blog(LOG_ERROR, "Failed to create preview child window");
+    return;
+  }
+
+  // Store for cleanup
+  previewHwnd = previewWindow;
+
+  blog(LOG_INFO, "Create OBS display in child window");
+  gs_init_data gs_data = {};
   gs_data.adapter = 0;
-  gs_data.cx = 1920;  // Window width
-  gs_data.cy = 1080;  // Window height
+  gs_data.cx = 640;              // Match child window size
+  gs_data.cy = 480;              
   gs_data.format = GS_BGRA;
   gs_data.zsformat = GS_ZS_NONE;
   gs_data.num_backbuffers = 1;
-  gs_data.window.hwnd = hwnd;
-  blog(LOG_INFO, "ObsInterface::showPreview has hwnd %d", hwnd);
-
+  gs_data.window.hwnd = previewWindow;  // Use child window, not parent
 
   display = obs_display_create(&gs_data, 0x0);
-  obs_display_add_draw_callback(display, draw_callback, NULL);
+  if (display) {
+    obs_display_add_draw_callback(display, draw_callback, NULL);
+    blog(LOG_INFO, "OBS preview embedded successfully");
+  } else {
+    blog(LOG_ERROR, "Failed to create OBS display");
+    DestroyWindow(previewWindow);
+    previewHwnd = nullptr;
+  }
 }
 
 void ObsInterface::resizePreview(int width, int height) {
@@ -317,30 +343,21 @@ void ObsInterface::resizePreview(int width, int height) {
 }
 
 void ObsInterface::hidePreview() {
-  if (!display) {
-    blog(LOG_INFO, "No display to hide");
-    return;
-  }
+  blog(LOG_INFO, "ObsInterface::hidePreview");
 
- // Remove the draw callback first
+  if (display) {
     obs_display_remove_draw_callback(display, draw_callback, NULL);
-    
-    // Add a temporary callback that clears the screen
-    auto clear_callback = [](void* data, uint32_t cx, uint32_t cy) {
-        gs_clear(GS_CLEAR_COLOR, nullptr, 0.0f, 0);
-    };
-    
-    obs_display_add_draw_callback(display, clear_callback, NULL);
-    
-    // Give it one frame to render the clear
-    std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~1 frame at 60fps
-    
-    // Remove the clear callback and destroy
-    obs_display_remove_draw_callback(display, clear_callback, NULL);
     obs_display_destroy(display);
     display = nullptr;
-    
-    blog(LOG_INFO, "Display hidden and destroyed");
+    blog(LOG_INFO, "OBS display destroyed");
+  }
+
+  // Destroy the child window to fully clean up the preview
+  if (previewHwnd) {
+    DestroyWindow(previewHwnd);
+    previewHwnd = nullptr;
+    blog(LOG_INFO, "Preview child window destroyed");
+  }
 }
 
 ObsInterface::ObsInterface() {
