@@ -12,7 +12,7 @@ interface WCREngine {
   ObsInit(cb: () => void): void;
   ObsShutdown(): void;
   ObsStartBuffer(): void;
-  ObsStartRecording(): void;
+  ObsStartRecording(offset: number): void;
   ObsStopRecording(): void;
 
   ObsShowPreview(hwnd: Buffer): void;

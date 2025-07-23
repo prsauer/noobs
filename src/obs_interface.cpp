@@ -7,6 +7,11 @@
 #include <vector>
 #include <thread>
 
+struct SignalData {
+  long long code;
+  std::string signal;
+};
+
 std::vector<std::string> ObsInterface::get_available_video_encoders()
 {
   std::vector<std::string> encoders;
@@ -249,39 +254,56 @@ obs_source_t* ObsInterface::create_video_source() {
   return source;
 }
 
-void call_jscb(Napi::Env env, Napi::Function cb, std::string* msg) {
-  cb.Call({ Napi::String::New(env, *msg) });
+void call_jscb(Napi::Env env, Napi::Function cb, SignalData* sd) {
+  Napi::Object obj = Napi::Object::New(env);
+  obj.Set("code", Napi::Number::New(env, sd->code));
+  obj.Set("signal", Napi::String::New(env, sd->signal));
+  cb.Call({ obj });
+  delete sd;
 }
 
-void ObsInterface::output_signal_handler(void *data, calldata_t *cd) {
-  std::cout << "\n=== OUTPUT SIGNAL ===" << std::endl;
-  
-  // Try to get common signal parameters
-  obs_output_t *output = (obs_output_t*)calldata_ptr(cd, "output");
+void ObsInterface::output_signal_handler_starting(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
-
-  auto now = std::chrono::system_clock::now();
-  std::time_t time = std::chrono::system_clock::to_time_t(now);
-  
-  std::cout << "Signal: " << "??" << std::endl;
-  std::cout << "Code: " << code << std::endl;
-  std::cout << "Time: " << std::ctime(&time) << std::endl;
-  
-  std::cout << "===================\n" << std::endl;
-
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  std::string* msg = new std::string("Signal received with real data");
-  self->jscb.NonBlockingCall(msg, call_jscb);
-  delete msg;
+  SignalData* sd = new SignalData{ code, "starting" };
+  self->jscb.NonBlockingCall(sd, call_jscb);
+}
+
+void ObsInterface::output_signal_handler_start(void *data, calldata_t *cd) {
+  long long code = calldata_int(cd, "code");
+  ObsInterface* self = static_cast<ObsInterface*>(data);
+  SignalData* sd = new SignalData{ code, "start" };
+  self->jscb.NonBlockingCall(sd, call_jscb);
+}
+
+void ObsInterface::output_signal_handler_stop(void *data, calldata_t *cd) {
+  long long code = calldata_int(cd, "code");
+  ObsInterface* self = static_cast<ObsInterface*>(data);
+  SignalData* sd = new SignalData{ code, "stop" };
+  self->jscb.NonBlockingCall(sd, call_jscb);
+}
+
+void ObsInterface::output_signal_handler_stopping(void *data, calldata_t *cd) {
+  long long code = calldata_int(cd, "code");
+  ObsInterface* self = static_cast<ObsInterface*>(data);
+  SignalData* sd = new SignalData{ code, "stopping" };
+  self->jscb.NonBlockingCall(sd, call_jscb);
+}
+
+void ObsInterface::output_signal_handler_saved(void *data, calldata_t *cd) {
+  long long code = calldata_int(cd, "code");
+  ObsInterface* self = static_cast<ObsInterface*>(data);
+  SignalData* sd = new SignalData{ code, "saved" };
+  self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::create_signal_handlers(obs_output_t *output) {
   signal_handler_t *sh = obs_output_get_signal_handler(output);
-  signal_handler_connect(sh, "starting", output_signal_handler,  this);
-  signal_handler_connect(sh, "start", output_signal_handler,  this);
-  signal_handler_connect(sh, "stopping", output_signal_handler,  this);
-  signal_handler_connect(sh, "stop", output_signal_handler,  this);
-  signal_handler_connect(sh, "saved", output_signal_handler,  this);
+  signal_handler_connect(sh, "starting", output_signal_handler_starting,  this);
+  signal_handler_connect(sh, "start", output_signal_handler_start,  this);
+  signal_handler_connect(sh, "stopping", output_signal_handler_stopping,  this);
+  signal_handler_connect(sh, "stop", output_signal_handler_stop,  this);
+  signal_handler_connect(sh, "saved", output_signal_handler_saved,  this);
 }
 
 void ObsInterface::obs_log_handler(int lvl, const char *msg, va_list args, void *p) {
@@ -292,8 +314,8 @@ void ObsInterface::obs_log_handler(int lvl, const char *msg, va_list args, void 
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
-    // Render the OBS preview scene here
-    obs_render_main_texture();
+  // Render the OBS preview scene here
+  obs_render_main_texture();
 }
 
 void ObsInterface::showPreview(HWND hwnd) {
@@ -429,13 +451,18 @@ ObsInterface::ObsInterface(Napi::ThreadSafeFunction cb) {
   scene = create_scene();
   video_source = create_video_source();
   obs_scene_add(scene, video_source);
-  create_signal_handlers(output);
   jscb = cb;
+  create_signal_handlers(output);
   base_set_log_handler(obs_log_handler, NULL);
 }
 
 ObsInterface::~ObsInterface() {
   blog(LOG_INFO, "OBS destructor called");
+
+  if (jscb) {
+    blog(LOG_INFO, "Releasing JavaScript callback");
+    jscb.Release();
+  }
 
   if (video_source) {
     blog(LOG_INFO, "Releasing video source");
@@ -511,8 +538,9 @@ void ObsInterface::startRecording(int offset) {
   bool success = proc_handler_call(ph, "convert", &cd);
   calldata_free(&cd);
 
-  if (!success)
+  if (!success) {
     throw std::runtime_error("Failed to call convert procedure handler");
+  }
 
    blog(LOG_INFO, "ObsInterface::startRecording exit");
 }

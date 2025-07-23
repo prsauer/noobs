@@ -1,12 +1,12 @@
-const wcr = require('./index.js');
+const wcre = require('./index.js');
 
 async function test() {
-  console.log('Uptime:', wcr.getUptime());
+  console.log('Uptime:', wcre.getUptime());
 
   console.log("Listing processes...");
   
   try {
-    const processes = await wcr.listProcesses();
+    const processes = await wcre.listProcesses();
     console.log(`Found ${processes.length} processes`);
     console.log('First few processes:', processes.slice(0, 5));
   } catch (error) {
@@ -15,10 +15,28 @@ async function test() {
 
 
   console.log("Starting obs...");
-  wcr.ObsInit();
+
+  const cb = (msg) => {
+    console.log("Callback received:", msg);
+  }
+
+  wcre.ObsInit(cb);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  for (let i = 0; i < 2; i++) {
+    console.log("Test Recording Loop:", i + 1);
+    wcre.ObsStartBuffer();
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    wcre.ObsStartRecording(3);
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    wcre.ObsStopRecording();
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
 
   console.log("Stopping obs...");
-  wcr.ObsShutdown();
+  wcre.ObsShutdown();
 
   console.log("Test Done");
 }

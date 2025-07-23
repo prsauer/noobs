@@ -57,10 +57,10 @@ Napi::Value ObsInit(const Napi::CallbackInfo& info) {
 
   Napi::Function fn = info[0].As<Napi::Function>();
 
-  Napi::ThreadSafeFunction callback = 
-    Napi::ThreadSafeFunction::New(info.Env(), fn, "callback", 0, 1);
+  Napi::ThreadSafeFunction jscb =
+    Napi::ThreadSafeFunction::New(info.Env(), fn, "JavaScript callback", 0, 1);
 
-  obs = new ObsInterface(callback);
+  obs = new ObsInterface(jscb);
   return info.Env().Undefined();
 }
 
@@ -82,10 +82,17 @@ Napi::Value ObsStartBuffer(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value ObsStartRecording(const Napi::CallbackInfo& info) {
-  if (!obs) 
+  if (!obs) {
     throw std::runtime_error("Obs not initialized");
+  }
 
-  obs->startRecording(2);
+  int offset = 0;
+
+  if (info.Length() == 1 && info[0].IsNumber()) {
+    offset = info[0].As<Napi::Number>().Int32Value();
+  }
+
+  obs->startRecording(offset);
   return info.Env().Undefined();
 }
 
