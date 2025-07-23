@@ -477,6 +477,8 @@ void ObsInterface::startBuffering() {
 
   if (!success)
     throw std::runtime_error("Failed to start buffering!");
+    
+  blog(LOG_INFO, "ObsInterface::startBuffering exited");
 }
 
 void ObsInterface::startRecording(int offset) {
