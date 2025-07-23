@@ -9,16 +9,17 @@ interface WCREngine {
   getUptime(): number;
   listProcesses(): Promise<ProcessInfo[]>;
 
-  ObsInit(): undefined;
-  ObsShutdown(): undefined;
-  ObsStartBuffer(): undefined;
-  ObsStartRecording(): undefined;
-  ObsStopRecording(): undefined;
+  ObsInit(): void;
+  ObsShutdown(): void;
+  ObsStartBuffer(): void;
+  ObsStartRecording(): void;
+  ObsStopRecording(): void;
 
-  ObsShowPreview(hwnd: Buffer): undefined;
-  ObsHidePreview(): undefined;
-  ObsSetPreviewSize(width: number, height: number): undefined;
+  ObsShowPreview(hwnd: Buffer): void;
+  ObsHidePreview(): void;
+  ObsResizePreview(width: number, height: number): void;
+  ObsMovePreview(x: number, y: number): void;
 }
 
-declare const obs: WCREngine;
-export = obs;
+declare const wcre: WCREngine;
+export = wcre;

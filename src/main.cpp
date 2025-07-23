@@ -192,6 +192,22 @@ Napi::Value ObsResizePreview(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsMovePreview(const Napi::CallbackInfo& info) {
+  if (!obs) 
+    throw std::runtime_error("Obs not initialized");
+
+  if (info.Length() < 2) {
+    Napi::TypeError::New(info.Env(), "Expected x and y").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  int x = info[0].As<Napi::Number>().Int32Value();
+  int y = info[1].As<Napi::Number>().Int32Value();
+
+  obs->movePreview(x, y);
+  return info.Env().Undefined();
+}
+
 Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
   if (!obs) 
     throw std::runtime_error("Obs not initialized");

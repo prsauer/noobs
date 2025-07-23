@@ -10,8 +10,9 @@ class ObsInterface {
     void stopRecording();
 
     void showPreview(HWND hwnd);
-    void resizePreview(int width, int height);
     void hidePreview();
+    void resizePreview(int width, int height);
+    void movePreview(int x, int y);
 
     std::vector<std::string> get_available_video_encoders();
 

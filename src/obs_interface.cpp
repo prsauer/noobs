@@ -339,7 +339,60 @@ void ObsInterface::showPreview(HWND hwnd) {
 }
 
 void ObsInterface::resizePreview(int width, int height) {
-  // TODO
+  blog(LOG_INFO, "ObsInterface::resizePreview to size (%d x %d)", width, height);
+
+  if (!previewHwnd) {
+    blog(LOG_WARNING, "No preview window to resize");
+    return;
+  }
+
+  // Resize the child window
+  BOOL windowSuccess = SetWindowPos(
+    previewHwnd,           // Handle to the child window
+    NULL,                  // No Z-order change
+    0, 0,                  // Keep current position (ignored due to SWP_NOMOVE)
+    width, height,         // New size (width, height)
+    SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE  // Don't change position, Z-order, or activation
+  );
+
+  if (!windowSuccess) {
+    blog(LOG_ERROR, "Failed to resize preview window to (%d x %d)", width, height);
+    return;
+  }
+
+  blog(LOG_INFO, "Preview window resized successfully to (%d x %d)", width, height);
+
+  // Resize the OBS display to match the new window size
+  if (display) {
+    obs_display_resize(display, width, height);
+    blog(LOG_INFO, "OBS display resized to (%d x %d)", width, height);
+  } else {
+    blog(LOG_WARNING, "No OBS display to resize");
+  }
+}
+
+void ObsInterface::movePreview(int x, int y) {
+  blog(LOG_INFO, "ObsInterface::movePreview to position (%d, %d)", x, y);
+
+  if (!previewHwnd) {
+    blog(LOG_WARNING, "No preview window to move");
+    return;
+  }
+
+  // Move the child window to the new position within the parent
+  BOOL success = SetWindowPos(
+    previewHwnd,           // Handle to the child window
+    NULL,                  // No Z-order change
+    x, y,                  // New position (x, y)
+    0, 0,                  // Keep current size (ignored due to SWP_NOSIZE)
+    SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE  // Don't change size, Z-order, or activation
+  );
+
+  if (success) {
+    blog(LOG_INFO, "Preview window moved successfully to (%d, %d)", x, y);
+  } else {
+    blog(LOG_ERROR, "Failed to move preview window to (%d, %d)", x, y);
+  }
 }
 
 void ObsInterface::hidePreview() {
