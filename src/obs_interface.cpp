@@ -485,6 +485,7 @@ void ObsInterface::startBuffering() {
 }
 
 void ObsInterface::startRecording(int offset) {
+  blog(LOG_INFO, "ObsInterface::startRecording enter");
   bool is_active = obs_output_active(output);
 
   if (!is_active)
@@ -501,13 +502,17 @@ void ObsInterface::startRecording(int offset) {
 
   if (!success)
     throw std::runtime_error("Failed to call convert procedure handler");
+    
+   blog(LOG_INFO, "ObsInterface::startRecording exit");
 }
 
 void ObsInterface::stopRecording() {
+  blog(LOG_INFO, "ObsInterface::stopRecording enter");
   bool is_active = obs_output_active(output);
 
   if (!is_active)
     return
 
   obs_output_stop(output);
+  blog(LOG_INFO, "ObsInterface::stopRecording exited");
 }
