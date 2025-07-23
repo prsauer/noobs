@@ -302,7 +302,7 @@ void ObsInterface::showPreview(HWND hwnd) {
     "OBS Preview",       // Window name (ANSI string)
     WS_CHILD | WS_VISIBLE | WS_BORDER,  // Child + visible + border
     20, 20,              // Position within parent (x, y)
-    640, 480,            // Size (width, height)
+    1920, 1080,           // Size (width, height)
     hwnd,                // Parent window (your Electron app)
     NULL,                // No menu
     GetModuleHandle(NULL), 
@@ -320,8 +320,8 @@ void ObsInterface::showPreview(HWND hwnd) {
   blog(LOG_INFO, "Create OBS display in child window");
   gs_init_data gs_data = {};
   gs_data.adapter = 0;
-  gs_data.cx = 640;              // Match child window size
-  gs_data.cy = 480;              
+  gs_data.cx = 1920;              // Match child window size
+  gs_data.cy = 1080;              
   gs_data.format = GS_BGRA;
   gs_data.zsformat = GS_ZS_NONE;
   gs_data.num_backbuffers = 1;
