@@ -249,6 +249,10 @@ obs_source_t* ObsInterface::create_video_source() {
   return source;
 }
 
+void call_jscb(Napi::Env env, Napi::Function cb, std::string* msg) {
+  cb.Call({ Napi::String::New(env, *msg) });
+}
+
 void ObsInterface::output_signal_handler(void *data, calldata_t *cd) {
   std::cout << "\n=== OUTPUT SIGNAL ===" << std::endl;
   
@@ -259,20 +263,25 @@ void ObsInterface::output_signal_handler(void *data, calldata_t *cd) {
   auto now = std::chrono::system_clock::now();
   std::time_t time = std::chrono::system_clock::to_time_t(now);
   
-  std::cout << "Signal: " << (const char *)data << std::endl;
+  std::cout << "Signal: " << "??" << std::endl;
   std::cout << "Code: " << code << std::endl;
   std::cout << "Time: " << std::ctime(&time) << std::endl;
   
   std::cout << "===================\n" << std::endl;
+
+  ObsInterface* self = static_cast<ObsInterface*>(data);
+  std::string* msg = new std::string("Signal received with real data");
+  self->jscb.NonBlockingCall(msg, call_jscb);
+  delete msg;
 }
 
 void ObsInterface::create_signal_handlers(obs_output_t *output) {
   signal_handler_t *sh = obs_output_get_signal_handler(output);
-  signal_handler_connect(sh, "starting", output_signal_handler,  (void *)"starting");
-  signal_handler_connect(sh, "start", output_signal_handler,  (void *)"start");
-  signal_handler_connect(sh, "stopping", output_signal_handler,  (void *)"stopping");
-  signal_handler_connect(sh, "stop", output_signal_handler,  (void *)"stop");
-  signal_handler_connect(sh, "saved", output_signal_handler,  (void *)"saved");
+  signal_handler_connect(sh, "starting", output_signal_handler,  this);
+  signal_handler_connect(sh, "start", output_signal_handler,  this);
+  signal_handler_connect(sh, "stopping", output_signal_handler,  this);
+  signal_handler_connect(sh, "stop", output_signal_handler,  this);
+  signal_handler_connect(sh, "saved", output_signal_handler,  this);
 }
 
 void ObsInterface::obs_log_handler(int lvl, const char *msg, va_list args, void *p) {
@@ -413,7 +422,7 @@ void ObsInterface::hidePreview() {
   }
 }
 
-ObsInterface::ObsInterface() {
+ObsInterface::ObsInterface(Napi::ThreadSafeFunction cb) {
   blog(LOG_INFO, "OBS constructor called");
   init_obs();
   output = create_output();
@@ -421,6 +430,7 @@ ObsInterface::ObsInterface() {
   video_source = create_video_source();
   obs_scene_add(scene, video_source);
   create_signal_handlers(output);
+  jscb = cb;
   base_set_log_handler(obs_log_handler, NULL);
 }
 

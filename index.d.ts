@@ -9,7 +9,7 @@ interface WCREngine {
   getUptime(): number;
   listProcesses(): Promise<ProcessInfo[]>;
 
-  ObsInit(): void;
+  ObsInit(cb: () => void): void;
   ObsShutdown(): void;
   ObsStartBuffer(): void;
   ObsStartRecording(): void;

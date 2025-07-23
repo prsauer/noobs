@@ -1,8 +1,10 @@
 #pragma once
 
+#include <napi.h>
+
 class ObsInterface {
   public:
-    ObsInterface();
+    ObsInterface(Napi::ThreadSafeFunction callback);
     ~ObsInterface();
 
     void startBuffering();
@@ -33,7 +35,8 @@ class ObsInterface {
     obs_encoder_t *video_encoder = nullptr;
     obs_encoder_t *audio_encoder = nullptr;
     obs_display_t *display = nullptr;
-    HWND previewHwnd = nullptr;
+    HWND previewHwnd = nullptr; // window handle for scene preview
+    Napi::ThreadSafeFunction jscb; // javascript callback
 
     void init_obs();
     void reset_video();

@@ -48,60 +48,19 @@ void WindowThread(std::promise<HWND> hwndPromise) {
 }
 
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
-  obs = new ObsInterface();
+  bool valid = info.Length() == 1 && info[0].IsFunction();
 
-  // std::promise<HWND> hwndPromise;
-  // std::future<HWND> hwndFuture = hwndPromise.get_future();
+  if (!valid) {
+    Napi::Error::New(info.Env(), "Expected a callback function").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
 
-  // std::thread winThread(WindowThread, std::move(hwndPromise));
-  // HWND hwnd = hwndFuture.get();  // blocks until hwnd is ready
+  Napi::Function fn = info[0].As<Napi::Function>();
 
-  // gs_init_data gs_data = {};
+  Napi::ThreadSafeFunction callback = 
+    Napi::ThreadSafeFunction::New(info.Env(), fn, "callback", 0, 1);
 
-  // gs_data.adapter = 0;
-  // gs_data.cx = 1920;  // Window width
-  // gs_data.cy = 1080;  // Window height
-  // gs_data.format = GS_BGRA;
-  // gs_data.zsformat = GS_ZS_NONE;
-  // gs_data.num_backbuffers = 1;
-  // gs_data.window.hwnd = hwnd;
-
-  // obs_display_t* display = nullptr;
-  // display = obs_display_create(&gs_data, 0x0);
-  // obs_display_add_draw_callback(display, draw_callback, NULL);
-  
-
-  // std::cout << "Start rec" << std::endl;
-  // bool started = obs_output_start(output);
-
-  // if (started) {
-  //   std::cout << "Recording started successfully!" << std::endl;
-  // } else {
-  //   std::cerr << "Failed to start recording!" << std::endl;
-  // }
-
-  // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
-
-  // std::cout << "calling save proc handler" << std::endl;
-  // calldata cd;
-  // calldata_init(&cd);
-  // calldata_set_int(&cd, "offset_seconds", 3);
-  // proc_handler_t *ph = obs_output_get_proc_handler(output);
-  // proc_handler_call(ph, "convert", &cd);
-  // calldata_free(&cd);
-  // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
-
-
-  // obs_output_stop(output);
-  // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
-
-  // // Leaves the last frame present on the screen
-  // // obs_display_remove_draw_callback(display, draw_callback, NULL);
-  // // obs_display_destroy(display);
-
-  // std::cout << "END FN" << std::endl;
-
-  // winThread.detach();  // or detach() if you don’t care about waiting
+  obs = new ObsInterface(callback);
   return info.Env().Undefined();
 }
 
@@ -114,7 +73,7 @@ Napi::Value ObsShutdown(const Napi::CallbackInfo& info) {
 
 Napi::Value ObsStartBuffer(const Napi::CallbackInfo& info) {
   blog(LOG_INFO, "ObsStartBuffer called");
-  
+
   if (!obs) 
     throw std::runtime_error("Obs not initialized");
 
