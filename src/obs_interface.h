@@ -9,7 +9,7 @@ class ObsInterface {
     void startRecording(int offset);
     void stopRecording();
 
-    void showPreview(HWND* hwnd);
+    void showPreview(HWND hwnd);
     void resizePreview(int width, int height);
     void hidePreview();
 
@@ -25,13 +25,13 @@ class ObsInterface {
     // Reconfigure video sources
   
   private:
-    obs_output_t *output;
-    obs_scene_t *scene;
-    obs_source_t *video_source;
-    obs_source_t *audio_source;
-    obs_encoder_t *video_encoder;
-    obs_encoder_t *audio_encoder;
-    obs_display_t *display;
+    obs_output_t *output = nullptr;
+    obs_scene_t *scene = nullptr;
+    obs_source_t *video_source = nullptr;
+    obs_source_t *audio_source = nullptr;
+    obs_encoder_t *video_encoder = nullptr;
+    obs_encoder_t *audio_encoder = nullptr;
+    obs_display_t *display = nullptr;
 
     void init_obs();
     void reset_video();

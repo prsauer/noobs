@@ -286,7 +286,7 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
     obs_render_main_texture();
 }
 
-void ObsInterface::showPreview(HWND* hwnd) {
+void ObsInterface::showPreview(HWND hwnd) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
   if (display) {

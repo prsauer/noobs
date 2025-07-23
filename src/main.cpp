@@ -172,7 +172,7 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   std::cout << "Received HWND: " << hwndUnion.hwnd << " (0x" << std::hex << buffer << std::dec << ")" << std::endl;
   std::cout << "Received HWND: " << hwndUnion.hwnd << " (0x" << std::hex << hwndUnion.value << std::dec << ")" << std::endl;
 
-  obs->showPreview(&hwndUnion.hwnd);
+  obs->showPreview(hwndUnion.hwnd);
   return info.Env().Undefined();
 }
 
