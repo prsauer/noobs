@@ -137,21 +137,42 @@ Napi::Value ObsStopRecording(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsShowPreview called");
+
   if (!obs) 
     throw std::runtime_error("Obs not initialized");
 
-  // if (info.Length() < 1 || !info[0].IsNumber()) {
-  //   Napi::TypeError::New(info.Env(), "Expected HWND as number").ThrowAsJavaScriptException();
-  //   return info.Env().Undefined();
-  // }
+  if (info.Length() < 1 || !info[0].IsBuffer()) {
+    Napi::TypeError::New(info.Env(), "Expected HWND as Buffer").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
 
   // Get HWND from JavaScript (passed as a number)
-  uint64_t hwndValue = info[0].As<Napi::Number>().Int64Value();
-  HWND hwnd = reinterpret_cast<HWND>(hwndValue);
 
-  std::cout << "Received HWND: " << hwnd << " (0x" << std::hex << hwndValue << std::dec << ")" << std::endl;
+  // Handle Buffer (from Electron's getNativeWindowHandle())
+  Napi::Buffer<uint8_t> buffer = info[0].As<Napi::Buffer<uint8_t>>();
 
-  obs->showPreview(&hwnd);
+  if (buffer.Length() < sizeof(HWND)) {
+    Napi::TypeError::New(info.Env(), "Buffer too small for HWND").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  } else {
+    blog(LOG_INFO, "ObsShowPreview buffer length: %zu", buffer.Length());
+    blog(LOG_INFO, "ObsShowPreview hwnd length: %zu", sizeof(HWND));
+  }
+
+  // Union to safely read the bytes
+  union {
+    uint8_t bytes[8];
+    uint64_t value;
+    HWND hwnd;
+  } hwndUnion;
+  
+  memcpy(hwndUnion.bytes, buffer.Data(), sizeof(hwndUnion.bytes));
+
+  std::cout << "Received HWND: " << hwndUnion.hwnd << " (0x" << std::hex << buffer << std::dec << ")" << std::endl;
+  std::cout << "Received HWND: " << hwndUnion.hwnd << " (0x" << std::hex << hwndUnion.value << std::dec << ")" << std::endl;
+
+  obs->showPreview(&hwndUnion.hwnd);
   return info.Env().Undefined();
 }
 
