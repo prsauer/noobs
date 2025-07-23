@@ -8,6 +8,10 @@
 #include <future>
 #include <chrono>
 
+#include "obs_interface.h"
+
+ObsInterface* obs = nullptr;
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_DESTROY) {
         PostQuitMessage(0);
@@ -43,385 +47,99 @@ void WindowThread(std::promise<HWND> hwndPromise) {
     }
 }
 
-void load_module(const char* module) {
-    obs_module_t *ptr = NULL;
-    int success = obs_open_module(&ptr, module, NULL);
-    std::cout << "Loading module: "  << module << std::endl;
-
-    if (success != MODULE_SUCCESS) {
-        std::cerr << "Failed to open module!" << std::endl;
-    } else {
-        std::cout << "Module opened successfully!" << std::endl;
-    }
-
-    bool initmod = obs_init_module(ptr);
-
-    if (!initmod) {
-        std::cerr << "Module initialization failed!" << std::endl;
-    } else {
-        std::cout << "Module initialized successfully!" << std::endl;
-    }
-}
-
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
     // Render the OBS preview scene here
     obs_render_main_texture();
 }
 
-void output_signal_handler(void *data, calldata_t *cd) {
-    std::cout << "\n=== OUTPUT SIGNAL ===" << std::endl;
-    
-    // Try to get common signal parameters
-    obs_output_t *output = (obs_output_t*)calldata_ptr(cd, "output");
-    long long code = calldata_int(cd, "code");
+Napi::Value ObsInit(const Napi::CallbackInfo& info) {
+  obs = new ObsInterface();
 
-    auto now = std::chrono::system_clock::now();
-    std::time_t time = std::chrono::system_clock::to_time_t(now);
-    
-    std::cout << "Signal: " << (const char *)data << std::endl;
-    std::cout << "Code: " << code << std::endl;
-    std::cout << "Time: " << std::ctime(&time) << std::endl;
-    
-    std::cout << "===================\n" << std::endl;
-}
+  // std::promise<HWND> hwndPromise;
+  // std::future<HWND> hwndFuture = hwndPromise.get_future();
 
-static void listEncoders()
-{
-	size_t idx = 0;
-	const char *encoder_type;
+  // std::thread winThread(WindowThread, std::move(hwndPromise));
+  // HWND hwnd = hwndFuture.get();  // blocks until hwnd is ready
 
-	while (obs_enum_encoder_types(idx++, &encoder_type)) {
-		// if (obs_get_encoder_caps(encoder_type) & hide_flags || obs_get_encoder_type(encoder_type) != type) {
-		// 	continue;
-		// }
+  // gs_init_data gs_data = {};
 
-		blog(LOG_INFO, "\t- %s (%s)", encoder_type, obs_encoder_get_display_name(encoder_type));
-	}
-};
+  // gs_data.adapter = 0;
+  // gs_data.cx = 1920;  // Window width
+  // gs_data.cy = 1080;  // Window height
+  // gs_data.format = GS_BGRA;
+  // gs_data.zsformat = GS_ZS_NONE;
+  // gs_data.num_backbuffers = 1;
+  // gs_data.window.hwnd = hwnd;
 
-static void listSourceTypes()
-{
-  size_t idx = 0;
-  const char *src = nullptr;
-
-  while (obs_enum_source_types(idx++, &src)) {
-      blog(LOG_INFO, "\t- %s", src);
-  }
-}
-
-static void listInputTypes()
-{
-  size_t idx = 0;
-  const char *src = nullptr;
-
-  while (obs_enum_input_types(idx++, &src)) {
-     blog(LOG_INFO, "\t- %s", src);
-  }
-}
-
-static void listOutputTypes()
-{
-  size_t idx = 0;
-  const char *src = nullptr;
-
-  while (obs_enum_output_types(idx++, &src)) {
-      blog(LOG_INFO, "\t- %s", src);
-  }
-}
-
-
-static void printCwd()
-{
-  // Print the current directory
-  char cwd[MAX_PATH];
-  if (GetCurrentDirectoryA(MAX_PATH, cwd)) {
-    std::cout << "Current directory: " << cwd << std::endl;
-  } else {
-    std::cerr << "Failed to get current directory!" << std::endl;
-  }
-}
-
-Napi::Value StartOBS(const Napi::CallbackInfo& info) {
-  wchar_t path_utf16[MAX_PATH];
-  GetModuleFileNameW(NULL, path_utf16, MAX_PATH);
-  std::wcout << L"Executable path: " << path_utf16 << std::endl;
-
-  printCwd();
-  std::cout << "Set CWD" << std::endl;
-
-  if (!SetCurrentDirectoryA("D:/checkouts/warcraft-recorder-obs-engine")) {
-      std::cerr << "Failed to set CWD. Error: " << GetLastError() << std::endl;
-  }
-
-  printCwd();
-
-  std::cout << "Starting..." << std::endl;
-  obs_startup("en-US", NULL, NULL);
-  std::cout << "OBS has started!" << std::endl;
-
-  obs_add_data_path("D:/checkouts/warcraft-recorder-obs-engine/effects/");
-  obs_add_data_path("D:/checkouts/warcraft-recorder-obs-engine/effects/libobs");
-
-  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/obs-x264.dll");
-
-  // todo - This loads AMF but needs obs-amf-test.exe to be next to the exe wihhc is probably node.exe and not in the place libobs expects
-  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/obs-ffmpeg.dll");
-  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/win-capture.dll");
-
-  // obs_add_module_path(
-  //   "D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/", 
-  //   "D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/%module%"
-  // );
-
-  // obs_load_all_modules();
-
-
-  // obs-ffmpeg-nvenc.c
-  // obs-qsv11
-  // AMD?
-
-  bool init = obs_initialized();
-
-    if (!init) {
-      std::cerr << "OBS initialization failed!" << std::endl;
-    } else {
-      std::cout << "OBS is initialized!" << std::endl;
-    }
-
-    const char* version = obs_get_version_string();
-    std::cout << "OBS version is: " << version <<  std::endl;
-
-    const char* n = "obs_x264";
-    const char * encoder = obs_get_encoder_codec(n);
-
-    if (encoder == nullptr) {
-      std::cerr << "Failed to get encoder codec!" << std::endl;
-    } else {
-      std::cout << "Codec is: " << encoder <<  std::endl;
-    }
-
-    
-    std::cout << "Setup video info" << std::endl;
-
-    obs_video_info ovi = {};
-
-    ovi.base_width = 1920;
-    ovi.base_height = 1080;
-    ovi.output_width = 1920;
-    ovi.output_height = 1080;
-    ovi.fps_num = 60;
-    ovi.fps_den = 1;
-
-    ovi.output_format = VIDEO_FORMAT_NV12;
-    ovi.colorspace = VIDEO_CS_DEFAULT;
-    ovi.range = VIDEO_RANGE_DEFAULT;
-    ovi.scale_type = OBS_SCALE_BILINEAR;
-    ovi.adapter = 0;
-    ovi.gpu_conversion = true;
-    ovi.graphics_module = "libobs-d3d11.dll"; 
-
-    int reset = obs_reset_video(&ovi);
-
-    if (reset != 0) {
-        std::cerr << "Failed to reset video!" << reset << std::endl;
-    } else {
-        std::cout << "Video reset successfully!" << std::endl;
-    }
-    struct obs_video_info *ovi2 = (struct obs_video_info *)malloc(sizeof(struct obs_video_info));
-    bool testvideosettings = obs_get_video_info(ovi2);
-
-    if (testvideosettings) {
-      std::cout << "Got video settings" << std::endl;
-    } else {
-      std::cerr << "Failed to get video settings!" << std::endl;
-    }
-
-    
-    struct obs_audio_info aoi = {0};
-    aoi.samples_per_sec = 48000;
-    aoi.speakers = SPEAKERS_STEREO;
-    reset = obs_reset_audio(&aoi);
-
-    if (!reset) {
-        std::cerr << "Failed to reset audio!" << std::endl;
-    } else {
-        std::cout << "Audio reset successfully!" << std::endl;
-    }
-
-    std::cout << "Create output" << std::endl;
-    obs_output_t *output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
-
-    if (!output) {
-        std::cerr << "Failed to create output!" << std::endl;
-
-    } else {
-      std::cout << "Created output" << std::endl;
-    }
-
-    std::cout << "Set output settings" << std::endl;
-    obs_data_t *settings = obs_data_create();
-    obs_data_set_int(settings, "max_time_sec", 30);
-    obs_data_set_int(settings, "max_size_mb", 512);
-    obs_data_set_string(settings, "directory", "D:/checkouts/warcraft-recorder-obs-engine"); // or wherever
-    obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
-    obs_data_set_string(settings, "extension", "mp4");
-    obs_output_update(output, settings);
-    obs_data_release(settings);
-    
-    // obs_data_t *settings = obs_data_create();
-    // obs_data_set_string(settings, "path", "D:/checkouts/warcraft-recorder-obs-engine/recording.mp4");  // Use "url" for ffmpeg_output not "path"
-
-    // obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
-    // obs_data_set_string(settings, "extension", "mp4");
-    // obs_data_set_string(settings, "format_name", "mp4");
-    // obs_data_set_bool(settings, "allow_spaces", false);
-		// obs_data_set_bool(settings, "allow_overwrite", true);
-
-    // obs_output_update(output, settings);
-    // obs_data_release(settings);
-
-    std::cout << "Create venc" << std::endl;
-    obs_encoder_t *venc = obs_video_encoder_create("h264_texture_amf", "simple_h264_stream", NULL, NULL);
-    std::cout << "Set video encoder settings" << std::endl;
-    obs_data_t* amf_settings = obs_data_create();
-    obs_data_set_string(amf_settings, "preset", "speed");  // Faster preset
-    //obs_data_set_int(amf_settings, "bitrate", 2500);
-    obs_data_set_string(amf_settings, "rate_control", "CQP");
-    obs_data_set_int(amf_settings, "cqp", 30);
-    obs_data_set_string(amf_settings, "profile", "main");
-    obs_data_set_int(amf_settings, "keyint_sec", 1); // Set keyframe interval to 1 second
-    obs_encoder_update(venc, amf_settings);
-    obs_data_release(amf_settings);
-
-    obs_output_set_video_encoder(output, venc);
-
-
-    std::cout << "Create aenc" << std::endl;
-    obs_encoder_t *aenc = obs_audio_encoder_create("ffmpeg_aac", "simple_aac", NULL, 0, NULL);
-    std::cout << "Set audio encoder settings" << std::endl;
-    obs_data_t *aenc_settings = obs_data_create();
-    obs_data_set_int(aenc_settings, "bitrate", 128);
-    obs_encoder_update(aenc, aenc_settings);
-    obs_data_release(aenc_settings);
-
-    obs_output_set_audio_encoder(output, aenc, 0);
-    
-    std::cout << "Create scene and src" << std::endl;
-    obs_scene_t *scene = obs_scene_create("Scene");
+  // obs_display_t* display = nullptr;
+  // display = obs_display_create(&gs_data, 0x0);
+  // obs_display_add_draw_callback(display, draw_callback, NULL);
   
-    std::cout << "Create display capture source" << std::endl;
-    // Create settings for monitor capture
-    obs_data_t *monitor_settings = obs_data_create();
-    obs_data_set_int(monitor_settings, "monitor", 0);  // Monitor 0
-    obs_data_set_bool(monitor_settings, "capture_cursor", true);
 
-    obs_source_t *source = obs_source_create("monitor_capture", "Monitor", monitor_settings, NULL);
-    obs_data_release(monitor_settings);
+  // std::cout << "Start rec" << std::endl;
+  // bool started = obs_output_start(output);
 
-    if (source) {
-      obs_scene_add(scene, source);
-      std::cout << "Added display capture to scene" << std::endl;
-    } else {
-        std::cerr << "Failed to create display capture source!" << std::endl;
-    }
+  // if (started) {
+  //   std::cout << "Recording started successfully!" << std::endl;
+  // } else {
+  //   std::cerr << "Failed to start recording!" << std::endl;
+  // }
 
-    obs_source_t *scene_source = obs_scene_get_source(scene);
-    obs_set_output_source(0, scene_source);  // 0 = video track
+  // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
 
-    std::cout << "Get video" << std::endl;
-    video_t *video = obs_get_video();
-    std::cout << "Got video" << std::endl;
-    obs_encoder_set_video(venc, obs_get_video());
-    obs_encoder_set_audio(aenc, obs_get_audio());
+  // std::cout << "calling save proc handler" << std::endl;
+  // calldata cd;
+  // calldata_init(&cd);
+  // calldata_set_int(&cd, "offset_seconds", 3);
+  // proc_handler_t *ph = obs_output_get_proc_handler(output);
+  // proc_handler_call(ph, "convert", &cd);
+  // calldata_free(&cd);
+  // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
 
 
+  // obs_output_stop(output);
+  // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
 
-    signal_handler_t *sh = obs_output_get_signal_handler(output);
-    
-    signal_handler_connect(sh, "starting", output_signal_handler,  (void *)"starting");
-    signal_handler_connect(sh, "start", output_signal_handler,  (void *)"start");
-    signal_handler_connect(sh, "stopping", output_signal_handler,  (void *)"stopping");
-    signal_handler_connect(sh, "stop", output_signal_handler,  (void *)"stop");
-    signal_handler_connect(sh, "saved", output_signal_handler,  (void *)"saved");
+  // // Leaves the last frame present on the screen
+  // // obs_display_remove_draw_callback(display, draw_callback, NULL);
+  // // obs_display_destroy(display);
 
-    std::cout << "List encoders" << std::endl;
-    listEncoders();
-    std::cout << "List  src types" << std::endl;
-    listSourceTypes();
-    std::cout << "List  input types" << std::endl;
-    listInputTypes();
-    std::cout << "List  output types" << std::endl;
-    listOutputTypes();
+  // std::cout << "END FN" << std::endl;
 
-    std::promise<HWND> hwndPromise;
-    std::future<HWND> hwndFuture = hwndPromise.get_future();
-
-    std::thread winThread(WindowThread, std::move(hwndPromise));
-    HWND hwnd = hwndFuture.get();  // blocks until hwnd is ready
-
-    gs_init_data gs_data = {};
-
-    gs_data.adapter = 0;
-    gs_data.cx = 1920;  // Window width
-    gs_data.cy = 1080;  // Window height
-    gs_data.format = GS_BGRA;
-    gs_data.zsformat = GS_ZS_NONE;
-    gs_data.num_backbuffers = 1;
-    gs_data.window.hwnd = hwnd;
-
-    obs_display_t* display = nullptr;
-    display = obs_display_create(&gs_data, 0x0);
-    obs_display_add_draw_callback(display, draw_callback, NULL);
-    
-
-    std::cout << "Start rec" << std::endl;
-    bool started = obs_output_start(output);
-
-    if (started) {
-        std::cout << "Recording started successfully!" << std::endl;
-    } else {
-        std::cerr << "Failed to start recording!" << std::endl;
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
-
-
-    std::cout << "calling save proc handler" << std::endl;
-    calldata cd;
-    calldata_init(&cd);
-    calldata_set_int(&cd, "offset_seconds", 3);
-    proc_handler_t *ph = obs_output_get_proc_handler(output);
-    proc_handler_call(ph, "convert", &cd);
-    calldata_free(&cd);
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
-
-
-    obs_output_stop(output);
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
-
-    // Leaves the last frame present on the screen
-    // obs_display_remove_draw_callback(display, draw_callback, NULL);
-    // obs_display_destroy(display);
-
-    std::cout << "END FN" << std::endl;
-
-    winThread.detach();  // or detach() if you don’t care about waiting
+  // winThread.detach();  // or detach() if you don’t care about waiting
   return info.Env().Undefined();
 }
 
 
+Napi::Value ObsShutdown(const Napi::CallbackInfo& info) {
+  delete obs;
+  obs = nullptr;
+  return info.Env().Undefined();
+}
 
+Napi::Value ObsStartBuffer(const Napi::CallbackInfo& info) {
+  if (!obs) 
+    throw std::runtime_error("Obs not initialized");
 
+  obs->startBuffering();
+  return info.Env().Undefined();
+}
 
+Napi::Value ObsStartRecording(const Napi::CallbackInfo& info) {
+  if (!obs) 
+    throw std::runtime_error("Obs not initialized");
 
+  obs->startRecording(2);
+  return info.Env().Undefined();
+}
 
+Napi::Value ObsStopRecording(const Napi::CallbackInfo& info) {
+  if (!obs) 
+    throw std::runtime_error("Obs not initialized");
 
-
-
-
-
-
-
+  obs->stopRecording();
+  return info.Env().Undefined();
+}
 
 
 Napi::Number GetUptime(const Napi::CallbackInfo& info) {
@@ -529,8 +247,13 @@ Napi::Value ListProcesses(const Napi::CallbackInfo& info) {
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  exports.Set("ObsInit", Napi::Function::New(env, ObsInit));
+  exports.Set("ObsShutdown", Napi::Function::New(env, ObsShutdown));
+  exports.Set("ObsStartBuffer", Napi::Function::New(env, ObsStartBuffer));
+  exports.Set("ObsStartRecording", Napi::Function::New(env, ObsStartRecording));
+  exports.Set("ObsStopRecording", Napi::Function::New(env, ObsStopRecording));
+
   exports.Set("getUptime", Napi::Function::New(env, GetUptime));
-  exports.Set("StartOBS", Napi::Function::New(env, StartOBS));
   exports.Set("listProcesses", Napi::Function::New(env, ListProcesses));
   return exports;
 }
