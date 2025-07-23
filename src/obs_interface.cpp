@@ -296,7 +296,7 @@ void ObsInterface::showPreview(HWND hwnd) {
   }
 
   // Create an embedded child window for OBS preview
-  HWND previewWindow = CreateWindowEx(
+  HWND previewWindow = CreateWindowExA(
     0,                    // No extended styles
     "STATIC",            // Simple static control class (ANSI string)
     "OBS Preview",       // Window name (ANSI string)
