@@ -113,6 +113,8 @@ Napi::Value ObsShutdown(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value ObsStartBuffer(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsStartBuffer called");
+  
   if (!obs) 
     throw std::runtime_error("Obs not initialized");
 

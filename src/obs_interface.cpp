@@ -462,6 +462,8 @@ ObsInterface::~ObsInterface() {
 }
 
 void ObsInterface::startBuffering() {
+  blog(LOG_INFO, "ObsInterface::startBuffering called");
+
   if (!output)
     throw std::runtime_error("Output is not initialized!");
 
@@ -481,7 +483,8 @@ void ObsInterface::startRecording(int offset) {
   bool is_active = obs_output_active(output);
 
   if (!is_active)
-    throw std::runtime_error("Output is not active");
+    blog(LOG_ERROR, "Buffer is not active");
+    throw std::runtime_error("Buffer is not active");
 
   std::cout << "calling save proc handler" << std::endl;
   calldata cd;
