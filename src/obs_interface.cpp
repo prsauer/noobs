@@ -5,6 +5,7 @@
 #include <chrono>
 #include "obs_interface.h"
 #include <vector>
+#include <thread>
 
 std::vector<std::string> ObsInterface::get_available_video_encoders()
 {
@@ -316,12 +317,30 @@ void ObsInterface::resizePreview(int width, int height) {
 }
 
 void ObsInterface::hidePreview() {
-  if (!display)
+  if (!display) {
+    blog(LOG_INFO, "No display to hide");
     return;
+  }
 
-  obs_display_remove_draw_callback(display, draw_callback, NULL);
-  obs_display_destroy(display);
-  display = nullptr;
+ // Remove the draw callback first
+    obs_display_remove_draw_callback(display, draw_callback, NULL);
+    
+    // Add a temporary callback that clears the screen
+    auto clear_callback = [](void* data, uint32_t cx, uint32_t cy) {
+        gs_clear(GS_CLEAR_COLOR, nullptr, 0.0f, 0);
+    };
+    
+    obs_display_add_draw_callback(display, clear_callback, NULL);
+    
+    // Give it one frame to render the clear
+    std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~1 frame at 60fps
+    
+    // Remove the clear callback and destroy
+    obs_display_remove_draw_callback(display, clear_callback, NULL);
+    obs_display_destroy(display);
+    display = nullptr;
+    
+    blog(LOG_INFO, "Display hidden and destroyed");
 }
 
 ObsInterface::ObsInterface() {
