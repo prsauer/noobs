@@ -7,10 +7,7 @@
 #include <vector>
 #include <thread>
 
-struct SignalData {
-  long long code;
-  std::string signal;
-};
+
 
 std::vector<std::string> ObsInterface::get_available_video_encoders()
 {
@@ -256,8 +253,8 @@ obs_source_t* ObsInterface::create_video_source() {
 
 void call_jscb(Napi::Env env, Napi::Function cb, SignalData* sd) {
   Napi::Object obj = Napi::Object::New(env);
+  obj.Set("id", Napi::String::New(env, sd->id));
   obj.Set("code", Napi::Number::New(env, sd->code));
-  obj.Set("signal", Napi::String::New(env, sd->signal));
   cb.Call({ obj });
   delete sd;
 }
@@ -265,35 +262,35 @@ void call_jscb(Napi::Env env, Napi::Function cb, SignalData* sd) {
 void ObsInterface::output_signal_handler_starting(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ code, "starting" };
+  SignalData* sd = new SignalData{ "starting", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::output_signal_handler_start(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ code, "start" };
+  SignalData* sd = new SignalData{ "start", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::output_signal_handler_stop(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ code, "stop" };
+  SignalData* sd = new SignalData{ "stop", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::output_signal_handler_stopping(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ code, "stopping" };
+  SignalData* sd = new SignalData{ "stopping", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::output_signal_handler_saved(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ code, "saved" };
+  SignalData* sd = new SignalData{ "saved", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 

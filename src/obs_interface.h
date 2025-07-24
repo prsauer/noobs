@@ -2,6 +2,11 @@
 
 #include <napi.h>
 
+struct SignalData {
+  std::string id;
+  long long code;
+};
+
 class ObsInterface {
   public:
     ObsInterface(Napi::ThreadSafeFunction callback);

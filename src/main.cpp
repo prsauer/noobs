@@ -300,7 +300,6 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("ObsStartRecording", Napi::Function::New(env, ObsStartRecording));
   exports.Set("ObsStopRecording", Napi::Function::New(env, ObsStopRecording));
 
-  // Add preview functions
   exports.Set("ObsShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("ObsHidePreview", Napi::Function::New(env, ObsHidePreview));
   exports.Set("ObsResizePreview", Napi::Function::New(env, ObsResizePreview));

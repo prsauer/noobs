@@ -5,11 +5,16 @@ interface ProcessInfo {
   threads: number;
 }
 
+type Signal = {
+  id: string;
+  code: number;
+}
+
 interface WCREngine {
   getUptime(): number;
   listProcesses(): Promise<ProcessInfo[]>;
 
-  ObsInit(cb: () => void): void;
+  ObsInit(cb: (signal: Signal) => void): void;
   ObsShutdown(): void;
   ObsStartBuffer(): void;
   ObsStartRecording(offset: number): void;
