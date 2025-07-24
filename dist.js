@@ -16,6 +16,6 @@ const dlls = fs.readdirSync(binDir).filter(file => file.endsWith('.dll'));
 
 dlls.forEach((file) => {
   const srcPath = path.join(binDir, file);
-  const destPath = path.join(dist, file);
+  const destPath = path.join(dist, 'bin', '64bit', file);
   fs.copyFileSync(srcPath, destPath);
 });
