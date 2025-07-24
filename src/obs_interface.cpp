@@ -561,8 +561,17 @@ std::string ObsInterface::getLastRecording() {
   calldata_init(&cd);
   proc_handler_t *ph = obs_output_get_proc_handler(output);
   bool success = proc_handler_call(ph, "get_last_replay", &cd);
-  std::string path = calldata_string(&cd, "path");
+
+  if (!success) {
+    std::cerr << "Failed to call get_last_replay procedure handler" << std::endl;
+    calldata_free(&cd);
+    return "";
+  }
+
+  const char* p = calldata_string(&cd, "path");
+  std::string path = p ? p : "" ;
   calldata_free(&cd);
+  
   std::cout << "return path: " << path << std::endl;
   return path;
 }
