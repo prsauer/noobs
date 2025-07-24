@@ -8,7 +8,7 @@ fs.mkdirSync(distBin, { recursive: true });
 
 // Copy the compiled .node file.
 const addonSrc = path.resolve(__dirname, 'build', 'Release', 'warcraft-recorder-obs-engine.node');
-const addonDest = path.join(dist, 'warcraft-recorder-obs-engine.node');
+const addonDest = path.join(distRoot, 'warcraft-recorder-obs-engine.node');
 fs.copyFileSync(addonSrc, addonDest);
 
 // Now copy the .dll files we need.
