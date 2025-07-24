@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-// Make the dist directory.
 const distRoot = path.resolve(__dirname, 'dist');
 const distBin = path.join(distRoot, 'bin', '64bit');
+
+// Remake the dist directory.
+fs.rmdirSync(distRoot);
 fs.mkdirSync(distBin, { recursive: true });
 
 // Copy the compiled .node file.
