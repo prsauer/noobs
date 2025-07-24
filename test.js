@@ -36,6 +36,8 @@ async function test() {
 
     const last = wcre.ObsGetLastRecording();
     console.log("Last recording:", last);
+
+    await new Promise(resolve => setTimeout(resolve, 30000));
   }
 
   console.log("Stopping obs...");
