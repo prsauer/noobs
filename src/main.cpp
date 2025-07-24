@@ -190,10 +190,6 @@ Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
 }
 
 
-
-
-
-
 Napi::Number GetUptime(const Napi::CallbackInfo& info) {
   DWORD ticks = GetTickCount();
   return Napi::Number::New(info.Env(), static_cast<double>(ticks));

@@ -28,7 +28,7 @@ async function test() {
     wcre.ObsStartBuffer();
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    wcre.ObsStartRecording(3);
+    wcre.ObsStartRecording(1);
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     wcre.ObsStopRecording();

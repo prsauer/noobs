@@ -5,7 +5,7 @@ interface ProcessInfo {
   threads: number;
 }
 
-type Signal = {
+type Signal = { // TODO export type? 
   id: string;
   code: number;
 }
