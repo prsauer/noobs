@@ -8,16 +8,14 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "build": "node-gyp rebuild"
+    "build": "node-gyp rebuild && node dist.js"
   },
   "files": [
     "index.js",
     "index.d.ts",
-    "build/Release/warcraft-recorder-obs-engine.node",
+    "dist/**/*",
     "binding.gyp",
     "src/**/*",
-    "bin/**/*",
-    "obs-plugins/**/*",
     "include/**/*"
   ],
   "author": "Warcraft Recorder LTD",
