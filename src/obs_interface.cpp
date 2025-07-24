@@ -131,7 +131,6 @@ void ObsInterface::reset_audio() {
 }
 
 void ObsInterface::init_obs() {
-  set_cwd("D:/checkouts/warcraft-recorder-obs-engine");
   print_cwd();
   print_exe_path();
 

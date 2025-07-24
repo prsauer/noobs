@@ -1,6 +1,6 @@
 {
   "name": "warcraft-recorder-obs-engine",
-  "version": "0.0.42",
+  "version": "0.0.41",
   "description": "A native Node.js addon with libobs bindings for Warcraft Recorder.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -14,10 +14,10 @@
     "index.js",
     "index.d.ts",
     "binding.gyp",
+    "bin/64bit/obs.lib",
     "src/**/*",
     "include/**/*",
-    "dist/**/*",
-    "bin/64bit/obs.lib"
+    "dist/**/*"
   ],
   "author": "Warcraft Recorder LTD",
   "license": "ISC",
