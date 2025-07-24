@@ -150,9 +150,6 @@ void ObsInterface::init_obs() {
   load_module("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/plugins/obs-ffmpeg.dll");
   load_module("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/plugins/win-capture.dll");
 
-  const char* version = obs_get_version_string();
-  blog(LOG_INFO, "OBS version is: %s", version);
-
   list_encoders();
   list_source_types();
   list_input_types();
