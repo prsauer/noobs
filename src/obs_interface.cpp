@@ -144,12 +144,11 @@ void ObsInterface::init_obs() {
   if (!obs_initialized())
     throw std::runtime_error("OBS initialization failed");
 
-  obs_add_data_path("D:/checkouts/warcraft-recorder-obs-engine/effects/");
-  obs_add_data_path("D:/checkouts/warcraft-recorder-obs-engine/effects/libobs");
+  obs_add_data_path("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/effects/");
 
-  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/obs-x264.dll");
-  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/obs-ffmpeg.dll");
-  load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/win-capture.dll");
+  load_module("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/plugins/obs-x264.dll");
+  load_module("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/plugins/obs-ffmpeg.dll");
+  load_module("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/plugins/win-capture.dll");
 
   const char* version = obs_get_version_string();
   blog(LOG_INFO, "OBS version is: %s", version);
@@ -436,11 +435,11 @@ void ObsInterface::hidePreview() {
 
 ObsInterface::ObsInterface(Napi::ThreadSafeFunction cb) {
   // Setup logs first so we have logs for the initialization.
-  base_set_log_handler(log_handler, NULL);
+  base_set_log_handler(log_handler, NULL); // TODO pass log directory?
   blog(LOG_DEBUG, "Creating ObsInterface");
 
   // Initialize OBS and load required modules.
-  init_obs();
+  init_obs(); // TODO pass plugin directory? 
 
   // Create the resources we rely on.
   output = create_output();
