@@ -15,6 +15,7 @@ class ObsInterface {
     void startBuffering();
     void startRecording(int offset);
     void stopRecording();
+    std::string getLastRecording();
 
     void showPreview(HWND hwnd);
     void hidePreview();

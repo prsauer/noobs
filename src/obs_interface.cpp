@@ -175,7 +175,7 @@ obs_output_t* ObsInterface::create_output() {
   obs_data_t *settings = obs_data_create();
   obs_data_set_int(settings, "max_time_sec", 30);
   obs_data_set_int(settings, "max_size_mb", 512);
-  obs_data_set_string(settings, "directory", "D:/checkouts/warcraft-recorder-obs-engine"); // or wherever
+  obs_data_set_string(settings, "directory", "D:/checkouts/warcraft-recorder-obs-engine/recordings"); // or wherever
   obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
   obs_data_set_string(settings, "extension", "mp4");
   obs_output_update(output, settings);
@@ -553,4 +553,15 @@ void ObsInterface::stopRecording() {
 
   obs_output_stop(output);
   blog(LOG_INFO, "ObsInterface::stopRecording exited");
+}
+
+std::string ObsInterface::getLastRecording() {
+  std::cout << "calling get last replay proc handler" << std::endl;
+  calldata cd;
+  calldata_init(&cd);
+  proc_handler_t *ph = obs_output_get_proc_handler(output);
+  bool success = proc_handler_call(ph, "get_last_replay", &cd);
+  std::string path = calldata_string(&cd, "path");
+  calldata_free(&cd);
+  return path;
 }

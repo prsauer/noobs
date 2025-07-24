@@ -19,6 +19,7 @@ interface WCREngine {
   ObsStartBuffer(): void;
   ObsStartRecording(offset: number): void;
   ObsStopRecording(): void;
+  ObsGetLastRecording(): string;
 
   ObsShowPreview(hwnd: Buffer): void;
   ObsHidePreview(): void;

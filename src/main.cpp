@@ -104,6 +104,14 @@ Napi::Value ObsStopRecording(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsGetLastRecording(const Napi::CallbackInfo& info) {
+  if (!obs)
+    throw std::runtime_error("Obs not initialized");
+
+  std::string lastRecording = obs->getLastRecording();
+  return Napi::String::New(info.Env(), lastRecording);
+}
+
 Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   blog(LOG_INFO, "ObsShowPreview called");
 
@@ -115,9 +123,6 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
     return info.Env().Undefined();
   }
 
-  // Get HWND from JavaScript (passed as a number)
-
-  // Handle Buffer (from Electron's getNativeWindowHandle())
   Napi::Buffer<uint8_t> buffer = info[0].As<Napi::Buffer<uint8_t>>();
 
   if (buffer.Length() < sizeof(HWND)) {
@@ -299,6 +304,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("ObsStartBuffer", Napi::Function::New(env, ObsStartBuffer));
   exports.Set("ObsStartRecording", Napi::Function::New(env, ObsStartRecording));
   exports.Set("ObsStopRecording", Napi::Function::New(env, ObsStopRecording));
+  exports.Set("ObsGetLastRecording", Napi::Function::New(env, ObsGetLastRecording));
 
   exports.Set("ObsShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("ObsHidePreview", Napi::Function::New(env, ObsHidePreview));
