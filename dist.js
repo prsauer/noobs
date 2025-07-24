@@ -6,7 +6,7 @@ const distBin = path.join(distRoot, 'bin', '64bit');
 
 // Clean the dist directory if it exists.
 if (fs.existsSync(distRoot)) {
-  fs.rmdirSync(distRoot, { recursive: true, force: true });
+  fs.rmSync(distRoot, { recursive: true, force: true });
 }
 
 // Remake the dist directory structure.
