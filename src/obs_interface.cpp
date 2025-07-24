@@ -27,7 +27,9 @@ std::vector<std::string> ObsInterface::get_available_video_encoders()
 
 void ObsInterface::list_encoders(obs_encoder_type type)
 {
-  std::cout << "List encoders" << std::endl;
+  blog(LOG_INFO, "List encoders");
+  blog(LOG_INFO, "List encoders of type: %d", type);
+  
   size_t idx = 0;
   const char *encoder_type;
 
@@ -46,7 +48,7 @@ void ObsInterface::list_encoders(obs_encoder_type type)
 
 void ObsInterface::list_source_types()
 {
-  std::cout << "List  src types" << std::endl;
+  blog(LOG_INFO, "List  src types");
   size_t idx = 0;
   const char *src = nullptr;
 
@@ -57,7 +59,7 @@ void ObsInterface::list_source_types()
 
 void ObsInterface::list_input_types()
 {
-  std::cout << "List  input types" << std::endl;
+  blog(LOG_INFO, "List  input types");
   size_t idx = 0;
   const char *src = nullptr;
 
@@ -68,7 +70,7 @@ void ObsInterface::list_input_types()
 
 void ObsInterface::list_output_types()
 {
-  std::cout << "List  output types" << std::endl;
+  blog(LOG_INFO, "List  output types");
   size_t idx = 0;
   const char *src = nullptr;
 
@@ -78,7 +80,7 @@ void ObsInterface::list_output_types()
 }
 
 void ObsInterface::load_module(const char* module) {
-  std::cout << "Loading module: "  << module << std::endl;
+  blog(LOG_INFO, "Loading module: %s", module);
 
   obs_module_t *ptr = NULL;
   int success = obs_open_module(&ptr, module, NULL);
@@ -93,7 +95,7 @@ void ObsInterface::load_module(const char* module) {
 }
 
 void ObsInterface::reset_video() {
-  std::cout << "Setup video info" << std::endl;
+  blog(LOG_INFO, "Setup video info");
 
   obs_video_info ovi = {};
 
@@ -133,9 +135,9 @@ void ObsInterface::init_obs() {
   print_cwd();
   print_exe_path();
 
-  std::cout << "Starting..." << std::endl;
+  blog(LOG_INFO, "Starting...");
   auto success = obs_startup("en-US", NULL, NULL);
-  std::cout << "OBS has started!" << std::endl;
+  blog(LOG_INFO, "OBS has started!");
 
   if (!success)
     throw std::runtime_error("OBS startup failed");
@@ -151,7 +153,7 @@ void ObsInterface::init_obs() {
   load_module("D:/checkouts/warcraft-recorder-obs-engine/obs-plugins/64bit/win-capture.dll");
 
   const char* version = obs_get_version_string();
-  std::cout << "OBS version is: " << version <<  std::endl;
+  blog(LOG_INFO, "OBS version is: %s", version);
 
   list_encoders();
   list_source_types();
@@ -160,18 +162,17 @@ void ObsInterface::init_obs() {
   reset_video();
   reset_audio();
 
-  // TODO setup logs?
-  std::cout << "Done initializing" << std::endl;
+  blog(LOG_INFO, "Done initializing");
 }
 
 obs_output_t* ObsInterface::create_output() {
-  std::cout << "Create output" << std::endl;
+  blog(LOG_INFO, "Create output");
   obs_output_t *output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
 
   if (!output)
     throw std::runtime_error("Failed to create output!");
 
-  std::cout << "Set output settings" << std::endl;
+  blog(LOG_INFO, "Set output settings");
   obs_data_t *settings = obs_data_create();
   obs_data_set_int(settings, "max_time_sec", 30);
   obs_data_set_int(settings, "max_size_mb", 512);
@@ -181,13 +182,13 @@ obs_output_t* ObsInterface::create_output() {
   obs_output_update(output, settings);
   obs_data_release(settings);
 
-  std::cout << "Create venc" << std::endl;
+  blog(LOG_INFO, "Create venc");
   video_encoder = obs_video_encoder_create("h264_texture_amf", "simple_h264_stream", NULL, NULL);
 
   if (!video_encoder)
     throw std::runtime_error("Failed to create video encoder!");
 
-  std::cout << "Set video encoder settings" << std::endl;
+  blog(LOG_INFO, "Set video encoder settings");
   obs_data_t* amf_settings = obs_data_create();
   obs_data_set_string(amf_settings, "preset", "speed");  // Faster preset
   //obs_data_set_int(amf_settings, "bitrate", 2500);
@@ -198,13 +199,13 @@ obs_output_t* ObsInterface::create_output() {
   obs_encoder_update(video_encoder, amf_settings);
   obs_data_release(amf_settings);
 
-  std::cout << "Create aenc" << std::endl;
+  blog(LOG_INFO, "Create aenc");
   audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "simple_aac", NULL, 0, NULL);
 
   if (!audio_encoder)
     throw std::runtime_error("Failed to create audio encoder!");
 
-  std::cout << "Set audio encoder settings" << std::endl;
+  blog(LOG_INFO, "Set audio encoder settings");
   obs_data_t *aenc_settings = obs_data_create();
   obs_data_set_int(aenc_settings, "bitrate", 128);
   obs_encoder_update(audio_encoder, aenc_settings);
@@ -220,7 +221,7 @@ obs_output_t* ObsInterface::create_output() {
 }
 
 obs_scene_t* ObsInterface::create_scene() {
-  std::cout << "Create scene and src" << std::endl;
+  blog(LOG_INFO, "Create scene and src");
   obs_scene_t *scene = obs_scene_create("WCR Scene");
 
   if (!scene)
@@ -236,7 +237,7 @@ obs_scene_t* ObsInterface::create_scene() {
 }
 
 obs_source_t* ObsInterface::create_video_source() {
-  std::cout << "Create display capture source" << std::endl;
+  blog(LOG_INFO, "Create display capture source");
   // Create settings for monitor capture
   obs_data_t *monitor_settings = obs_data_create();
   obs_data_set_int(monitor_settings, "monitor", 0);  // Monitor 0
@@ -301,13 +302,6 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
   signal_handler_connect(sh, "stopping", output_signal_handler_stopping,  this);
   signal_handler_connect(sh, "stop", output_signal_handler_stop,  this);
   signal_handler_connect(sh, "saved", output_signal_handler_saved,  this);
-}
-
-void ObsInterface::obs_log_handler(int lvl, const char *msg, va_list args, void *p) {
-  char buffer[4096]; // surely should malloc here
-  vsnprintf(buffer, sizeof(buffer), msg, args);
-  std::cout << buffer << std::endl;
-  std::cout.flush();
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
@@ -442,56 +436,63 @@ void ObsInterface::hidePreview() {
 }
 
 ObsInterface::ObsInterface(Napi::ThreadSafeFunction cb) {
-  blog(LOG_INFO, "OBS constructor called");
+  // Setup logs first so we have logs for the initialization.
+  base_set_log_handler(log_handler, NULL);
+  blog(LOG_DEBUG, "Creating ObsInterface");
+
+  // Initialize OBS and load required modules.
   init_obs();
+
+  // Create the resources we rely on.
   output = create_output();
   scene = create_scene();
   video_source = create_video_source();
   obs_scene_add(scene, video_source);
+
+  // Add the signal handler callback.
   jscb = cb;
   create_signal_handlers(output);
-  base_set_log_handler(obs_log_handler, NULL);
 }
 
 ObsInterface::~ObsInterface() {
-  blog(LOG_INFO, "OBS destructor called");
+  blog(LOG_DEBUG, "Destroying ObsInterface");
 
   if (jscb) {
-    blog(LOG_INFO, "Releasing JavaScript callback");
+    blog(LOG_DEBUG, "Releasing JavaScript callback");
     jscb.Release();
   }
 
   if (video_source) {
-    blog(LOG_INFO, "Releasing video source");
+    blog(LOG_DEBUG, "Releasing video source");
     obs_source_release(video_source);
   }
 
   if (scene) {
-    blog(LOG_INFO, "Releasing scene");
+    blog(LOG_DEBUG, "Releasing scene");
     obs_scene_release(scene);
   }
 
   if (output) {
     if (obs_output_active(output)) {
-      blog(LOG_INFO, "Force stopping output");
+      blog(LOG_DEBUG, "Force stopping output");
       obs_output_force_stop(output);
     }
       
-    blog(LOG_INFO, "Releasing output");
+    blog(LOG_DEBUG, "Releasing output");
     obs_output_release(output);
   }
 
   if (video_encoder) {
-    blog(LOG_INFO, "Releasing video encoder");
+    blog(LOG_DEBUG, "Releasing video encoder");
     obs_encoder_release(video_encoder);
   }
 
   if (audio_encoder) {
-    blog(LOG_INFO, "Releasing audio encoder");
+    blog(LOG_DEBUG, "Releasing audio encoder");
     obs_encoder_release(audio_encoder);
   }
 
-  blog(LOG_INFO, "Shutting down OBS");
+  blog(LOG_DEBUG, "Now shutting down OBS");
   obs_shutdown();
 }
 
@@ -527,7 +528,7 @@ void ObsInterface::startRecording(int offset) {
     throw std::runtime_error("Buffer is not active");
   }
 
-  std::cout << "calling save proc handler" << std::endl;
+  blog(LOG_INFO, "calling save proc handler");
   calldata cd;
   calldata_init(&cd);
   calldata_set_int(&cd, "offset_seconds", offset);
@@ -556,14 +557,14 @@ void ObsInterface::stopRecording() {
 }
 
 std::string ObsInterface::getLastRecording() {
-  std::cout << "calling get last replay proc handler" << std::endl;
+  blog(LOG_INFO, "calling get last replay proc handler");
   calldata cd;
   calldata_init(&cd);
   proc_handler_t *ph = obs_output_get_proc_handler(output);
   bool success = proc_handler_call(ph, "get_last_replay", &cd);
 
   if (!success) {
-    std::cerr << "Failed to call get_last_replay procedure handler" << std::endl;
+    blog(LOG_ERROR, "Failed to call get_last_replay procedure handler");
     calldata_free(&cd);
     return "";
   }
@@ -572,6 +573,6 @@ std::string ObsInterface::getLastRecording() {
   std::string path = p ? p : "" ;
   calldata_free(&cd);
   
-  std::cout << "return path: " << path << std::endl;
+  blog(LOG_INFO, "return path: %s", path.c_str());
   return path;
 }

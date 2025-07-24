@@ -49,7 +49,6 @@ class ObsInterface {
     void reset_audio();
     void load_module(const char* module);
     void create_signal_handlers(obs_output_t *output);
-    static void obs_log_handler(int lvl, const char *msg, va_list args, void *p);
 
     static void output_signal_handler_starting(void *data, calldata_t *cd);
     static void output_signal_handler_start(void *data, calldata_t *cd);
