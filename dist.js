@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Make the dist directory.
-const dist = path.resolve(__dirname, 'dist');
+const dist = path.resolve(__dirname, 'dist', 'bin', '64bit');
 fs.mkdirSync(dist, { recursive: true });
 
 // Copy the compiled .node file.
