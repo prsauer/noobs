@@ -563,5 +563,6 @@ std::string ObsInterface::getLastRecording() {
   bool success = proc_handler_call(ph, "get_last_replay", &cd);
   std::string path = calldata_string(&cd, "path");
   calldata_free(&cd);
+  std::cout << "return path: " << path << std::endl;
   return path;
 }
