@@ -13,10 +13,11 @@
   "files": [
     "index.js",
     "index.d.ts",
-    "dist/**/*",
     "binding.gyp",
     "src/**/*",
-    "include/**/*"
+    "include/**/*",
+    "dist/**/*",
+    "bin/64bit/obs.lib"
   ],
   "author": "Warcraft Recorder LTD",
   "license": "ISC",
