@@ -454,10 +454,14 @@ void ObsInterface::hidePreview() {
   std::this_thread::sleep_for(std::chrono::seconds(10));
 
   // Destroy the child window to fully clean up the preview
+  // if (previewHwnd) {
+  //   DestroyWindow(previewHwnd);
+  //   previewHwnd = nullptr;
+  //   blog(LOG_INFO, "Preview child window destroyed");
+  // }
   if (previewHwnd) {
-    DestroyWindow(previewHwnd);
-    previewHwnd = nullptr;
-    blog(LOG_INFO, "Preview child window destroyed");
+    ShowWindow(previewHwnd, SW_HIDE);
+    blog(LOG_INFO, "Preview child window hidden");
   }
 }
 
