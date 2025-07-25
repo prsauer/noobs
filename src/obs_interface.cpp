@@ -331,52 +331,51 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
 void ObsInterface::showPreview(HWND hwnd) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
-  if (display) {
-    blog(LOG_INFO, "Display already exists, returning early");
-    return;  // Return early if display already exists
+  if (!previewHwnd) {
+    blog(LOG_INFO, "Creating OBS preview child window");
+
+    previewHwnd = CreateWindowExA(
+      0,                    // No extended styles
+      "STATIC",            // Simple static control class (ANSI string)
+      "OBS Preview",       // Window name (ANSI string)
+      WS_CHILD | WS_VISIBLE | WS_BORDER,  // Child + visible + border
+      20, 20,              // Position within parent (x, y)
+      1920, 1080,           // Size (width, height)
+      hwnd,                // Parent window (your Electron app)
+      NULL,                // No menu
+      GetModuleHandle(NULL), 
+      NULL
+    );
+
+    if (!previewHwnd) {
+      blog(LOG_ERROR, "Failed to create OBS display");
+      return;
+    }
   }
 
-  // Create an embedded child window for OBS preview
-  HWND previewWindow = CreateWindowExA(
-    0,                    // No extended styles
-    "STATIC",            // Simple static control class (ANSI string)
-    "OBS Preview",       // Window name (ANSI string)
-    WS_CHILD | WS_VISIBLE | WS_BORDER,  // Child + visible + border
-    20, 20,              // Position within parent (x, y)
-    1920, 1080,           // Size (width, height)
-    hwnd,                // Parent window (your Electron app)
-    NULL,                // No menu
-    GetModuleHandle(NULL), 
-    NULL
-  );
+  if (!display) {
+    blog(LOG_INFO, "Create OBS display in child window");
 
-  if (!previewWindow) {
-    blog(LOG_ERROR, "Failed to create preview child window");
-    return;
-  }
+    gs_init_data gs_data = {};
+    gs_data.adapter = 0;
+    gs_data.cx = 1920; 
+    gs_data.cy = 1080;              
+    gs_data.format = GS_BGRA;
+    gs_data.zsformat = GS_ZS_NONE;
+    gs_data.num_backbuffers = 1;
+    gs_data.window.hwnd = previewHwnd;
 
-  // Store for cleanup
-  previewHwnd = previewWindow;
+    display = obs_display_create(&gs_data, 0x0);
 
-  blog(LOG_INFO, "Create OBS display in child window");
-  gs_init_data gs_data = {};
-  gs_data.adapter = 0;
-  gs_data.cx = 1920;              // Match child window size
-  gs_data.cy = 1080;              
-  gs_data.format = GS_BGRA;
-  gs_data.zsformat = GS_ZS_NONE;
-  gs_data.num_backbuffers = 1;
-  gs_data.window.hwnd = previewWindow;  // Use child window, not parent
+    if (!display) {
+      blog(LOG_ERROR, "Failed to create OBS display");
+      return;
+    }
 
-  display = obs_display_create(&gs_data, 0x0);
-  if (display) {
     obs_display_add_draw_callback(display, draw_callback, NULL);
-    blog(LOG_INFO, "OBS preview embedded successfully");
-  } else {
-    blog(LOG_ERROR, "Failed to create OBS display");
-    DestroyWindow(previewWindow);
-    previewHwnd = nullptr;
   }
+
+  obs_display_set_enabled(display, true);
 }
 
 void ObsInterface::resizePreview(int width, int height) {
