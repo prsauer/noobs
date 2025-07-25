@@ -50,3 +50,13 @@ fs.readdirSync(effectsDir).forEach((file) => {
   const destPath = path.join(distEffects, file);
   fs.copyFileSync(srcPath, destPath);
 });
+
+// Copy executable files required on the PATH.
+const exeFiles = ['obs-amf-test.exe'];
+
+exeFiles.forEach((file) => {
+  const srcPath = path.join(binDir, file);
+  const destPath = path.join(distBin, file);
+  fs.copyFileSync(srcPath, destPath);
+});
+
