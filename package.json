@@ -20,7 +20,7 @@
     "dist/**/*"
   ],
   "author": "Warcraft Recorder LTD",
-  "license": "ISC",
+  "license": "LGPL-2.0",
   "devDependencies": {
     "@types/node": "^24.1.0",
     "node-gyp": "^11.2.0"

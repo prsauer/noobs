@@ -1,8 +1,15 @@
 # No(de)obs
+> Previously named "warcraft-recorder-obs-engine"
 
-Node bindings to libobs, built for Warcraft Recorder. An alternative but less mature `obs-studio-node` with a focus on recording gameplay from a replay buffer.
+This library is still very young, you probably don't want to use it.
 
-Uses a [custom](https://github.com/aza547/warcraft-recorder-obs-studio) fork of libobs to enable "replay_buffer to recording" as well as some less interesting improvements to allow libobs to be easier used as a library and not through OBS studio itself.
+Native node bindings to libobs, built for Warcraft Recorder. 
+
+An alternative but less mature `obs-studio-node` with a focus on recording gameplay from a replay buffer.
+
+Uses a [custom](https://github.com/aza547/warcraft-recorder-obs-studio) fork of libobs to:
+- Enable "replay_buffer to recording".
+- Allow libobs to be used as a library easier.
 
 ## Installation
 
@@ -37,8 +44,12 @@ TODO
 ## Building from Source
 
 ```bash
-npm install
-npm run build
+npm install       # install deps
+npm run build     # compile it
+
+npm version patch # version bump
+npm pack          # build tgz locally
+npm publish       # publish to npm
 ```
 
 ## License
