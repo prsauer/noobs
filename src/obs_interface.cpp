@@ -130,22 +130,28 @@ void ObsInterface::reset_audio() {
     throw std::runtime_error("Failed to reset audio!");
 }
 
-void ObsInterface::init_obs(const std::string& pluginPath) {
-  print_cwd();
-  print_exe_path();
-
-  blog(LOG_INFO, "Starting...");
+void ObsInterface::init_obs(const std::string& pluginPath, const std::string& dataPath) {
+  blog(LOG_INFO, "Enter init_obs");
   auto success = obs_startup("en-US", NULL, NULL);
-  blog(LOG_INFO, "OBS has started!");
 
-  if (!success)
+  if (!success) {
+    blog(LOG_ERROR, "Failed to start OBS!");
     throw std::runtime_error("OBS startup failed");
+  }
 
-  if (!obs_initialized())
+  if (!obs_initialized()) {
+    blog(LOG_ERROR, "OBS not initialized!");
     throw std::runtime_error("OBS initialization failed");
+  }
+  
+  std::string dp = dataPath;
 
-  obs_add_data_path("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/effects/");
+  if (dp.back() != '/' && dp.back() != '\\') {
+    // Add a trailing slash if not present, else libobs gets upset.
+    dp += '/';
+  }
 
+  obs_add_data_path(dp.c_str());  // This is deprecated in libobs but it works for now.
   std::vector<std::string> modules = { "obs-x264.dll", "obs-ffmpeg.dll", "win-capture.dll" };
 
   for (const auto& module : modules) {
@@ -159,10 +165,11 @@ void ObsInterface::init_obs(const std::string& pluginPath) {
   list_source_types();
   list_input_types();
   list_output_types();
+
   reset_video();
   reset_audio();
 
-  blog(LOG_INFO, "Done initializing");
+  blog(LOG_INFO, "Exit init_obs");
 }
 
 obs_output_t* ObsInterface::create_output() {
@@ -435,13 +442,18 @@ void ObsInterface::hidePreview() {
   }
 }
 
-ObsInterface::ObsInterface(const std::string& pluginPath, const std::string& logPath, Napi::ThreadSafeFunction cb) {
+ObsInterface::ObsInterface(
+  const std::string& pluginPath, 
+  const std::string& logPath, 
+  const std::string& dataPath,  
+  Napi::ThreadSafeFunction cb
+) {
   // Setup logs first so we have logs for the initialization.
   base_set_log_handler(log_handler, (void*)logPath.c_str());
   blog(LOG_DEBUG, "Creating ObsInterface");
 
   // Initialize OBS and load required modules.
-  init_obs(pluginPath);
+  init_obs(pluginPath, dataPath);
 
   // Create the resources we rely on.
   output = create_output();

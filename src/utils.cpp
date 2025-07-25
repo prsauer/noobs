@@ -1,29 +1,9 @@
-#include <windows.h>
 #include <iostream>
 #include <obs.h>
 #include <fstream>
 #include <chrono>
 #include <iomanip>
 #include <sstream>
-
-void print_cwd() {
-  char cwd[MAX_PATH];
-  GetCurrentDirectoryA(MAX_PATH, cwd);
-  blog(LOG_INFO, "Current directory: %s", cwd);
-}
-
-void set_cwd(const char* path) {
-  auto success = SetCurrentDirectoryA(path);
-  
-  if (!success) 
-    throw "Failed to set CWD";
-}
-
-void print_exe_path() {
-  wchar_t path_utf16[MAX_PATH];
-  GetModuleFileNameW(NULL, path_utf16, MAX_PATH);
-  std::wcout << L"Executable path: " << path_utf16 << std::endl;
-}
 
 void log_handler(int lvl, const char *msg, va_list args, void *p) {
   // Use the passed log path parameter
@@ -39,7 +19,7 @@ void log_handler(int lvl, const char *msg, va_list args, void *p) {
     
     // Use the provided directory path and append the filename
     std::string log_dir = static_cast<const char*>(p);
-    
+
     // Ensure the directory path ends with a separator
     if (!log_dir.empty() && log_dir.back() != '\\' && log_dir.back() != '/') {
       log_dir += "\\";

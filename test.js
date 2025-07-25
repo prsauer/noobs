@@ -23,10 +23,13 @@ async function test() {
 
   const pluginPath = path.resolve(__dirname, 'dist', 'plugins');
   const logPath = path.resolve(__dirname, 'logs');
+  const dataPath = path.resolve(__dirname, 'dist', 'effects');
+  
   console.log("Plugin path:", pluginPath);
   console.log("Log path:", logPath);
+  console.log("Data path:", dataPath);
 
-  wcre.ObsInit(pluginPath, logPath, cb);
+  wcre.ObsInit(pluginPath, logPath, dataPath, cb);
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   for (let i = 0; i < 2; i++) {

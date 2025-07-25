@@ -9,7 +9,13 @@ struct SignalData {
 
 class ObsInterface {
   public:
-    ObsInterface(const std::string& pluginPath, const std::string& logPath, Napi::ThreadSafeFunction cb);
+    ObsInterface(
+      const std::string& pluginPath, //where to look for plugins
+      const std::string& logPath,    // where to write logs to
+      const std::string& dataPath,   // where to look for effects
+      Napi::ThreadSafeFunction cb    // JavaScript callback
+    );
+
     ~ObsInterface();
 
     void startBuffering();
@@ -44,7 +50,7 @@ class ObsInterface {
     HWND previewHwnd = nullptr; // window handle for scene preview
     Napi::ThreadSafeFunction jscb; // javascript callback
 
-    void init_obs(const std::string& pluginPath);
+    void init_obs(const std::string& pluginPath, const std::string& dataPath);
     void reset_video();
     void reset_audio();
     void load_module(const char* module);
