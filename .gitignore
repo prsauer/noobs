@@ -2,7 +2,7 @@ build/
 node_modules/
 obs-plugins/
 data/
-effects/
 recordings/
 dist/
 logs/
+noobs-*.tgz
