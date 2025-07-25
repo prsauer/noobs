@@ -324,51 +324,30 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
-  // Render the OBS preview scene here
-  // gs_resize(cx, cy);  // Resize graphics context
-
-  // obs_display_resize(display, cx, cy);
   obs_render_main_texture();
 }
 
-void ObsInterface::showPreview(HWND hwnd, int x, int y, int width, int height) {
+void ObsInterface::initPreview(HWND parent) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
-  // TODO initialize this all in the constructor to save on a small noticable
-  // delay on the first time call to this function.
-  if (!previewHwnd) {
-    // First time we've called this so create the child window.
+  if (!preview_hwnd) {
     blog(LOG_INFO, "Creating preview child window");
 
-    previewHwnd = CreateWindowExA(
-      0,                   // No extended styles
-      "STATIC",            // Simple static control class (ANSI string)
-      "OBS Preview",       // Window name (ANSI string)
-      WS_CHILD | WS_VISIBLE | WS_BORDER,  // Child + visible + border
-      x, y,
-      width, height,
-      hwnd,                // Parent window (your Electron app)
-      NULL,                // No menu
-      GetModuleHandle(NULL), 
+    preview_hwnd = CreateWindowExA(
+      0,                      // No extended styles
+      "STATIC",               // Simple static control class (ANSI string)
+      "OBS Preview",          // Window name (ANSI string)
+      WS_CHILD | WS_BORDER,   // Child + border, NOT visible initially
+      0, 0,                   // Initial position (x, y)
+      0, 0,                   // Initial size (width, height)
+      parent,                 // Parent window (your Electron app)
+      NULL,                   // No menu
+      GetModuleHandle(NULL),
       NULL
     );
 
-    if (!previewHwnd) {
+    if (!preview_hwnd) {
       blog(LOG_ERROR, "Failed to create preview child window");
-      return;
-    }
-  } else {
-    // Resize and move the existing child window.
-    bool success = SetWindowPos(
-      previewHwnd,           // Handle to the child window
-      NULL,                  // No Z-order change
-      x, y,                  // New position (x, y)
-      width, height,         // New size (width, height)
-      SWP_NOZORDER | SWP_NOACTIVATE  // Don't change position, Z-order, or activation
-    );
-
-    if (!success) {
-      blog(LOG_ERROR, "Failed to resize preview window to (%d x %d)", width, height);
       return;
     }
   }
@@ -383,7 +362,7 @@ void ObsInterface::showPreview(HWND hwnd, int x, int y, int width, int height) {
     gs_data.format = GS_BGRA;
     gs_data.zsformat = GS_ZS_NONE;
     gs_data.num_backbuffers = 1;
-    gs_data.window.hwnd = previewHwnd;
+    gs_data.window.hwnd = preview_hwnd;
 
     display = obs_display_create(&gs_data, 0x0);
 
@@ -395,15 +374,40 @@ void ObsInterface::showPreview(HWND hwnd, int x, int y, int width, int height) {
     obs_display_add_draw_callback(display, draw_callback, NULL);
   }
 
-  ShowWindow(previewHwnd, SW_SHOW);
+  obs_display_set_enabled(display, false);
+}
+
+void ObsInterface::showPreview(int x, int y, int width, int height) {
+  blog(LOG_INFO, "ObsInterface::showPreview");
+
+  if (!preview_hwnd || !display) {
+    blog(LOG_ERROR, "Preview window not initialized");
+    return;
+  }
+
+  // Resize and move the existing child window.
+  bool success = SetWindowPos(
+    preview_hwnd,                  // Handle to the child window
+    NULL,                          // No Z-order change
+    x, y,                          // New position (x, y)
+    width, height,                 // New size (width, height)
+    SWP_NOZORDER | SWP_NOACTIVATE  // Don't change position, Z-order, or activation
+  );
+
+  if (!success) {
+    blog(LOG_ERROR, "Failed to resize preview window to (%d x %d)", width, height);
+    return;
+  }
+
+  ShowWindow(preview_hwnd, SW_SHOW);
   obs_display_set_enabled(display, true);
 }
 
 void ObsInterface::hidePreview() {
   blog(LOG_INFO, "ObsInterface::hidePreview");
 
-  if (previewHwnd) {
-    ShowWindow(previewHwnd, SW_HIDE);
+  if (preview_hwnd) {
+    ShowWindow(preview_hwnd, SW_HIDE);
     blog(LOG_INFO, "Preview child window hidden");
   }
 

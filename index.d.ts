@@ -1,19 +1,9 @@
-interface ProcessInfo {
-  name: string;
-  pid: number;
-  parentPid: number;
-  threads: number;
-}
-
 type Signal = { // TODO export type? 
   id: string;
   code: number;
 }
 
 interface Noobs {
-  getUptime(): number;
-  listProcesses(): Promise<ProcessInfo[]>;
-
   ObsInit(
     pluginPath: string, 
     logPath: string, 

@@ -12,41 +12,6 @@
 
 ObsInterface* obs = nullptr;
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    if (uMsg == WM_DESTROY) {
-        PostQuitMessage(0);
-        return 0;
-    }
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
-
-
-void WindowThread(std::promise<HWND> hwndPromise) {
-    const wchar_t CLASS_NAME[] = L"MyWindowClass";
-    HINSTANCE hInstance = GetModuleHandle(nullptr);
-
-    WNDCLASSW wc = {};
-    wc.lpfnWndProc = WindowProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = CLASS_NAME;
-    RegisterClassW(&wc);
-
-    HWND hwnd = CreateWindowExW(
-        0, CLASS_NAME, L"My Window",
-        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
-        nullptr, nullptr, hInstance, nullptr
-    );
-
-    hwndPromise.set_value(hwnd);  // Send hwnd back to main thread
-    ShowWindow(hwnd, SW_SHOW);
-
-    MSG msg = {};
-    while (GetMessage(&msg, nullptr, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
   bool valid = info.Length() == 5 &&
    info[0].IsString() && // Plugin path
@@ -73,7 +38,6 @@ Napi::Value ObsInit(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-
 Napi::Value ObsShutdown(const Napi::CallbackInfo& info) {
   delete obs;
   obs = nullptr;
@@ -83,8 +47,10 @@ Napi::Value ObsShutdown(const Napi::CallbackInfo& info) {
 Napi::Value ObsStartBuffer(const Napi::CallbackInfo& info) {
   blog(LOG_INFO, "ObsStartBuffer called");
 
-  if (!obs) 
+  if (!obs) {
+    blog(LOG_ERROR, "ObsStartBuffer called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
+  }
 
   obs->startBuffering();
   return info.Env().Undefined();
@@ -92,6 +58,7 @@ Napi::Value ObsStartBuffer(const Napi::CallbackInfo& info) {
 
 Napi::Value ObsStartRecording(const Napi::CallbackInfo& info) {
   if (!obs) {
+    blog(LOG_ERROR, "ObsStartRecording called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
   }
 
@@ -106,19 +73,50 @@ Napi::Value ObsStartRecording(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value ObsStopRecording(const Napi::CallbackInfo& info) {
-  if (!obs) 
+  if (!obs) {
+    blog(LOG_ERROR, "ObsStopRecording called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
+  }
 
   obs->stopRecording();
   return info.Env().Undefined();
 }
 
 Napi::Value ObsGetLastRecording(const Napi::CallbackInfo& info) {
-  if (!obs)
+  if (!obs) {
+    blog(LOG_ERROR, "ObsGetLastRecording called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
+  }
 
   std::string lastRecording = obs->getLastRecording();
   return Napi::String::New(info.Env(), lastRecording);
+}
+
+Napi::Value ObsInitPreview(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsInitPreview called");
+
+  if (!obs) {
+    blog(LOG_ERROR, "ObsInitPreview called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBuffer();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsInitPreview").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  Napi::Buffer<uint8_t> buffer = info[0].As<Napi::Buffer<uint8_t>>();
+
+  if (buffer.Length() < sizeof(HWND)) {
+    Napi::TypeError::New(info.Env(), "Buffer too small for HWND").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  HWND hwnd = *reinterpret_cast<HWND*>(buffer.Data());
+  obs->initPreview(hwnd);
+  return info.Env().Undefined();
 }
 
 Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
@@ -129,8 +127,7 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
     throw std::runtime_error("Obs not initialized");
   }
 
-  bool valid = info.Length() == 5 &&
-    info[0].IsBuffer() && // HWND
+  bool valid = info.Length() == 4 &&
     info[1].IsNumber() && // X
     info[2].IsNumber() && // Y
     info[3].IsNumber() && // Width
@@ -141,159 +138,37 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
     return info.Env().Undefined();
   }
 
-  Napi::Buffer<uint8_t> buffer = info[0].As<Napi::Buffer<uint8_t>>();
-  int x = info[1].As<Napi::Number>().Int32Value();
-  int y = info[2].As<Napi::Number>().Int32Value();
-  int width = info[3].As<Napi::Number>().Int32Value();
-  int height = info[4].As<Napi::Number>().Int32Value();
+  int x = info[0].As<Napi::Number>().Int32Value();
+  int y = info[1].As<Napi::Number>().Int32Value();
+  int width = info[2].As<Napi::Number>().Int32Value();
+  int height = info[3].As<Napi::Number>().Int32Value();
 
-  if (buffer.Length() < sizeof(HWND)) {
-    Napi::TypeError::New(info.Env(), "Buffer too small for HWND").ThrowAsJavaScriptException();
-    return info.Env().Undefined();
-  } else {
-    blog(LOG_INFO, "ObsShowPreview buffer length: %zu", buffer.Length());
-    blog(LOG_INFO, "ObsShowPreview hwnd length: %zu", sizeof(HWND));
-  }
-
-  // Union to safely read the bytes
-  union {
-    uint8_t bytes[8];
-    uint64_t value;
-    HWND hwnd;
-  } hwndUnion;
-  
-  memcpy(hwndUnion.bytes, buffer.Data(), sizeof(hwndUnion.bytes));
-
-  obs->showPreview(hwndUnion.hwnd, x, y, width, height);
+  obs->showPreview(x, y, width, height);
   return info.Env().Undefined();
 }
 
 Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
-  if (!obs) 
+  if (!obs) {
+    blog(LOG_ERROR, "ObsHidePreview called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
+  }
 
   obs->hidePreview();
   return info.Env().Undefined();
 }
 
-
-Napi::Number GetUptime(const Napi::CallbackInfo& info) {
-  DWORD ticks = GetTickCount();
-  return Napi::Number::New(info.Env(), static_cast<double>(ticks));
-}
-
-class ProcessListWorker : public Napi::AsyncWorker {
-public:
-    ProcessListWorker(Napi::Function& callback) 
-        : Napi::AsyncWorker(callback) {}
-
-    ~ProcessListWorker() {}
-
-    // This runs on a background thread - won't block JS
-    void Execute() override {
-        HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        if (snapshot == INVALID_HANDLE_VALUE) {
-            SetError("Failed to create process snapshot");
-            return;
-        }
-        
-        PROCESSENTRY32W pe32;
-        pe32.dwSize = sizeof(PROCESSENTRY32W);
-        
-        if (!Process32FirstW(snapshot, &pe32)) {
-            CloseHandle(snapshot);
-            SetError("Failed to get first process");
-            return;
-        }
-        
-        do {
-            ProcessInfo info;
-            
-            // Convert wide string to UTF-8
-            int utf8Length = WideCharToMultiByte(CP_UTF8, 0, pe32.szExeFile, -1, nullptr, 0, nullptr, nullptr);
-            if (utf8Length > 0) {
-                std::vector<char> utf8Buffer(utf8Length);
-                WideCharToMultiByte(CP_UTF8, 0, pe32.szExeFile, -1, utf8Buffer.data(), utf8Length, nullptr, nullptr);
-                
-                info.name = std::string(utf8Buffer.data());
-                info.pid = pe32.th32ProcessID;
-                info.parentPid = pe32.th32ParentProcessID;
-                info.threads = pe32.cntThreads;
-                
-                processes.push_back(info);
-            }
-        } while (Process32NextW(snapshot, &pe32));
-        
-        CloseHandle(snapshot);
-    }
-
-    // This runs back on the main thread
-    void OnOK() override {
-        Napi::HandleScope scope(Env());
-        Napi::Array result = Napi::Array::New(Env());
-        
-        for (size_t i = 0; i < processes.size(); i++) {
-            Napi::Object process = Napi::Object::New(Env());
-            process.Set("name", Napi::String::New(Env(), processes[i].name));
-            process.Set("pid", Napi::Number::New(Env(), processes[i].pid));
-            process.Set("parentPid", Napi::Number::New(Env(), processes[i].parentPid));
-            process.Set("threads", Napi::Number::New(Env(), processes[i].threads));
-            result.Set(i, process);
-        }
-        
-        Callback().Call({Env().Null(), result});
-    }
-
-    void OnError(const Napi::Error& e) override {
-        Napi::HandleScope scope(Env());
-        Callback().Call({e.Value(), Env().Undefined()});
-    }
-
-private:
-    struct ProcessInfo {
-        std::string name;
-        DWORD pid;
-        DWORD parentPid;
-        DWORD threads;
-    };
-    
-    std::vector<ProcessInfo> processes;
-};
-
-Napi::Value ListProcesses(const Napi::CallbackInfo& info) {
-    Napi::Env env = info.Env();
-    auto deferred = Napi::Promise::Deferred::New(env);
-    
-    auto callback = Napi::Function::New(env, [deferred](const Napi::CallbackInfo& info) {
-        if (!info[0].IsNull()) {
-            // Error case
-            deferred.Reject(info[0]);
-        } else {
-            // Success case
-            deferred.Resolve(info[1]);
-        }
-        return info.Env().Undefined();
-    });
-    
-    ProcessListWorker* worker = new ProcessListWorker(callback);
-    worker->Queue();
-    
-    return deferred.Promise();
-}
-
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("ObsInit", Napi::Function::New(env, ObsInit));
   exports.Set("ObsShutdown", Napi::Function::New(env, ObsShutdown));
+
   exports.Set("ObsStartBuffer", Napi::Function::New(env, ObsStartBuffer));
   exports.Set("ObsStartRecording", Napi::Function::New(env, ObsStartRecording));
   exports.Set("ObsStopRecording", Napi::Function::New(env, ObsStopRecording));
   exports.Set("ObsGetLastRecording", Napi::Function::New(env, ObsGetLastRecording));
 
+  exports.Set("ObsInitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ObsShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("ObsHidePreview", Napi::Function::New(env, ObsHidePreview));
-  
-  exports.Set("getUptime", Napi::Function::New(env, GetUptime));
-  exports.Set("listProcesses", Napi::Function::New(env, ListProcesses));
   return exports;
 }
 

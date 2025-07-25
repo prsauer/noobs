@@ -24,14 +24,13 @@ class ObsInterface {
     void stopRecording();
     std::string getLastRecording();
 
-    void showPreview(HWND hwnd, int x, int y, int width, int height); // Also used for moving and resizing.
+    void initPreview(HWND parent); // Must call this before showPreview to setup resources.
+    void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.
     void hidePreview();
 
     std::vector<std::string> get_available_video_encoders();
 
     // TODO
-    // Show preview
-    // Hide preview
     // Configure video 
     // Configure audio
     // List audio source
@@ -46,7 +45,7 @@ class ObsInterface {
     obs_encoder_t *video_encoder = nullptr;
     obs_encoder_t *audio_encoder = nullptr;
     obs_display_t *display = nullptr;
-    HWND previewHwnd = nullptr; // window handle for scene preview
+    HWND preview_hwnd = nullptr; // window handle for scene preview
     Napi::ThreadSafeFunction jscb; // javascript callback
 
     void init_obs(const std::string& pluginPath, const std::string& dataPath);
