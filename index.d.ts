@@ -28,7 +28,7 @@ interface Noobs {
   ObsStopRecording(): void;
   ObsGetLastRecording(): string;
 
-  ObsShowPreview(hwnd: Buffer): void;
+  ObsShowPreview(hwnd: Buffer, x: number, y: number, width: number, height: number): void;
   ObsHidePreview(): void;
   ObsResizePreview(width: number, height: number): void;
   ObsMovePreview(x: number, y: number): void;
