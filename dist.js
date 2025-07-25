@@ -52,7 +52,7 @@ fs.readdirSync(effectsDir).forEach((file) => {
 });
 
 // Copy executable files required on the PATH.
-const exeFiles = ['obs-amf-test.exe'];
+const exeFiles = ['obs-amf-test.exe', "obs-ffmpeg-mux.exe"];
 
 exeFiles.forEach((file) => {
   const srcPath = path.join(binDir, file);
