@@ -332,10 +332,10 @@ void ObsInterface::showPreview(HWND hwnd) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
   if (!previewHwnd) {
-    blog(LOG_INFO, "Creating OBS preview child window");
+    blog(LOG_INFO, "Creating preview child window");
 
     previewHwnd = CreateWindowExA(
-      0,                    // No extended styles
+      0,                   // No extended styles
       "STATIC",            // Simple static control class (ANSI string)
       "OBS Preview",       // Window name (ANSI string)
       WS_CHILD | WS_VISIBLE | WS_BORDER,  // Child + visible + border
@@ -348,7 +348,7 @@ void ObsInterface::showPreview(HWND hwnd) {
     );
 
     if (!previewHwnd) {
-      blog(LOG_ERROR, "Failed to create OBS display");
+      blog(LOG_ERROR, "Failed to create preview child window");
       return;
     }
   }
@@ -375,6 +375,7 @@ void ObsInterface::showPreview(HWND hwnd) {
     obs_display_add_draw_callback(display, draw_callback, NULL);
   }
 
+  ShowWindow(previewHwnd, SW_SHOW);
   obs_display_set_enabled(display, true);
 }
 
@@ -387,7 +388,7 @@ void ObsInterface::resizePreview(int width, int height) {
   }
 
   // Resize the child window
-  BOOL windowSuccess = SetWindowPos(
+  bool success = SetWindowPos(
     previewHwnd,           // Handle to the child window
     NULL,                  // No Z-order change
     0, 0,                  // Keep current position (ignored due to SWP_NOMOVE)
@@ -395,7 +396,7 @@ void ObsInterface::resizePreview(int width, int height) {
     SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE  // Don't change position, Z-order, or activation
   );
 
-  if (!windowSuccess) {
+  if (!success) {
     blog(LOG_ERROR, "Failed to resize preview window to (%d x %d)", width, height);
     return;
   }
