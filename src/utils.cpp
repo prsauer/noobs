@@ -15,7 +15,7 @@ void log_handler(int lvl, const char *msg, va_list args, void *p) {
     auto time_t = std::chrono::system_clock::to_time_t(now);
     
     std::stringstream filename_stream;
-    filename_stream << "ObsEngine-" << std::put_time(std::localtime(&time_t), "%Y-%m-%d") << ".log";
+    filename_stream << "OBS-" << std::put_time(std::localtime(&time_t), "%Y-%m-%d") << ".log";
     
     // Use the provided directory path and append the filename
     std::string log_dir = static_cast<const char*>(p);
