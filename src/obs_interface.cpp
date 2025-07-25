@@ -439,30 +439,12 @@ void ObsInterface::movePreview(int x, int y) {
 void ObsInterface::hidePreview() {
   blog(LOG_INFO, "ObsInterface::hidePreview");
 
-  // blog(LOG_INFO, "Waiting for 10 seconds before destroying preview");
-  // std::this_thread::sleep_for(std::chrono::seconds(10));
-
-  // if (display) {
-  //   obs_display_remove_draw_callback(display, draw_callback, NULL);
-  //   obs_display_destroy(display);
-  //   display = nullptr;
-  //   blog(LOG_INFO, "OBS display destroyed");
-  // }
-
-  
-  blog(LOG_INFO, "Waiting for 10 seconds before hiding preview");
-  std::this_thread::sleep_for(std::chrono::seconds(10));
-
-  // Destroy the child window to fully clean up the preview
-  // if (previewHwnd) {
-  //   DestroyWindow(previewHwnd);
-  //   previewHwnd = nullptr;
-  //   blog(LOG_INFO, "Preview child window destroyed");
-  // }
   if (previewHwnd) {
     ShowWindow(previewHwnd, SW_HIDE);
     blog(LOG_INFO, "Preview child window hidden");
   }
+
+  obs_display_set_enabled(display, false);
 }
 
 ObsInterface::ObsInterface(
