@@ -325,12 +325,15 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   // Render the OBS preview scene here
+  gs_resize(cx, cy);  // Resize graphics context
   obs_render_main_texture();
 }
 
 void ObsInterface::showPreview(HWND hwnd) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
+  // TODO initialize this all in the constructor to save on a small noticable
+  // delay on the first time call to this function.
   if (!previewHwnd) {
     blog(LOG_INFO, "Creating preview child window");
 
