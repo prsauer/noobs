@@ -337,6 +337,7 @@ void ObsInterface::showPreview(HWND hwnd, int x, int y, int width, int height) {
   // TODO initialize this all in the constructor to save on a small noticable
   // delay on the first time call to this function.
   if (!previewHwnd) {
+    // First time we've called this so create the child window.
     blog(LOG_INFO, "Creating preview child window");
 
     previewHwnd = CreateWindowExA(
@@ -356,6 +357,20 @@ void ObsInterface::showPreview(HWND hwnd, int x, int y, int width, int height) {
       blog(LOG_ERROR, "Failed to create preview child window");
       return;
     }
+  } else {
+    // Resize and move the existing child window.
+    bool success = SetWindowPos(
+      previewHwnd,           // Handle to the child window
+      NULL,                  // No Z-order change
+      x, y,                  // New position (x, y)
+      width, height,         // New size (width, height)
+      SWP_NOZORDER | SWP_NOACTIVATE  // Don't change position, Z-order, or activation
+    );
+
+    if (!success) {
+      blog(LOG_ERROR, "Failed to resize preview window to (%d x %d)", width, height);
+      return;
+    }
   }
 
   if (!display) {
@@ -363,8 +378,8 @@ void ObsInterface::showPreview(HWND hwnd, int x, int y, int width, int height) {
 
     gs_init_data gs_data = {};
     gs_data.adapter = 0;
-    gs_data.cx = 1920; 
-    gs_data.cy = 1080;              
+    gs_data.cx = 1920; // TODO get from video context?
+    gs_data.cy = 1080; // TODO get from video context?
     gs_data.format = GS_BGRA;
     gs_data.zsformat = GS_ZS_NONE;
     gs_data.num_backbuffers = 1;
@@ -382,63 +397,6 @@ void ObsInterface::showPreview(HWND hwnd, int x, int y, int width, int height) {
 
   ShowWindow(previewHwnd, SW_SHOW);
   obs_display_set_enabled(display, true);
-}
-
-void ObsInterface::resizePreview(int width, int height) {
-  blog(LOG_INFO, "ObsInterface::resizePreview to size (%d x %d)", width, height);
-
-  if (!previewHwnd) {
-    blog(LOG_WARNING, "No preview window to resize");
-    return;
-  }
-
-  // Resize the child window
-  bool success = SetWindowPos(
-    previewHwnd,           // Handle to the child window
-    NULL,                  // No Z-order change
-    0, 0,                  // Keep current position (ignored due to SWP_NOMOVE)
-    width, height,         // New size (width, height)
-    SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE  // Don't change position, Z-order, or activation
-  );
-
-  if (!success) {
-    blog(LOG_ERROR, "Failed to resize preview window to (%d x %d)", width, height);
-    return;
-  }
-
-  blog(LOG_INFO, "Preview window resized successfully to (%d x %d)", width, height);
-
-  // Resize the OBS display to match the new window size
-  if (display) {
-    // obs_display_resize(display, width, height);
-    blog(LOG_INFO, "OBS display resized to (%d x %d)", width, height);
-  } else {
-    blog(LOG_WARNING, "No OBS display to resize");
-  }
-}
-
-void ObsInterface::movePreview(int x, int y) {
-  blog(LOG_INFO, "ObsInterface::movePreview to position (%d, %d)", x, y);
-
-  if (!previewHwnd) {
-    blog(LOG_WARNING, "No preview window to move");
-    return;
-  }
-
-  // Move the child window to the new position within the parent
-  BOOL success = SetWindowPos(
-    previewHwnd,           // Handle to the child window
-    NULL,                  // No Z-order change
-    x, y,                  // New position (x, y)
-    0, 0,                  // Keep current size (ignored due to SWP_NOSIZE)
-    SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE  // Don't change size, Z-order, or activation
-  );
-
-  if (success) {
-    blog(LOG_INFO, "Preview window moved successfully to (%d, %d)", x, y);
-  } else {
-    blog(LOG_ERROR, "Failed to move preview window to (%d, %d)", x, y);
-  }
 }
 
 void ObsInterface::hidePreview() {

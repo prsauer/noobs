@@ -24,10 +24,8 @@ class ObsInterface {
     void stopRecording();
     std::string getLastRecording();
 
-    void showPreview(HWND hwnd, int x, int y, int width, int height);
+    void showPreview(HWND hwnd, int x, int y, int width, int height); // Also used for moving and resizing.
     void hidePreview();
-    void resizePreview(int width, int height);
-    void movePreview(int x, int y);
 
     std::vector<std::string> get_available_video_encoders();
 

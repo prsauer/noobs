@@ -124,8 +124,10 @@ Napi::Value ObsGetLastRecording(const Napi::CallbackInfo& info) {
 Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   blog(LOG_INFO, "ObsShowPreview called");
 
-  if (!obs) 
+  if (!obs) {
+    blog(LOG_ERROR, "ObsShowPreview called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
+  }
 
   bool valid = info.Length() == 5 &&
     info[0].IsBuffer() && // HWND
@@ -163,38 +165,6 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   memcpy(hwndUnion.bytes, buffer.Data(), sizeof(hwndUnion.bytes));
 
   obs->showPreview(hwndUnion.hwnd, x, y, width, height);
-  return info.Env().Undefined();
-}
-
-Napi::Value ObsResizePreview(const Napi::CallbackInfo& info) {
-  if (!obs) 
-    throw std::runtime_error("Obs not initialized");
-
-  if (info.Length() < 2) {
-    Napi::TypeError::New(info.Env(), "Expected width and height").ThrowAsJavaScriptException();
-    return info.Env().Undefined();
-  }
-
-  int width = info[0].As<Napi::Number>().Int32Value();
-  int height = info[1].As<Napi::Number>().Int32Value();
-
-  obs->resizePreview(width, height);
-  return info.Env().Undefined();
-}
-
-Napi::Value ObsMovePreview(const Napi::CallbackInfo& info) {
-  if (!obs) 
-    throw std::runtime_error("Obs not initialized");
-
-  if (info.Length() < 2) {
-    Napi::TypeError::New(info.Env(), "Expected x and y").ThrowAsJavaScriptException();
-    return info.Env().Undefined();
-  }
-
-  int x = info[0].As<Napi::Number>().Int32Value();
-  int y = info[1].As<Napi::Number>().Int32Value();
-
-  obs->movePreview(x, y);
   return info.Env().Undefined();
 }
 
@@ -321,8 +291,6 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
   exports.Set("ObsShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("ObsHidePreview", Napi::Function::New(env, ObsHidePreview));
-  exports.Set("ObsResizePreview", Napi::Function::New(env, ObsResizePreview));
-  exports.Set("ObsMovePreview", Napi::Function::New(env, ObsMovePreview));
   
   exports.Set("getUptime", Napi::Function::New(env, GetUptime));
   exports.Set("listProcesses", Napi::Function::New(env, ListProcesses));
