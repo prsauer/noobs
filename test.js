@@ -1,13 +1,13 @@
-const wcre = require('./index.js');
+const noobs = require('./index.js');
 const path = require('path');
 
 async function test() {
-  console.log('Uptime:', wcre.getUptime());
+  console.log('Uptime:', noobs.getUptime());
 
   console.log("Listing processes...");
   
   try {
-    const processes = await wcre.listProcesses();
+    const processes = await noobs.listProcesses();
     console.log(`Found ${processes.length} processes`);
     console.log('First few processes:', processes.slice(0, 5));
   } catch (error) {
@@ -24,33 +24,35 @@ async function test() {
   const pluginPath = path.resolve(__dirname, 'dist', 'plugins');
   const logPath = path.resolve(__dirname, 'logs');
   const dataPath = path.resolve(__dirname, 'dist', 'effects');
+  const recordingPath = path.resolve(__dirname, 'recordings');
   
   console.log("Plugin path:", pluginPath);
   console.log("Log path:", logPath);
   console.log("Data path:", dataPath);
+  console.log("Recording path:", recordingPath);
 
-  wcre.ObsInit(pluginPath, logPath, dataPath, cb);
+  noobs.ObsInit(pluginPath, logPath, dataPath, recordingPath, cb);
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   for (let i = 0; i < 2; i++) {
     console.log("Test Recording Loop:", i + 1);
-    wcre.ObsStartBuffer();
+    noobs.ObsStartBuffer();
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    wcre.ObsStartRecording(1);
+    noobs.ObsStartRecording(1);
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    wcre.ObsStopRecording();
+    noobs.ObsStopRecording();
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    const last = wcre.ObsGetLastRecording();
+    const last = noobs.ObsGetLastRecording();
     console.log("Last recording:", last);
 
     await new Promise(resolve => setTimeout(resolve, 30000));
   }
 
   console.log("Stopping obs...");
-  wcre.ObsShutdown();
+  noobs.ObsShutdown();
 
   console.log("Test Done");
 }

@@ -10,14 +10,15 @@ type Signal = { // TODO export type?
   code: number;
 }
 
-interface WCREngine {
+interface Noobs {
   getUptime(): number;
   listProcesses(): Promise<ProcessInfo[]>;
 
   ObsInit(
     pluginPath: string, 
     logPath: string, 
-    dataPath: string, 
+    dataPath: string,
+    recordingPath: string,
     cb: (signal: Signal) => void
   ): void;
 
@@ -33,5 +34,5 @@ interface WCREngine {
   ObsMovePreview(x: number, y: number): void;
 }
 
-declare const wcre: WCREngine;
-export = wcre;
+declare const noobs: Noobs;
+export = noobs;

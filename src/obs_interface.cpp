@@ -85,13 +85,17 @@ void ObsInterface::load_module(const char* module) {
   obs_module_t *ptr = NULL;
   int success = obs_open_module(&ptr, module, NULL);
 
-  if (success != MODULE_SUCCESS)
+  if (success != MODULE_SUCCESS) {
+    blog(LOG_ERROR, "Failed to open module: %s", module);
     throw std::runtime_error("Failed to open module!");
+  }
 
   bool initmod = obs_init_module(ptr);
 
-  if (!initmod)
+  if (!initmod) {
+    blog(LOG_ERROR, "Failed to initialize module!");
     throw std::runtime_error("Module initialization failed!");
+  }
 }
 
 void ObsInterface::reset_video() {
@@ -116,8 +120,10 @@ void ObsInterface::reset_video() {
 
   int success = obs_reset_video(&ovi);
 
-  if (success != OBS_VIDEO_SUCCESS)
+  if (success != OBS_VIDEO_SUCCESS) {
+    blog(LOG_ERROR, "Failed to reset video!");
     throw std::runtime_error("Failed to reset video!");
+  }
 }
 
 void ObsInterface::reset_audio() {
@@ -126,8 +132,10 @@ void ObsInterface::reset_audio() {
   oai.speakers = SPEAKERS_STEREO;
   bool reset = obs_reset_audio(&oai);
 
-  if (!reset)
+  if (!reset) {
+    blog(LOG_ERROR, "Failed to reset audio!");
     throw std::runtime_error("Failed to reset audio!");
+  }
 }
 
 void ObsInterface::init_obs(const std::string& pluginPath, const std::string& dataPath) {
@@ -172,18 +180,20 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   blog(LOG_INFO, "Exit init_obs");
 }
 
-obs_output_t* ObsInterface::create_output() {
+obs_output_t* ObsInterface::create_output(const std::string& recordingPath) {
   blog(LOG_INFO, "Create output");
   obs_output_t *output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
 
-  if (!output)
+  if (!output) {
+    blog(LOG_ERROR, "Failed to create output!");
     throw std::runtime_error("Failed to create output!");
+  }
 
   blog(LOG_INFO, "Set output settings");
   obs_data_t *settings = obs_data_create();
-  obs_data_set_int(settings, "max_time_sec", 30);
-  obs_data_set_int(settings, "max_size_mb", 512);
-  obs_data_set_string(settings, "directory", "D:/checkouts/warcraft-recorder-obs-engine/recordings"); // or wherever
+  obs_data_set_int(settings, "max_time_sec", 60);
+  obs_data_set_int(settings, "max_size_mb", 1024);
+  obs_data_set_string(settings, "directory", recordingPath.c_str());
   obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
   obs_data_set_string(settings, "extension", "mp4");
   obs_output_update(output, settings);
@@ -192,8 +202,10 @@ obs_output_t* ObsInterface::create_output() {
   blog(LOG_INFO, "Create venc");
   video_encoder = obs_video_encoder_create("h264_texture_amf", "simple_h264_stream", NULL, NULL);
 
-  if (!video_encoder)
+  if (!video_encoder) {
+    blog(LOG_ERROR, "Failed to create video encoder!");
     throw std::runtime_error("Failed to create video encoder!");
+  }
 
   blog(LOG_INFO, "Set video encoder settings");
   obs_data_t* amf_settings = obs_data_create();
@@ -209,8 +221,10 @@ obs_output_t* ObsInterface::create_output() {
   blog(LOG_INFO, "Create aenc");
   audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "simple_aac", NULL, 0, NULL);
 
-  if (!audio_encoder)
+  if (!audio_encoder) {
+    blog(LOG_ERROR, "Failed to create audio encoder!");
     throw std::runtime_error("Failed to create audio encoder!");
+  }
 
   blog(LOG_INFO, "Set audio encoder settings");
   obs_data_t *aenc_settings = obs_data_create();
@@ -446,6 +460,7 @@ ObsInterface::ObsInterface(
   const std::string& pluginPath, 
   const std::string& logPath, 
   const std::string& dataPath,  
+  const std::string& recordingPath,
   Napi::ThreadSafeFunction cb
 ) {
   // Setup logs first so we have logs for the initialization.
@@ -456,7 +471,7 @@ ObsInterface::ObsInterface(
   init_obs(pluginPath, dataPath);
 
   // Create the resources we rely on.
-  output = create_output();
+  output = create_output(recordingPath);
   scene = create_scene();
   video_source = create_video_source();
   obs_scene_add(scene, video_source);

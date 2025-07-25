@@ -1,5 +1,5 @@
 {
-  "name": "warcraft-recorder-obs-engine",
+  "name": "noobs",
   "version": "0.0.63",
   "description": "A native Node.js addon with libobs bindings for Warcraft Recorder.",
   "main": "index.js",

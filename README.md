@@ -1,38 +1,39 @@
-# Warcraft Recorder Engine
+# Noobs
+>  No-(de)-obs
 
-A native Node.js addon for Warcraft gameplay recording built with N-API.
+Node bindings to libobs, built for Warcraft Recorder. An alternative but less mature `obs-studio-node` with a focus on recording gameplay from a replay buffer.
+
+Uses a [custom](https://github.com/aza547/warcraft-recorder-obs-studio) fork of libobs to enable "replay_buffer to recording" as well as some less interesting improvements to allow libobs to be easier used as a library and not through OBS studio itself.
 
 ## Installation
 
 ```bash
-npm install warcraft-recorder-obs-engine
+npm install noobs
 ```
 
 ## Usage
 
 ```javascript
-const warcraftRecorder = require('warcraft-recorder-obs-engine');
+import noobs from 'noobs';
 
-// Get a greeting from the native addon
-const message = warcraftRecorder.hello();
-console.log(message); // "hello from napi"
+...
+
+noobs.ObsInit(pluginPath, logPath, dataPath, recordingPath, cb);
 ```
+
+See `test.js` for more.
 
 ### TypeScript
 
-This package includes TypeScript definitions:
-
-```typescript
-import * as warcraftRecorder from 'warcraft-recorder-obs-engine';
-
-const message: string = warcraftRecorder.hello();
-console.log(message);
-```
+This package includes TypeScript definitions.
 
 ## Requirements
 
-- Node.js >= 14.0.0
-- A C++ compiler (Visual Studio Build Tools on Windows, Xcode on macOS, GCC on Linux)
+TODO
+
+- Node.js ??
+- A C++ compiler (Visual Studio Build Tools on Windows, Xcode on macOS, GCC on Linux) ??
+- Node-gyp ??
 
 ## Building from Source
 
@@ -41,12 +42,6 @@ npm install
 npm run build
 ```
 
-## API
-
-### `hello(): string`
-
-Returns a greeting message from the native addon.
-
 ## License
 
-ISC
+GPL-2.0

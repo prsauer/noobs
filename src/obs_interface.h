@@ -10,10 +10,11 @@ struct SignalData {
 class ObsInterface {
   public:
     ObsInterface(
-      const std::string& pluginPath, //where to look for plugins
-      const std::string& logPath,    // where to write logs to
-      const std::string& dataPath,   // where to look for effects
-      Napi::ThreadSafeFunction cb    // JavaScript callback
+      const std::string& pluginPath,    // where to look for plugins
+      const std::string& logPath,       // where to write logs to
+      const std::string& dataPath,      // where to look for effects
+      const std::string& recordingPath, // where to save recordings
+      Napi::ThreadSafeFunction cb       // JavaScript callback
     );
 
     ~ObsInterface();
@@ -67,7 +68,7 @@ class ObsInterface {
     void list_input_types();
     void list_output_types();
 
-    obs_output_t* create_output();
+    obs_output_t* create_output(const std::string& recordingPath);
     obs_scene_t* create_scene();
     obs_source_t* create_video_source();
 };

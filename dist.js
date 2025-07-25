@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const packageName = 'noobs.node';
 const distRoot = path.resolve(__dirname, 'dist');
 const distBin = path.join(distRoot, 'bin');
 const distPlugins = path.join(distRoot, 'plugins');
@@ -18,8 +19,8 @@ fs.mkdirSync(distPlugins);
 fs.mkdirSync(distEffects);
 
 // Copy the compiled .node file.
-const addonSrc = path.resolve(__dirname, 'build', 'Release', 'warcraft-recorder-obs-engine.node');
-const addonDest = path.join(distRoot, 'warcraft-recorder-obs-engine.node');
+const addonSrc = path.resolve(__dirname, 'build', 'Release', packageName);
+const addonDest = path.join(distRoot, packageName);
 fs.copyFileSync(addonSrc, addonDest);
 
 // Now copy the .dll files we need.

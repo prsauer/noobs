@@ -1,6 +1,6 @@
 {
     "targets": [{
-        "target_name": "warcraft-recorder-obs-engine",
+        "target_name": "noobs",
         "cflags!": [ "-fno-exceptions" ],
         "cflags_cc!": [ "-fno-exceptions" ],
         "sources": [
