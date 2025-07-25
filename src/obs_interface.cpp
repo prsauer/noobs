@@ -130,7 +130,7 @@ void ObsInterface::reset_audio() {
     throw std::runtime_error("Failed to reset audio!");
 }
 
-void ObsInterface::init_obs() {
+void ObsInterface::init_obs(const std::string& pluginPath) {
   print_cwd();
   print_exe_path();
 
@@ -146,9 +146,14 @@ void ObsInterface::init_obs() {
 
   obs_add_data_path("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/effects/");
 
-  load_module("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/plugins/obs-x264.dll");
-  load_module("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/plugins/obs-ffmpeg.dll");
-  load_module("D:/checkouts/warcraft-recorder/release/app/node_modules/warcraft-recorder-obs-engine/dist/plugins/win-capture.dll");
+  std::vector<std::string> modules = { "obs-x264.dll", "obs-ffmpeg.dll", "win-capture.dll" };
+
+  for (const auto& module : modules) {
+    std::string path = pluginPath + "/" + module;
+    load_module(path.c_str());
+  }
+  
+  obs_post_load_modules();
 
   list_encoders();
   list_source_types();
@@ -430,13 +435,13 @@ void ObsInterface::hidePreview() {
   }
 }
 
-ObsInterface::ObsInterface(Napi::ThreadSafeFunction cb) {
+ObsInterface::ObsInterface(const std::string& pluginPath, const std::string& logPath, Napi::ThreadSafeFunction cb) {
   // Setup logs first so we have logs for the initialization.
-  base_set_log_handler(log_handler, NULL); // TODO pass log directory?
+  base_set_log_handler(log_handler, (void*)logPath.c_str());
   blog(LOG_DEBUG, "Creating ObsInterface");
 
   // Initialize OBS and load required modules.
-  init_obs(); // TODO pass plugin directory? 
+  init_obs(pluginPath);
 
   // Create the resources we rely on.
   output = create_output();

@@ -48,19 +48,24 @@ void WindowThread(std::promise<HWND> hwndPromise) {
 }
 
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
-  bool valid = info.Length() == 1 && info[0].IsFunction();
+  bool valid = info.Length() == 3 &&
+   info[0].IsString() && // Plugin path
+   info[1].IsString() && // Log path
+   info[2].IsFunction(); // JavaScript callback
 
   if (!valid) {
-    Napi::Error::New(info.Env(), "Expected a callback function").ThrowAsJavaScriptException();
+    Napi::Error::New(info.Env(), "Invalid arguments passed to ObsInit").ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
 
-  Napi::Function fn = info[0].As<Napi::Function>();
+  std::string pluginPath = info[0].As<Napi::String>().Utf8Value();
+  std::string logPath = info[1].As<Napi::String>().Utf8Value();
+  Napi::Function fn = info[2].As<Napi::Function>();
 
   Napi::ThreadSafeFunction jscb =
     Napi::ThreadSafeFunction::New(info.Env(), fn, "JavaScript callback", 0, 1);
 
-  obs = new ObsInterface(jscb);
+  obs = new ObsInterface(pluginPath, logPath, jscb);
   return info.Env().Undefined();
 }
 

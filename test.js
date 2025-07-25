@@ -1,4 +1,5 @@
 const wcre = require('./index.js');
+const path = require('path');
 
 async function test() {
   console.log('Uptime:', wcre.getUptime());
@@ -20,7 +21,12 @@ async function test() {
     console.log("Callback received:", msg);
   }
 
-  wcre.ObsInit(cb);
+  const pluginPath = path.resolve(__dirname, 'dist', 'plugins');
+  const logPath = path.resolve(__dirname, 'logs');
+  console.log("Plugin path:", pluginPath);
+  console.log("Log path:", logPath);
+
+  wcre.ObsInit(pluginPath, logPath, cb);
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   for (let i = 0; i < 2; i++) {

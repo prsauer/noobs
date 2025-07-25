@@ -26,7 +26,7 @@ void print_exe_path() {
 }
 
 void log_handler(int lvl, const char *msg, va_list args, void *p) {
-  // Static variable to store the log filename (generated once)
+  // Use the passed log path parameter
   static std::string log_filename;
   static bool filename_initialized = false;
   
@@ -36,7 +36,16 @@ void log_handler(int lvl, const char *msg, va_list args, void *p) {
     
     std::stringstream filename_stream;
     filename_stream << "ObsEngine-" << std::put_time(std::localtime(&time_t), "%Y-%m-%d") << ".log";
-    log_filename = filename_stream.str();
+    
+    // Use the provided directory path and append the filename
+    std::string log_dir = static_cast<const char*>(p);
+    
+    // Ensure the directory path ends with a separator
+    if (!log_dir.empty() && log_dir.back() != '\\' && log_dir.back() != '/') {
+      log_dir += "\\";
+    }
+
+    log_filename = log_dir + filename_stream.str();
     filename_initialized = true;
   }
   

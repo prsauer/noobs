@@ -14,7 +14,7 @@ interface WCREngine {
   getUptime(): number;
   listProcesses(): Promise<ProcessInfo[]>;
 
-  ObsInit(cb: (signal: Signal) => void): void;
+  ObsInit(pluginPath: string, logPath: string, cb: (signal: Signal) => void): void;
   ObsShutdown(): void;
   ObsStartBuffer(): void;
   ObsStartRecording(offset: number): void;
