@@ -1,5 +1,4 @@
-# Noobs
->  No-(de)-obs
+# No(de)obs
 
 Node bindings to libobs, built for Warcraft Recorder. An alternative but less mature `obs-studio-node` with a focus on recording gameplay from a replay buffer.
 
