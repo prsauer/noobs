@@ -127,12 +127,23 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   if (!obs) 
     throw std::runtime_error("Obs not initialized");
 
-  if (info.Length() < 1 || !info[0].IsBuffer()) {
-    Napi::TypeError::New(info.Env(), "Expected HWND as Buffer").ThrowAsJavaScriptException();
+  bool valid = info.Length() == 5 &&
+    info[0].IsBuffer() && // HWND
+    info[1].IsString() && // X
+    info[2].IsString() && // Y
+    info[3].IsString() && // Width
+    info[4].IsFunction(); // Height
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsShowPreview").ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
 
   Napi::Buffer<uint8_t> buffer = info[0].As<Napi::Buffer<uint8_t>>();
+  int x = info[1].As<Napi::Number>().Int32Value();
+  int y = info[2].As<Napi::Number>().Int32Value();
+  int width = info[3].As<Napi::Number>().Int32Value();
+  int height = info[4].As<Napi::Number>().Int32Value();
 
   if (buffer.Length() < sizeof(HWND)) {
     Napi::TypeError::New(info.Env(), "Buffer too small for HWND").ThrowAsJavaScriptException();
@@ -151,7 +162,7 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   
   memcpy(hwndUnion.bytes, buffer.Data(), sizeof(hwndUnion.bytes));
 
-  obs->showPreview(hwndUnion.hwnd);
+  obs->showPreview(hwndUnion.hwnd, x, y, width, height);
   return info.Env().Undefined();
 }
 

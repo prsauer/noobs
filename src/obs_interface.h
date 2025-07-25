@@ -24,7 +24,7 @@ class ObsInterface {
     void stopRecording();
     std::string getLastRecording();
 
-    void showPreview(HWND hwnd);
+    void showPreview(HWND hwnd, int x, int y, int width, int height);
     void hidePreview();
     void resizePreview(int width, int height);
     void movePreview(int x, int y);

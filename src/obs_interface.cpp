@@ -331,7 +331,7 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   obs_render_main_texture();
 }
 
-void ObsInterface::showPreview(HWND hwnd) {
+void ObsInterface::showPreview(HWND hwnd, int x, int y, int width, int height) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
   // TODO initialize this all in the constructor to save on a small noticable
@@ -344,8 +344,8 @@ void ObsInterface::showPreview(HWND hwnd) {
       "STATIC",            // Simple static control class (ANSI string)
       "OBS Preview",       // Window name (ANSI string)
       WS_CHILD | WS_VISIBLE | WS_BORDER,  // Child + visible + border
-      20, 20,              //  TODO: make this correct from the start?
-      1920, 1080,           //  TODO: make this correct from the start?
+      x, y,
+      width, height,
       hwnd,                // Parent window (your Electron app)
       NULL,                // No menu
       GetModuleHandle(NULL), 
