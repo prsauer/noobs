@@ -325,7 +325,9 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   // Render the OBS preview scene here
-  gs_resize(cx, cy);  // Resize graphics context
+  // gs_resize(cx, cy);  // Resize graphics context
+
+  // obs_display_resize(display, cx, cy);
   obs_render_main_texture();
 }
 
@@ -342,8 +344,8 @@ void ObsInterface::showPreview(HWND hwnd) {
       "STATIC",            // Simple static control class (ANSI string)
       "OBS Preview",       // Window name (ANSI string)
       WS_CHILD | WS_VISIBLE | WS_BORDER,  // Child + visible + border
-      20, 20,              // Position within parent (x, y)
-      1920, 1080,           // Size (width, height)
+      20, 20,              //  TODO: make this correct from the start?
+      1920, 1080,           //  TODO: make this correct from the start?
       hwnd,                // Parent window (your Electron app)
       NULL,                // No menu
       GetModuleHandle(NULL), 
@@ -408,7 +410,7 @@ void ObsInterface::resizePreview(int width, int height) {
 
   // Resize the OBS display to match the new window size
   if (display) {
-    obs_display_resize(display, width, height);
+    // obs_display_resize(display, width, height);
     blog(LOG_INFO, "OBS display resized to (%d x %d)", width, height);
   } else {
     blog(LOG_WARNING, "No OBS display to resize");
