@@ -129,10 +129,10 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
 
   bool valid = info.Length() == 5 &&
     info[0].IsBuffer() && // HWND
-    info[1].IsString() && // X
-    info[2].IsString() && // Y
-    info[3].IsString() && // Width
-    info[4].IsFunction(); // Height
+    info[1].IsNumber() && // X
+    info[2].IsNumber() && // Y
+    info[3].IsNumber() && // Width
+    info[4].IsNumber(); // Height
 
   if (!valid) {
     Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsShowPreview").ThrowAsJavaScriptException();
