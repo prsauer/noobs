@@ -1,15 +1,21 @@
 // OBS Data Types
-export type ObsDataValue = string | number | boolean | ObsData | ObsData[] | null;
+export type ObsDataValue =
+  | string
+  | number
+  | boolean
+  | ObsData
+  | ObsData[]
+  | null;
 
 export interface ObsData {
   [key: string]: ObsDataValue;
 }
 
 // OBS Property Types
-export type ObsPropertyType = 
+export type ObsPropertyType =
   | 'invalid'
   | 'bool'
-  | 'int' 
+  | 'int'
   | 'float'
   | 'text'
   | 'path'
@@ -114,7 +120,7 @@ export interface ObsGenericProperty extends ObsPropertyBase {
   type: 'invalid' | 'unknown';
 }
 
-export type ObsProperty = 
+export type ObsProperty =
   | ObsIntProperty
   | ObsFloatProperty
   | ObsTextProperty
@@ -130,34 +136,34 @@ export type ObsProperty =
   | ObsGenericProperty;
 
 export type Signal = {
-  id: string;   // Signal identifier, e.g. "stop"
+  id: string; // Signal identifier, e.g. "stop"
   code: number; // 0 for success, other values for errors
-}
+};
 
 export type SceneItemPosition = {
-  x: number;      // X position in pixels
-  y: number;      // Y position in pixels
+  x: number; // X position in pixels
+  y: number; // Y position in pixels
   scaleX: number; // X scaling factor
   scaleY: number; // Y scaling factor
 };
 
 export type SourceDimensions = {
   height: number; // Height in pixels, before scaling
-  width: number;  // Width in pixels, before scaling
-}
+  width: number; // Width in pixels, before scaling
+};
 
 interface Noobs {
   Init(
-    pluginPath: string, 
-    logPath: string, 
+    pluginPath: string,
+    logPath: string,
     dataPath: string,
     recordingPath: string,
     cb: (signal: Signal) => void,
-    buffering: boolean,
+    buffering: boolean
   ): void;
 
   Shutdown(): void;
-  
+
   // Recording functions
   StartBuffer(): void;
   StartRecording(offset: number): void;
