@@ -476,8 +476,8 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
   gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
 
-  vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
-  gs_effect_set_vec4(color, &red);
+  vec4 color = {0.733f, 0.267f, 0.125f, 1.0f}; // #BB4420
+  gs_effect_set_vec4(color, &color);
 
   gs_technique_begin(tech);
   gs_technique_begin_pass(tech, 0);
