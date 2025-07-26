@@ -329,25 +329,7 @@ void ObsInterface::create_scene() {
   }
 
   obs_set_output_source(0, scene_source); // 0 = video track
-  // obs_scene_add(scene, video_source);
 }
-
-// void ObsInterface::configure_video_source() {
-//   blog(LOG_INFO, "Create monitor capture source");
-
-//   // Create settings for monitor capture
-//   obs_data_t *monitor_settings = obs_data_create();
-//   obs_data_set_int(monitor_settings, "monitor", 0);  // Monitor 0
-//   obs_data_set_bool(monitor_settings, "capture_cursor", true);
-
-//   video_source = obs_source_create("monitor_capture", "video_source", monitor_settings, NULL);
-//   obs_data_release(monitor_settings);
-
-//   if (!video_source) {
-//     blog(LOG_ERROR, "Failed to create video source!");
-//     throw std::runtime_error("Failed to create video source!");
-//   }
-// }
 
 void ObsInterface::createSource(std::string name, std::string type) {
   blog(LOG_INFO, "Create source: %s of type %s", name.c_str(), type.c_str());
@@ -480,124 +462,66 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
   signal_handler_connect(sh, "saved", output_signal_handler_saved,  this);
 }
 
-
-static vec4 ConvertColorToVec4(uint32_t color)
-{
-	vec4 colorVec4;
-	vec4_set(&colorVec4, static_cast<float>(color & 0xFF) / 255.0f, static_cast<float>((color & 0xFF00) >> 8) / 255.0f,
-		 static_cast<float>((color & 0xFF0000) >> 16) / 255.0f, static_cast<float>((color & 0xFF000000) >> 24) / 255.0f);
-	return colorVec4;
-}
-
-	uint32_t m_paddingSize = 10;
-	uint32_t m_paddingColor = 0xFF222222;
-	/// Other
-	uint32_t m_backgroundColor = 0xFF000000;     // 0, 0, 0
-	uint32_t m_outlineColor = 0xFFA8E61A;        // 26, 230, 168
-	uint32_t m_cropOutlineColor = 0xFFA8E61A;    // 26, 230, 168
-	uint32_t m_guidelineColor = 0xFFA8E61A;      // 26, 230, 168
-	uint32_t m_resizeOuterColor = 0xFF7E7E7E;    // 126, 126, 126
-	uint32_t m_resizeInnerColor = 0xFFFFFFFF;    // 255, 255, 255
-	uint32_t m_rotationHandleColor = 0xFFA8E61A; // 26, 230, 168
-
-	vec4 m_paddingColorVec4 = ConvertColorToVec4(m_paddingColor);
-	vec4 m_backgroundColorVec4 = ConvertColorToVec4(m_backgroundColor);
-	vec4 m_outlineColorVec4 = ConvertColorToVec4(m_outlineColor);
-	vec4 m_cropOutlineColorVec4 = ConvertColorToVec4(m_cropOutlineColor);
-	vec4 m_guidelineColorVec4 = ConvertColorToVec4(m_guidelineColor);
-	vec4 m_resizeOuterColorVec4 = ConvertColorToVec4(m_resizeOuterColor);
-	vec4 m_resizeInnerColorVec4 = ConvertColorToVec4(m_resizeInnerColor);
-	vec4 m_rotationHandleColorVec4 = ConvertColorToVec4(m_rotationHandleColor);
-  
-
-// Helper to draw rectangle outline with 4 lines using GS lines primitive
-void draw_rectangle_outline(float x1, float y1, float x2, float y2) {
-    // Vertex format: position (vec3), color (uint32)
-    struct vertex {
-        float x, y, z;
-        uint32_t color;
-    };
-
-    const uint32_t white = 0xFFFFFFFF;
-
-    vertex verts[5] = {
-        {x1, y1, 0.0f, white},  // top-left
-        {x2, y1, 0.0f, white},  // top-right
-        {x2, y2, 0.0f, white},  // bottom-right
-        {x1, y2, 0.0f, white},  // bottom-left
-        {x1, y1, 0.0f, white}   // back to top-left to close the loop
-    };
-
-    gs_vertbuffer_t *vb = gs_vertexbuffer_create((gs_vb_data *)verts, 5);
-    if (!vb)
-        return;
-
-    // Draw line strip (connected lines)
-    gs_draw(GS_LINESTRIP, 0, 5);
-
-    gs_vertexbuffer_destroy(vb);
-}
-
-bool draw_source_ui(obs_scene_t *scene, obs_sceneitem_t *item, void *param) {
-      // Get the source and its bounds in the scene
-    obs_source_t *source = obs_sceneitem_get_source(item);
-
-    // Get the transform (position, scale, rotation)
-    struct vec2 pos, scale;
-    float rot;
-    obs_sceneitem_get_pos(item, &pos);
-    obs_sceneitem_get_scale(item, &scale);
-    rot = obs_sceneitem_get_rot(item);
-
-    // Get source size
-    uint32_t width = obs_source_get_width(source);
-    uint32_t height = obs_source_get_height(source);
-
-    // Calculate box corners in scene space (ignoring rotation here for simplicity)
-    float x1 = pos.x;
-    float y1 = pos.y;
-    float x2 = x1 + width * scale.x;
-    float y2 = y1 + height * scale.y;
-
-    // Draw a rectangle outline (using a helper function)
-    draw_rectangle_outline(x1, y1, x2, y2);
-
-    obs_source_release(source);
-    return true;  // continue enumeration
-}
-
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   // Initially, draw the OBS scene texture
   obs_render_main_texture();
 
-  // // Set projection and viewport
-  // gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
-  // gs_set_viewport(0, 0, cx, cy);
+  // This is some AI code that would draw a rectangle (and works).
+  // Set projection and viewport
+  gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
+  gs_set_viewport(0, 0, cx, cy);
 
-  // // Solid effect
-  // gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-  // gs_eparam_t *solid_color = gs_effect_get_param_by_name(solid, "color");
-  // gs_technique_t *solid_tech = gs_effect_get_technique(solid, "Solid");
+  // Solid effect
+  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+  gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
+  gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
 
-  // vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
-  // gs_effect_set_vec4(solid_color, &green);
+  vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+  gs_effect_set_vec4(color, &red);
 
-  // gs_technique_begin(solid_tech);
-  // gs_technique_begin_pass(solid_tech, 0);
+  gs_technique_begin(tech);
+  gs_technique_begin_pass(tech, 0);
 
-  // gs_matrix_push();
-  // gs_matrix_identity();
-  // gs_matrix_translate3f(200.0f, 200.0f, 50.0f); // Z = 50
-  // gs_matrix_scale3f(100.0f, 100.0f, 1.0f);
-  // gs_draw_sprite(nullptr, 0, 100, 100);
-  // gs_matrix_pop();
+  gs_matrix_push();
+  gs_matrix_identity();
 
-  obs_scene_t* scene = obs_get_scene_by_name("WCR Scene");
-  obs_scene_enum_items(scene, draw_source_ui, NULL);
-  obs_scene_release(scene);
+  // Top
+  gs_matrix_push();
+  gs_matrix_translate3f(0, 0, 0.0f);
+  gs_matrix_scale3f(1920, 1.0f, 1.0f);
+  gs_draw_sprite(nullptr, 0, 1920, 1.0f);
+  gs_matrix_pop();
 
-  // gs_technique_end_pass(solid_tech);
-  // gs_technique_end(solid_tech);
+  // Bottom
+  gs_matrix_push();
+  gs_matrix_translate3f(0, 1080 - 1.0f, 0.0f);
+  gs_matrix_scale3f(1920, 1.0f, 1.0f);
+  gs_draw_sprite(nullptr, 0, 1920, 1.0f);
+  gs_matrix_pop();
+
+  // Left
+  gs_matrix_push();
+  gs_matrix_translate3f(0, 0, 0.0f);
+  gs_matrix_scale3f(1.0f, 1080, 1.0f);
+  gs_draw_sprite(nullptr, 0, 1.0f, 1080);
+  gs_matrix_pop();
+
+  // Right
+  gs_matrix_push();
+  gs_matrix_translate3f(1920 - 1.0f, 0, 0.0f);
+  gs_matrix_scale3f(1.0f, 1080, 1.0f);
+  gs_draw_sprite(nullptr, 0, 1.0f, 1080);
+  gs_matrix_pop();
+
+  gs_matrix_pop();
+  gs_technique_end_pass(tech);
+  gs_technique_end(tech);
+
+  // This was me trying to understand what OSN does.
+  // It didn't work but probably is the right approach.
+  // obs_scene_t* scene = obs_get_scene_by_name("WCR Scene");
+  // obs_scene_enum_items(scene, draw_source_ui, NULL);
+  // obs_scene_release(scene);
 }
 
 void ObsInterface::initPreview(HWND parent) {
