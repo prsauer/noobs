@@ -152,7 +152,8 @@ interface Noobs {
     logPath: string, 
     dataPath: string,
     recordingPath: string,
-    cb: (signal: Signal) => void
+    cb: (signal: Signal) => void,
+    buffering: boolean,
   ): void;
 
   Shutdown(): void;
