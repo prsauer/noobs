@@ -461,6 +461,69 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
   signal_handler_connect(sh, "stop", output_signal_handler_stop,  this);
   signal_handler_connect(sh, "saved", output_signal_handler_saved,  this);
 }
+bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
+    // Get the item position and size
+    vec2 pos; vec2 scale; vec2 size;
+
+    obs_sceneitem_get_pos(item, &pos);
+    obs_sceneitem_get_scale(item, &scale);
+    obs_sceneitem_get_bounds(item, &size);
+
+    // Calculate actual size with scaling
+    float width = size.x * scale.x;
+    float height = size.y * scale.y;
+
+    // Draw rectangle around the source using the position and size
+    // You can reuse your existing code, but replace hardcoded values with pos and size:
+    
+    gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+    gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
+    gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
+
+    vec4 col = {0.733f, 0.267f, 0.125f, 1.0f}; // #BB4420
+    gs_effect_set_vec4(color, &col);
+
+    gs_technique_begin(tech);
+    gs_technique_begin_pass(tech, 0);
+
+    gs_matrix_push();
+    gs_matrix_identity();
+
+    // Top border
+    gs_matrix_push();
+    gs_matrix_translate3f(pos.x, pos.y, 0.0f);
+    gs_matrix_scale3f(width, 1.0f, 1.0f);
+    gs_draw_sprite(nullptr, 0, width, 1.0f);
+    gs_matrix_pop();
+
+    // Bottom border
+    gs_matrix_push();
+    gs_matrix_translate3f(pos.x, pos.y + height - 1.0f, 0.0f);
+    gs_matrix_scale3f(width, 1.0f, 1.0f);
+    gs_draw_sprite(nullptr, 0, width, 1.0f);
+    gs_matrix_pop();
+
+    // Left border
+    gs_matrix_push();
+    gs_matrix_translate3f(pos.x, pos.y, 0.0f);
+    gs_matrix_scale3f(1.0f, height, 1.0f);
+    gs_draw_sprite(nullptr, 0, 1.0f, height);
+    gs_matrix_pop();
+
+    // Right border
+    gs_matrix_push();
+    gs_matrix_translate3f(pos.x + width - 1.0f, pos.y, 0.0f);
+    gs_matrix_scale3f(1.0f, height, 1.0f);
+    gs_draw_sprite(nullptr, 0, 1.0f, height);
+    gs_matrix_pop();
+
+    gs_matrix_pop();
+
+    gs_technique_end_pass(tech);
+    gs_technique_end(tech);
+
+    return true;
+}
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   // Initially, draw the OBS scene texture
@@ -471,57 +534,10 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
   gs_set_viewport(0, 0, cx, cy);
 
-  // Solid effect
-  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-  gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
-  gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
-
-  vec4 col = {0.733f, 0.267f, 0.125f, 1.0f}; // #BB4420
-  gs_effect_set_vec4(color, &col);
-
-  gs_technique_begin(tech);
-  gs_technique_begin_pass(tech, 0);
-
-  gs_matrix_push();
-  gs_matrix_identity();
-
-  // Top
-  gs_matrix_push();
-  gs_matrix_translate3f(0, 0, 0.0f);
-  gs_matrix_scale3f(1920, 1.0f, 1.0f);
-  gs_draw_sprite(nullptr, 0, 1920, 1.0f);
-  gs_matrix_pop();
-
-  // Bottom
-  gs_matrix_push();
-  gs_matrix_translate3f(0, 1080 - 1.0f, 0.0f);
-  gs_matrix_scale3f(1920, 1.0f, 1.0f);
-  gs_draw_sprite(nullptr, 0, 1920, 1.0f);
-  gs_matrix_pop();
-
-  // Left
-  gs_matrix_push();
-  gs_matrix_translate3f(0, 0, 0.0f);
-  gs_matrix_scale3f(1.0f, 1080, 1.0f);
-  gs_draw_sprite(nullptr, 0, 1.0f, 1080);
-  gs_matrix_pop();
-
-  // Right
-  gs_matrix_push();
-  gs_matrix_translate3f(1920 - 1.0f, 0, 0.0f);
-  gs_matrix_scale3f(1.0f, 1080, 1.0f);
-  gs_draw_sprite(nullptr, 0, 1.0f, 1080);
-  gs_matrix_pop();
-
-  gs_matrix_pop();
-  gs_technique_end_pass(tech);
-  gs_technique_end(tech);
-
   // This was me trying to understand what OSN does.
-  // It didn't work but probably is the right approach.
-  // obs_scene_t* scene = obs_get_scene_by_name("WCR Scene");
-  // obs_scene_enum_items(scene, draw_source_ui, NULL);
-  // obs_scene_release(scene);
+  obs_scene_t* scene = obs_get_scene_by_name("WCR Scene");
+  obs_scene_enum_items(scene, draw_box, NULL);
+  obs_scene_release(scene);
 }
 
 void ObsInterface::initPreview(HWND parent) {
