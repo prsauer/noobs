@@ -502,6 +502,7 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
 
   // Finally, draw the OBS scene texture
   //obs_render_main_texture();
+  blog(LOG_INFO, "draw_callback: %dx%d", cx, cy);
 }
 
 void ObsInterface::initPreview(HWND parent) {
