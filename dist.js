@@ -26,21 +26,23 @@ fs.copyFileSync(addonSrc, addonDest);
 // Now copy the .dll files we need.
 const binDir = path.resolve(__dirname, 'bin', '64bit');
 
-fs.readdirSync(binDir).filter(file => file.endsWith('.dll')).forEach((file) => {
-  const srcPath = path.join(binDir, file);
-  const destPath = path.join(distBin, file);
-  fs.copyFileSync(srcPath, destPath);
-});
+fs.readdirSync(binDir)
+  .filter((file) => file.endsWith('.dll'))
+  .forEach((file) => {
+    const srcPath = path.join(binDir, file);
+    const destPath = path.join(distBin, file);
+    fs.copyFileSync(srcPath, destPath);
+  });
 
 // Copy the plugins we use.
 const pluginDir = path.resolve(__dirname, 'bin', 'plugins');
 
 const plugins = [
-  "obs-x264.dll", 
-  "obs-ffmpeg.dll", 
-  "win-capture.dll", 
-  "image-source.dll", 
-  "win-wasapi.dll"
+  'obs-x264.dll',
+  'obs-ffmpeg.dll',
+  'win-capture.dll',
+  'image-source.dll',
+  'win-wasapi.dll',
 ];
 
 plugins.forEach((file) => {
@@ -59,11 +61,10 @@ fs.readdirSync(effectsDir).forEach((file) => {
 });
 
 // Copy executable files required on the PATH.
-const exeFiles = ['obs-amf-test.exe', "obs-ffmpeg-mux.exe"];
+const exeFiles = ['obs-amf-test.exe', 'obs-ffmpeg-mux.exe'];
 
 exeFiles.forEach((file) => {
   const srcPath = path.join(binDir, file);
   const destPath = path.join(distBin, file);
   fs.copyFileSync(srcPath, destPath);
 });
-
