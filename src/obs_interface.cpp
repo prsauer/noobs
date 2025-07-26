@@ -474,8 +474,8 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
     uint32_t sizey = obs_source_get_height(src);
 
     // Calculate actual size with scaling
-    uint32_t width = sizex * scale.x;
-    uint32_t height = sizey * scale.y;
+    float width = sizex * scale.x;
+    float height = sizey * scale.y;
     blog(LOG_DEBUG, "Drawing box at (%f, %f) with size (%f, %f) - (%d %d)", pos.x, pos.y, width, height, sizex, sizey);
 
     // Draw rectangle around the source using the position and size
