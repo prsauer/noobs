@@ -1,7 +1,16 @@
-type Signal = { // TODO export type? 
-  id: string;
-  code: number;
+export type Signal = {
+  id: string;   // Signal identifier, e.g. "stop"
+  code: number; // 0 for success, other values for errors
 }
+
+export type SceneItemPosition = {
+  x: number;      // X position in pixels
+  y: number;      // Y position in pixels
+  width: number;  // Width in pixels, before scaling
+  height: number; // Height in pixels, before scaling
+  scaleX: number; // X scaling factor
+  scaleY: number; // Y scaling factor
+};
 
 interface Noobs {
   Init(
@@ -18,7 +27,8 @@ interface Noobs {
   StopRecording(): void;
   GetLastRecording(): string;
 
-  UpdateSource(x: number, y: number, scale: number): void;
+  GetSourcePos(src: string): SceneItemPosition;
+  SetSourcePos(src: string, pos: SceneItemPosition): void;
 
   InitPreview(hwnd: Buffer): void;
   ShowPreview(x: number, y: number, width: number, height: number): void;
@@ -26,4 +36,4 @@ interface Noobs {
 }
 
 declare const noobs: Noobs;
-export = noobs;
+export default noobs;

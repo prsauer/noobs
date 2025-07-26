@@ -613,7 +613,45 @@ std::string ObsInterface::getLastRecording() {
   return path;
 }
 
-void ObsInterface::updateSourcePos(int x, int y, float scale) {
+void ObsInterface::getSourcePos(std::string name, vec2* pos, vec2* size, vec2* scale) 
+{
+  blog(LOG_INFO, "ObsInterface::getSourcePos called");
+
+  obs_source_t *src = obs_get_source_by_name(name.c_str());
+  obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
+
+  if (!src) {
+    blog(LOG_ERROR, "Did not find source for video  ");
+    return;
+  }
+
+  if (!item) {
+    blog(LOG_ERROR, "Did not find scene item for video source");
+    return;
+  }
+
+  obs_sceneitem_get_pos(item, pos);
+  obs_sceneitem_get_scale(item, scale);
+
+  // Pre-scaled sizes.
+  size->x = obs_source_get_width(src);
+  size->y = obs_source_get_height(src);
+
+  blog(LOG_INFO, "ObsInterface::getSourcePos exited");
+}
+
+  if (!item) {
+    blog(LOG_ERROR, "Did not find scene item for video source");
+    return;
+  }
+
+  struct vec2 pos = { (float)x, (float)y };
+  obs_sceneitem_set_pos(item, &pos);
+
+  struct vec2 scalep = { scale, scale };
+  obs_sceneitem_set_scale(item, &scalep);
+}
+void ObsInterface::setSourcePos(int x, int y, float scale) {
   blog(LOG_INFO, "ObsInterface::moveSource called at (%d, %d)", x, y);
   obs_sceneitem_t *item = obs_scene_find_source(scene, "video_source");
 

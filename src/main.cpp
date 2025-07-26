@@ -157,22 +157,69 @@ Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-Napi::Value ObsUpdateSourcePos(const Napi::CallbackInfo& info) {
+Napi::Value ObsGetSourcePos(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsUpdateSource called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
   }
 
-  bool valid = info.Length() == 3 &&
-    info[0].IsNumber() && // X position (px)
-    info[1].IsNumber() && // Y position (px)
-    info[2].IsNumber();   // Scale (multiplier)
+  bool valid = info.Length() == 1 && info[0].IsString();
 
-  int x = info[0].As<Napi::Number>().Int32Value();
-  int y = info[1].As<Napi::Number>().Int32Value();
-  float scale = info[2].As<Napi::Number>().FloatValue();
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsGetSourcePos").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
 
-  obs->updateSourcePos(x, y, scale);
+  std::string name = info[0].As<Napi::String>().Utf8Value();
+
+  vec2 pos; vec2 size; vec2 scale;
+  obs->getSourcePos(name, &pos, &size, &scale);
+
+  Napi::Object result = Napi::Object::New(info.Env());
+  result.Set("x", Napi::Number::New(info.Env(), pos.x));
+  result.Set("y", Napi::Number::New(info.Env(), pos.y));
+  result.Set("width", Napi::Number::New(info.Env(), size.x));
+  result.Set("height", Napi::Number::New(info.Env(), size.y));
+  result.Set("scaleX", Napi::Number::New(info.Env(), scale.x));
+  result.Set("scaleY", Napi::Number::New(info.Env(), scale.y));
+  return result;
+}
+
+Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsUpdateSource called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 6 &&
+    info[0].IsString() && // Source name
+    info[1].IsNumber() && // X position (px)
+    info[2].IsNumber() && // Y position (px)
+    info[3].IsNumber() && // Width (px)
+    info[4].IsNumber() && // Height (px)
+    info[5].IsNumber() && // Scale factor (X)
+    info[6].IsNumber();   // Scale factor (Y)
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetSourcePos").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  std::string name = info[0].As<Napi::String>().Utf8Value();
+
+  float x = info[1].As<Napi::Number>().FloatValue();
+  float y = info[2].As<Napi::Number>().FloatValue();
+  vec2 pos = { x, y };
+
+  float width = info[3].As<Napi::Number>().FloatValue();
+  float height = info[4].As<Napi::Number>().FloatValue();
+  vec2 size = { width, height };
+
+  float scaleX = info[5].As<Napi::Number>().FloatValue();
+  float scaleY = info[6].As<Napi::Number>().FloatValue();
+  vec2 scale = { scaleX, scaleY };
+
+  obs->setSourcePos(name, &pos, &size, &scale);
   return info.Env().Undefined();
 }
 
@@ -185,7 +232,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("StopRecording", Napi::Function::New(env, ObsStopRecording));
   exports.Set("GetLastRecording", Napi::Function::New(env, ObsGetLastRecording));
 
-  exports.Set("UpdateSourcePos", Napi::Function::New(env, ObsUpdateSourcePos));
+  exports.Set("GetSourcePos", Napi::Function::New(env, ObsGetSourcePos));
+  exports.Set("SetSourcePos", Napi::Function::New(env, ObsSetSourcePos));
 
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
