@@ -494,15 +494,15 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   gs_matrix_identity();
   gs_matrix_translate3f(200.0f, 200.0f, 50.0f); // Z = 50
   gs_matrix_scale3f(100.0f, 100.0f, 1.0f);
-  gs_draw_sprite(nullptr, 0, 0, 0);
+  gs_draw_sprite(nullptr, 100, 100, 0);
   gs_matrix_pop();
 
   gs_technique_end_pass(solid_tech);
   gs_technique_end(solid_tech);
 
   // Finally, draw the OBS scene texture
-  //obs_render_main_texture();
-  blog(LOG_INFO, "draw_callback: %dx%d", cx, cy);
+  // obs_render_main_texture();
+  // blog(LOG_INFO, "draw_callback: %dx%d", cx, cy);
 }
 
 void ObsInterface::initPreview(HWND parent) {
