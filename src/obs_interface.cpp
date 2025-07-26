@@ -508,92 +508,62 @@ static vec4 ConvertColorToVec4(uint32_t color)
 	vec4 m_resizeOuterColorVec4 = ConvertColorToVec4(m_resizeOuterColor);
 	vec4 m_resizeInnerColorVec4 = ConvertColorToVec4(m_resizeInnerColor);
 	vec4 m_rotationHandleColorVec4 = ConvertColorToVec4(m_rotationHandleColor);
+  
 
+// Helper to draw rectangle outline with 4 lines using GS lines primitive
+void draw_rectangle_outline(float x1, float y1, float x2, float y2) {
+    // Vertex format: position (vec3), color (uint32)
+    struct vertex {
+        float x, y, z;
+        uint32_t color;
+    };
 
-void draw_outline(const matrix4 &mtx, const obs_sceneitem_crop &crop, const vec2 &boxScale, gs_eparam_t *color)
-{
-	gs_matrix_push();
-	gs_matrix_mul(&mtx);
+    const uint32_t white = 0xFFFFFFFF;
 
-	// if (crop.left) {
-	// 	gs_effect_set_vec4(color, &m_cropOutlineColorVec4);
-	// 	DrawCropOutline(0.0f, 0.0f, 0.0f, 1.0f, boxScale);
-	// } else {
-	// 	gs_effect_set_vec4(color, &m_outlineColorVec4);
-	// 	DrawSolidOutline(m_leftSolidOutline.get());
-	// }
-	// if (crop.top) {
-	// 	gs_effect_set_vec4(color, &m_cropOutlineColorVec4);
-	// 	DrawCropOutline(0.0f, 0.0f, 1.0f, 0.0f, boxScale);
-	// } else {
-	// 	gs_effect_set_vec4(color, &m_outlineColorVec4);
-	// 	DrawSolidOutline(m_topSolidOutline.get());
-	// }
-	// if (crop.right) {
-	// 	gs_effect_set_vec4(color, &m_cropOutlineColorVec4);
-	// 	DrawCropOutline(1.0f, 0.0f, 1.0f, 1.0f, boxScale);
-	// } else {
-	// 	gs_effect_set_vec4(color, &m_outlineColorVec4);
-	// 	DrawSolidOutline(m_rightSolidOutline.get());
-	// }
-	// if (crop.bottom) {
-	// 	gs_effect_set_vec4(color, &m_cropOutlineColorVec4);
-	// 	DrawCropOutline(0.0f, 1.0f, 1.0f, 1.0f, boxScale);
-	// } else {
-	// 	gs_effect_set_vec4(color, &m_outlineColorVec4);
-	// 	DrawSolidOutline(m_bottomSolidOutline.get());
-	// }
+    vertex verts[5] = {
+        {x1, y1, 0.0f, white},  // top-left
+        {x2, y1, 0.0f, white},  // top-right
+        {x2, y2, 0.0f, white},  // bottom-right
+        {x1, y2, 0.0f, white},  // bottom-left
+        {x1, y1, 0.0f, white}   // back to top-left to close the loop
+    };
 
-	gs_matrix_pop();
-}
+    gs_vertbuffer_t *vb = gs_vertexbuffer_create((gs_vb_data *)verts, 5);
+    if (!vb)
+        return;
 
-inline bool CloseFloat(float a, float b, float epsilon = 0.01)
-{
-	return abs(a - b) <= epsilon;
+    // Draw line strip (connected lines)
+    gs_draw(GS_LINESTRIP, 0, 5);
+
+    gs_vertexbuffer_destroy(vb);
 }
 
 bool draw_source_ui(obs_scene_t *scene, obs_sceneitem_t *item, void *param) {
-  matrix4 boxTransform;
-	matrix4 invBoxTransform;
-	obs_sceneitem_get_box_transform(item, &boxTransform);
-	matrix4_inv(&invBoxTransform, &boxTransform);
+      // Get the source and its bounds in the scene
+    obs_source_t *source = obs_sceneitem_get_source(item);
 
-	{
-		vec3 bounds[] = {
-			{{{0.f, 0.f, 0.f}}},
-			{{{1.f, 0.f, 0.f}}},
-			{{{0.f, 1.f, 0.f}}},
-			{{{1.f, 1.f, 0.f}}},
-		};
-		bool visible = std::all_of(std::begin(bounds), std::end(bounds), [&](const vec3 &b) {
-			vec3 pos;
-			vec3_transform(&pos, &b, &boxTransform);
-			vec3_transform(&pos, &pos, &invBoxTransform);
-			return CloseFloat(pos.x, b.x) && CloseFloat(pos.y, b.y);
-		});
+    // Get the transform (position, scale, rotation)
+    struct vec2 pos, scale;
+    float rot;
+    obs_sceneitem_get_pos(item, &pos);
+    obs_sceneitem_get_scale(item, &scale);
+    rot = obs_sceneitem_get_rot(item);
 
-		if (!visible)
-			return true;
-	}
+    // Get source size
+    uint32_t width = obs_source_get_width(source);
+    uint32_t height = obs_source_get_height(source);
 
-  obs_sceneitem_crop crop;
-	obs_sceneitem_get_crop(item, &crop);
+    // Calculate box corners in scene space (ignoring rotation here for simplicity)
+    float x1 = pos.x;
+    float y1 = pos.y;
+    float x2 = x1 + width * scale.x;
+    float y2 = y1 + height * scale.y;
 
-  matrix4 curTransform;
-	gs_matrix_get(&curTransform);
+    // Draw a rectangle outline (using a helper function)
+    draw_rectangle_outline(x1, y1, x2, y2);
 
-  vec2 boxScale;
-	obs_sceneitem_get_box_scale(item, &boxScale);
-
-	boxScale.x *= curTransform.x.x;
-	boxScale.y *= curTransform.y.y;
-
-  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-	gs_eparam_t *solid_color = gs_effect_get_param_by_name(solid, "color");
-
-  draw_outline(boxTransform, crop, boxScale, solid_color);
-
-	return true;
+    obs_source_release(source);
+    return true;  // continue enumeration
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
