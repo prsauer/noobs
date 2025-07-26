@@ -467,7 +467,10 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
 
     obs_sceneitem_get_pos(item, &pos);
     obs_sceneitem_get_scale(item, &scale);
-    obs_sceneitem_get_bounds(item, &size);
+
+    obs_source_t *src = obs_sceneitem_get_source(item);
+    size.x = obs_source_get_width(src);
+    size.y = obs_source_get_height(src);
 
     // Calculate actual size with scaling
     float width = size.x * scale.x;
