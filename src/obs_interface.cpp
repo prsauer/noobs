@@ -158,7 +158,13 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   }
 
   obs_add_data_path(dp.c_str());  // This is deprecated in libobs but it works for now.
-  std::vector<std::string> modules = { "obs-x264.dll", "obs-ffmpeg.dll", "win-capture.dll" };
+
+  std::vector<std::string> modules = { 
+    "obs-x264.dll", 
+    "obs-ffmpeg.dll",
+    "win-capture.dll", // Required for basically all forms of capture on Windows.
+    "image-source.dll" // Required for image sources.
+  };
 
   for (const auto& module : modules) {
     std::string path = pluginPath + "/" + module;
@@ -178,13 +184,8 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   blog(LOG_INFO, "Exit init_obs");
 }
 
-void ObsInterface::configure_output(const std::string& recordingPath) {
+void ObsInterface::create_output(const std::string& recordingPath) {
   blog(LOG_INFO, "Create output");
-
-  if (output && obs_output_active(output)) {
-    blog(LOG_ERROR, "Tried to recreate active output");
-    throw std::runtime_error("Failed to create output!");
-  }
 
   if (output) {
     blog(LOG_DEBUG, "Releasing output");
@@ -210,6 +211,32 @@ void ObsInterface::configure_output(const std::string& recordingPath) {
 
   // Add the signal handler callback.
   create_signal_handlers(output);
+}
+
+void ObsInterface::updateRecordingDir(const std::string& recordingPath) {
+  blog(LOG_INFO, "Updating recording directory");
+
+  if (!output) {
+    blog(LOG_ERROR, "No output to update recording directory");
+    throw std::runtime_error("Output not initialized");
+  }
+
+  // check its not active
+  if (obs_output_active(output)) {
+    blog(LOG_ERROR, "Output is active, cannot update recording path");
+    throw std::runtime_error("Output is active, cannot update recording path");
+  }
+
+  obs_data_t *settings = obs_output_get_settings(output);
+
+  if (!settings) {
+    blog(LOG_ERROR, "Failed to get output settings");
+    throw std::runtime_error("Failed to get output settings");
+  }
+
+  obs_data_set_string(settings, "directory", recordingPath.c_str());
+  obs_output_update(output, settings);
+  obs_data_release(settings);
 }
 
 void ObsInterface::configure_video_encoder() {
@@ -278,15 +305,8 @@ void ObsInterface::configure_audio_encoder() {
   obs_encoder_set_audio(audio_encoder, obs_get_audio());
 }
 
-void ObsInterface::configure_scene() {
-  blog(LOG_INFO, "Configure scene");
-
-  if (scene) {
-    blog(LOG_DEBUG, "Releasing scene");
-    obs_scene_release(scene);
-    scene = nullptr;
-  }
-
+void ObsInterface::create_scene() {
+  blog(LOG_INFO, "Create scene");
   scene = obs_scene_create("WCR Scene");
 
   if (!scene) {
@@ -302,24 +322,103 @@ void ObsInterface::configure_scene() {
   }
 
   obs_set_output_source(0, scene_source); // 0 = video track
-  obs_scene_add(scene, video_source);
+  // obs_scene_add(scene, video_source);
 }
 
-void ObsInterface::configure_video_source() {
-  blog(LOG_INFO, "Create monitor capture source");
+// void ObsInterface::configure_video_source() {
+//   blog(LOG_INFO, "Create monitor capture source");
 
-  // Create settings for monitor capture
-  obs_data_t *monitor_settings = obs_data_create();
-  obs_data_set_int(monitor_settings, "monitor", 0);  // Monitor 0
-  obs_data_set_bool(monitor_settings, "capture_cursor", true);
+//   // Create settings for monitor capture
+//   obs_data_t *monitor_settings = obs_data_create();
+//   obs_data_set_int(monitor_settings, "monitor", 0);  // Monitor 0
+//   obs_data_set_bool(monitor_settings, "capture_cursor", true);
 
-  video_source = obs_source_create("monitor_capture", "video_source", monitor_settings, NULL);
-  obs_data_release(monitor_settings);
+//   video_source = obs_source_create("monitor_capture", "video_source", monitor_settings, NULL);
+//   obs_data_release(monitor_settings);
 
-  if (!video_source) {
-    blog(LOG_ERROR, "Failed to create video source!");
-    throw std::runtime_error("Failed to create video source!");
+//   if (!video_source) {
+//     blog(LOG_ERROR, "Failed to create video source!");
+//     throw std::runtime_error("Failed to create video source!");
+//   }
+// }
+
+void ObsInterface::createSource(std::string name, std::string type) {
+  blog(LOG_INFO, "Create source: %s of type %s", name.c_str(), type.c_str());
+
+  obs_source_t *source = obs_source_create(
+    type.c_str(), 
+    name.c_str(), 
+    NULL, // No settings.
+    NULL  // No hotkey data.
+  );
+
+  if (!source) {
+    blog(LOG_ERROR, "Failed to create source: %s", name.c_str());
+    throw std::runtime_error("Failed to create source!");
   }
+}
+
+void ObsInterface::deleteSource(std::string name) {
+  blog(LOG_INFO, "Delete source: %s", name.c_str());
+  obs_source_t *source = obs_get_source_by_name(name.c_str());
+  
+  if (!source) {
+    blog(LOG_WARNING, "Source not found: %s", name.c_str());
+    return; // Source not found, nothing to delete.
+  }
+
+  obs_source_release(source);
+  blog(LOG_INFO, "Source deleted: %s", name.c_str());
+}
+
+obs_data_t* ObsInterface::getSourceSettings(std::string name) {
+  blog(LOG_INFO, "Get source settings for: %s", name.c_str());
+  obs_source_t *source = obs_get_source_by_name(name.c_str());
+  
+  if (!source) {
+    blog(LOG_ERROR, "Source not found: %s", name.c_str());
+    throw std::runtime_error("Source not found!");
+  }
+
+  obs_data_t *settings = obs_source_get_settings(source);
+  
+  if (!settings) {
+    blog(LOG_ERROR, "Failed to get settings for source: %s", name.c_str());
+    throw std::runtime_error("Failed to get source settings!");
+  }
+
+  return settings;
+}
+
+void ObsInterface::setSourceSettings(std::string name, obs_data_t* settings) {
+  blog(LOG_INFO, "Set source settings for: %s", name.c_str());
+  obs_source_t *source = obs_get_source_by_name(name.c_str());
+
+  if (!source) {
+    blog(LOG_ERROR, "Source not found: %s", name.c_str());
+    throw std::runtime_error("Source not found!");
+  }
+
+  obs_source_update(source, settings);
+}
+
+obs_properties_t* ObsInterface::getSourceProperties(std::string name) {
+  blog(LOG_INFO, "Get source properties for: %s", name.c_str());
+  obs_source_t *source = obs_get_source_by_name(name.c_str());
+
+  if (!source) {
+    blog(LOG_ERROR, "Source not found: %s", name.c_str());
+    throw std::runtime_error("Source not found!");
+  }
+
+  obs_properties_t *props = obs_source_properties(source);
+
+  if (!props) {
+    blog(LOG_ERROR, "Failed to get properties for source: %s", name.c_str());
+    throw std::runtime_error("Failed to get source properties!");
+  }
+
+  return props;
 }
 
 void call_jscb(Napi::Env env, Napi::Function cb, SignalData* sd) {
@@ -483,11 +582,11 @@ ObsInterface::ObsInterface(
   jscb = cb;
 
   // Create the resources we rely on.
-  configure_output(recordingPath);
+  create_output(recordingPath);
+  create_scene();
+
   configure_video_encoder();
   configure_audio_encoder();
-  configure_video_source();
-  configure_scene();
 }
 
 ObsInterface::~ObsInterface() {
@@ -611,6 +710,41 @@ std::string ObsInterface::getLastRecording() {
   
   blog(LOG_INFO, "return path: %s", path.c_str());
   return path;
+}
+
+void ObsInterface::addSourceToScene(std::string name) {
+  blog(LOG_INFO, "ObsInterface::addSourceToScene called for source: %s", name.c_str());
+
+  obs_source_t *src = obs_get_source_by_name(name.c_str());
+  
+  if (!src) {
+    blog(LOG_WARNING, "Did not find source for video source: %s", name.c_str());
+    return;
+  }
+
+  obs_sceneitem_t *item = obs_scene_add(scene, src);
+  
+  if (!item) {
+    blog(LOG_ERROR, "Failed to add source to scene: %s", name.c_str());
+    obs_source_release(src);
+    return;
+  }
+  
+  blog(LOG_INFO, "ObsInterface::addSourceToScene exited");
+}
+
+void ObsInterface::removeSourceFromScene(std::string name) {
+  blog(LOG_INFO, "ObsInterface::removeSourceFromScene called for source: %s", name.c_str());
+
+  obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
+  
+  if (!item) {
+    blog(LOG_WARNING, "Did not find scene item for video source: %s", name.c_str());
+    return;
+  }
+
+  obs_sceneitem_remove(item);
+  blog(LOG_INFO, "ObsInterface::removeSourceFromScene exited");
 }
 
 void ObsInterface::getSourcePos(std::string name, vec2* pos, vec2* size, vec2* scale) 

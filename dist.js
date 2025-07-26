@@ -35,7 +35,7 @@ fs.readdirSync(binDir).filter(file => file.endsWith('.dll')).forEach((file) => {
 // Copy the plugins we use.
 const pluginDir = path.resolve(__dirname, 'bin', 'plugins');
 
-const plugins = ["obs-x264.dll", "obs-ffmpeg.dll", "win-capture.dll"];
+const plugins = ["obs-x264.dll", "obs-ffmpeg.dll", "win-capture.dll", "image-source.dll"];
 
 plugins.forEach((file) => {
   const srcPath = path.join(pluginDir, file);

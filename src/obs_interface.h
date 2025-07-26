@@ -10,26 +10,35 @@ struct SignalData {
 class ObsInterface {
   public:
     ObsInterface(
-      const std::string& pluginPath,    // where to look for plugins
-      const std::string& logPath,       // where to write logs to
-      const std::string& dataPath,      // where to look for effects
-      const std::string& recordingPath, // where to save recordings
+      const std::string& pluginPath,    // Where to look for plugins
+      const std::string& logPath,       // Where to write logs to
+      const std::string& dataPath,      // Where to look for effects
+      const std::string& recordingPath, // Where to save recordings
       Napi::ThreadSafeFunction cb       // JavaScript callback
     );
 
     ~ObsInterface();
 
-    void startBuffering();
-    void startRecording(int offset);
-    void stopRecording();
-    std::string getLastRecording();
+    void startBuffering();             // Start buffering to memory.
+    void startRecording(int offset);   // Convert the active buffered recording to a real one.
+    void stopRecording();              // Stop the recording.
+    std::string getLastRecording();    // Get the last recorded file path.
+    void updateRecordingDir(const std::string& recordingPath); // Output must not be active when calling this.
 
+    void createSource(std::string name, std::string type);          // Create a new source
+    void deleteSource(std::string name);                            // Release a source.
+    obs_data_t* getSourceSettings(std::string name);                // Get the current settings.
+    void setSourceSettings(std::string name, obs_data_t* settings); // Set settings.
+    obs_properties_t* getSourceProperties(std::string name);        // Get the settings schema.
+
+    void addSourceToScene(std::string name); // Add source to scene.
+    void removeSourceFromScene(std::string name); // Remove source from scene.
     void getSourcePos(std::string name, vec2* pos, vec2* size, vec2* scale); // Size is returned to allow clients to calculate scale.
     void setSourcePos(std::string name, vec2* pos, vec2* scale); // Size does not get set here because it's set by the source itself.
 
     void initPreview(HWND parent); // Must call this before showPreview to setup resources.
     void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.
-    void hidePreview();
+    void hidePreview(); // Hide the preview display.
 
     std::vector<std::string> get_available_video_encoders();
 
@@ -68,9 +77,9 @@ class ObsInterface {
     void list_input_types();
     void list_output_types();
 
-    void configure_output(const std::string& recordingPath);
+    void create_scene();
+    void create_output(const std::string& recordingPath);
+
     void configure_video_encoder();
     void configure_audio_encoder();
-    void configure_scene();
-    void configure_video_source();
 };
