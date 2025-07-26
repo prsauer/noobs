@@ -18,7 +18,7 @@ async function test() {
   console.log("Data path:", dataPath);
   console.log("Recording path:", recordingPath);
 
-  noobs.Init(pluginPath, logPath, dataPath, recordingPath, cb, false);
+  noobs.Init(pluginPath, logPath, dataPath, recordingPath, cb, true);
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   console.log("Creating source...");
@@ -37,12 +37,10 @@ async function test() {
 
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-
-
   for (let i = 0; i < 2; i++) {
     console.log("Test Recording Loop:", i + 1);
-    // noobs.StartBuffer();
-    // await new Promise(resolve => setTimeout(resolve, 5000));
+    noobs.StartBuffer();
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     noobs.StartRecording(1);
     await new Promise(resolve => setTimeout(resolve, 5000));
