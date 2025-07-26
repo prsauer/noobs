@@ -6,6 +6,12 @@
 #include "obs_interface.h"
 #include <vector>
 #include <thread>
+#include <iostream>
+#include <map>
+#include <string>
+#include <graphics/matrix4.h>
+#include <graphics/vec4.h>
+#include <util/platform.h>
 
 std::vector<std::string> ObsInterface::get_available_video_encoders()
 {
@@ -474,34 +480,154 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
   signal_handler_connect(sh, "saved", output_signal_handler_saved,  this);
 }
 
+
+static vec4 ConvertColorToVec4(uint32_t color)
+{
+	vec4 colorVec4;
+	vec4_set(&colorVec4, static_cast<float>(color & 0xFF) / 255.0f, static_cast<float>((color & 0xFF00) >> 8) / 255.0f,
+		 static_cast<float>((color & 0xFF0000) >> 16) / 255.0f, static_cast<float>((color & 0xFF000000) >> 24) / 255.0f);
+	return colorVec4;
+}
+
+	uint32_t m_paddingSize = 10;
+	uint32_t m_paddingColor = 0xFF222222;
+	/// Other
+	uint32_t m_backgroundColor = 0xFF000000;     // 0, 0, 0
+	uint32_t m_outlineColor = 0xFFA8E61A;        // 26, 230, 168
+	uint32_t m_cropOutlineColor = 0xFFA8E61A;    // 26, 230, 168
+	uint32_t m_guidelineColor = 0xFFA8E61A;      // 26, 230, 168
+	uint32_t m_resizeOuterColor = 0xFF7E7E7E;    // 126, 126, 126
+	uint32_t m_resizeInnerColor = 0xFFFFFFFF;    // 255, 255, 255
+	uint32_t m_rotationHandleColor = 0xFFA8E61A; // 26, 230, 168
+
+	vec4 m_paddingColorVec4 = ConvertColorToVec4(m_paddingColor);
+	vec4 m_backgroundColorVec4 = ConvertColorToVec4(m_backgroundColor);
+	vec4 m_outlineColorVec4 = ConvertColorToVec4(m_outlineColor);
+	vec4 m_cropOutlineColorVec4 = ConvertColorToVec4(m_cropOutlineColor);
+	vec4 m_guidelineColorVec4 = ConvertColorToVec4(m_guidelineColor);
+	vec4 m_resizeOuterColorVec4 = ConvertColorToVec4(m_resizeOuterColor);
+	vec4 m_resizeInnerColorVec4 = ConvertColorToVec4(m_resizeInnerColor);
+	vec4 m_rotationHandleColorVec4 = ConvertColorToVec4(m_rotationHandleColor);
+
+
+void draw_outline(const matrix4 &mtx, const obs_sceneitem_crop &crop, const vec2 &boxScale, gs_eparam_t *color)
+{
+	gs_matrix_push();
+	gs_matrix_mul(&mtx);
+
+	// if (crop.left) {
+	// 	gs_effect_set_vec4(color, &m_cropOutlineColorVec4);
+	// 	DrawCropOutline(0.0f, 0.0f, 0.0f, 1.0f, boxScale);
+	// } else {
+	// 	gs_effect_set_vec4(color, &m_outlineColorVec4);
+	// 	DrawSolidOutline(m_leftSolidOutline.get());
+	// }
+	// if (crop.top) {
+	// 	gs_effect_set_vec4(color, &m_cropOutlineColorVec4);
+	// 	DrawCropOutline(0.0f, 0.0f, 1.0f, 0.0f, boxScale);
+	// } else {
+	// 	gs_effect_set_vec4(color, &m_outlineColorVec4);
+	// 	DrawSolidOutline(m_topSolidOutline.get());
+	// }
+	// if (crop.right) {
+	// 	gs_effect_set_vec4(color, &m_cropOutlineColorVec4);
+	// 	DrawCropOutline(1.0f, 0.0f, 1.0f, 1.0f, boxScale);
+	// } else {
+	// 	gs_effect_set_vec4(color, &m_outlineColorVec4);
+	// 	DrawSolidOutline(m_rightSolidOutline.get());
+	// }
+	// if (crop.bottom) {
+	// 	gs_effect_set_vec4(color, &m_cropOutlineColorVec4);
+	// 	DrawCropOutline(0.0f, 1.0f, 1.0f, 1.0f, boxScale);
+	// } else {
+	// 	gs_effect_set_vec4(color, &m_outlineColorVec4);
+	// 	DrawSolidOutline(m_bottomSolidOutline.get());
+	// }
+
+	gs_matrix_pop();
+}
+
+inline bool CloseFloat(float a, float b, float epsilon = 0.01)
+{
+	return abs(a - b) <= epsilon;
+}
+
+bool draw_source_ui(obs_scene_t *scene, obs_sceneitem_t *item, void *param) {
+  matrix4 boxTransform;
+	matrix4 invBoxTransform;
+	obs_sceneitem_get_box_transform(item, &boxTransform);
+	matrix4_inv(&invBoxTransform, &boxTransform);
+
+	{
+		vec3 bounds[] = {
+			{{{0.f, 0.f, 0.f}}},
+			{{{1.f, 0.f, 0.f}}},
+			{{{0.f, 1.f, 0.f}}},
+			{{{1.f, 1.f, 0.f}}},
+		};
+		bool visible = std::all_of(std::begin(bounds), std::end(bounds), [&](const vec3 &b) {
+			vec3 pos;
+			vec3_transform(&pos, &b, &boxTransform);
+			vec3_transform(&pos, &pos, &invBoxTransform);
+			return CloseFloat(pos.x, b.x) && CloseFloat(pos.y, b.y);
+		});
+
+		if (!visible)
+			return true;
+	}
+
+  obs_sceneitem_crop crop;
+	obs_sceneitem_get_crop(item, &crop);
+
+  matrix4 curTransform;
+	gs_matrix_get(&curTransform);
+
+  vec2 boxScale;
+	obs_sceneitem_get_box_scale(item, &boxScale);
+
+	boxScale.x *= curTransform.x.x;
+	boxScale.y *= curTransform.y.y;
+
+  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+	gs_eparam_t *solid_color = gs_effect_get_param_by_name(solid, "color");
+
+  draw_outline(boxTransform, crop, boxScale, solid_color);
+
+	return true;
+}
+
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   // Initially, draw the OBS scene texture
   obs_render_main_texture();
 
-  // Set projection and viewport
-  gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
-  gs_set_viewport(0, 0, cx, cy);
+  // // Set projection and viewport
+  // gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
+  // gs_set_viewport(0, 0, cx, cy);
 
-  // Solid effect
-  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-  gs_eparam_t *solid_color = gs_effect_get_param_by_name(solid, "color");
-  gs_technique_t *solid_tech = gs_effect_get_technique(solid, "Solid");
+  // // Solid effect
+  // gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+  // gs_eparam_t *solid_color = gs_effect_get_param_by_name(solid, "color");
+  // gs_technique_t *solid_tech = gs_effect_get_technique(solid, "Solid");
 
-  vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
-  gs_effect_set_vec4(solid_color, &green);
+  // vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+  // gs_effect_set_vec4(solid_color, &green);
 
-  gs_technique_begin(solid_tech);
-  gs_technique_begin_pass(solid_tech, 0);
+  // gs_technique_begin(solid_tech);
+  // gs_technique_begin_pass(solid_tech, 0);
 
-  gs_matrix_push();
-  gs_matrix_identity();
-  gs_matrix_translate3f(200.0f, 200.0f, 50.0f); // Z = 50
-  gs_matrix_scale3f(100.0f, 100.0f, 1.0f);
-  gs_draw_sprite(nullptr, 0, 100, 100);
-  gs_matrix_pop();
+  // gs_matrix_push();
+  // gs_matrix_identity();
+  // gs_matrix_translate3f(200.0f, 200.0f, 50.0f); // Z = 50
+  // gs_matrix_scale3f(100.0f, 100.0f, 1.0f);
+  // gs_draw_sprite(nullptr, 0, 100, 100);
+  // gs_matrix_pop();
 
-  gs_technique_end_pass(solid_tech);
-  gs_technique_end(solid_tech);
+  obs_scene_t* scene = obs_get_scene_by_name("WCR Scene");
+  obs_scene_enum_items(scene, draw_source_ui, NULL);
+  obs_scene_release(scene);
+
+  // gs_technique_end_pass(solid_tech);
+  // gs_technique_end(solid_tech);
 }
 
 void ObsInterface::initPreview(HWND parent) {
