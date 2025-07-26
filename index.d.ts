@@ -174,10 +174,9 @@ interface Noobs {
   // Scene management functions
   AddSourceToScene(sourceName: string): void;
   RemoveSourceFromScene(sourceName: string): void;
-  
-  // Source positioning functions
   GetSourcePos(name: string): SceneItemPosition & SourceDimensions;
   SetSourcePos(name: string, pos: SceneItemPosition): void;
+  // TODO: Cropping?
 
   // Preview functions
   InitPreview(hwnd: Buffer): void;

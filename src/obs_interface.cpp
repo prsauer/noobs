@@ -723,6 +723,8 @@ void ObsInterface::addSourceToScene(std::string name) {
     return;
   }
 
+  // TODO refuse to add twice?
+
   obs_sceneitem_t *item = obs_scene_add(scene, src);
   
   if (!item) {
