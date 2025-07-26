@@ -621,12 +621,12 @@ void ObsInterface::getSourcePos(std::string name, vec2* pos, vec2* size, vec2* s
   obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
 
   if (!src) {
-    blog(LOG_ERROR, "Did not find source for video  ");
+    blog(LOG_WARNING, "Did not find source for video source: %s", name);
     return;
   }
 
   if (!item) {
-    blog(LOG_ERROR, "Did not find scene item for video source");
+    blog(LOG_WARNING, "Did not find scene item for video source: %s", name);
     return;
   }
 
@@ -645,7 +645,7 @@ void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale) {
   obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
 
   if (!item) {
-    blog(LOG_ERROR, "Did not find scene item for video source");
+    blog(LOG_WARNING, "Did not find scene item for video source: %s", name);
     return;
   }
 

@@ -193,10 +193,7 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
 
   bool valid = info.Length() == 5 &&
     info[0].IsString() && // Source name
-    info[1].IsNumber() && // X position (px)
-    info[2].IsNumber() && // Y position (px)
-    info[3].IsNumber() && // Scale factor (X)
-    info[4].IsNumber();   // Scale factor (Y)
+    info[1].IsObject();   // Position definition.
 
   if (!valid) {
     Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetSourcePos").ThrowAsJavaScriptException();
@@ -205,12 +202,13 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
 
   std::string name = info[0].As<Napi::String>().Utf8Value();
 
-  float x = info[1].As<Napi::Number>().FloatValue();
-  float y = info[2].As<Napi::Number>().FloatValue();
+  Napi::Object position = info[1].As<Napi::Object>();
+  float x = position.Get("x").As<Napi::Number>().FloatValue();
+  float y = position.Get("y").As<Napi::Number>().FloatValue();
   vec2 pos = { x, y };
 
-  float scaleX = info[3].As<Napi::Number>().FloatValue();
-  float scaleY = info[4].As<Napi::Number>().FloatValue();
+  float scaleX = position.Get("scaleX").As<Napi::Number>().FloatValue();
+  float scaleY = position.Get("scaleY").As<Napi::Number>().FloatValue();
   vec2 scale = { scaleX, scaleY };
 
   obs->setSourcePos(name, &pos, &scale);
