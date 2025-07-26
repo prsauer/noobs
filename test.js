@@ -2,19 +2,6 @@ const noobs = require('./index.js');
 const path = require('path');
 
 async function test() {
-  console.log('Uptime:', noobs.getUptime());
-
-  console.log("Listing processes...");
-  
-  try {
-    const processes = await noobs.listProcesses();
-    console.log(`Found ${processes.length} processes`);
-    console.log('First few processes:', processes.slice(0, 5));
-  } catch (error) {
-    console.error('Error:', error);
-  }
-
-
   console.log("Starting obs...");
 
   const cb = (msg) => {

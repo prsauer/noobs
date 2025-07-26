@@ -205,16 +205,16 @@ obs_output_t* ObsInterface::create_output(const std::string& recordingPath) {
     throw std::runtime_error("Failed to create video encoder!");
   }
 
-  // blog(LOG_INFO, "Set video encoder settings");
-  // obs_data_t* amf_settings = obs_data_create();
-  // obs_data_set_string(amf_settings, "preset", "speed");  // Faster preset
-  // //obs_data_set_int(amf_settings, "bitrate", 2500);
-  // obs_data_set_string(amf_settings, "rate_control", "CQP");
-  // obs_data_set_int(amf_settings, "cqp", 30);
-  // obs_data_set_string(amf_settings, "profile", "main");
-  // obs_data_set_int(amf_settings, "keyint_sec", 1); // Set keyframe interval to 1 second
-  // obs_encoder_update(video_encoder, amf_settings);
-  // obs_data_release(amf_settings);
+  blog(LOG_INFO, "Set video encoder settings");
+  obs_data_t* venc_settings = obs_data_create();
+  obs_data_set_string(venc_settings, "preset", "speed");  // Faster preset
+  //obs_data_set_int(amf_settings, "bitrate", 2500);
+  obs_data_set_string(venc_settings, "rate_control", "CRF");
+  obs_data_set_int(venc_settings, "crf", 30);
+  obs_data_set_string(venc_settings, "profile", "main");
+  obs_data_set_int(venc_settings, "keyint_sec", 1); // Set keyframe interval to 1 second
+  obs_encoder_update(video_encoder, venc_settings);
+  obs_data_release(venc_settings);
 
   blog(LOG_INFO, "Create aenc");
   audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "simple_aac", NULL, 0, NULL);
