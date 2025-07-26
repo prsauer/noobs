@@ -24,7 +24,7 @@ class ObsInterface {
     void startRecording(int offset);   // Convert the active buffered recording to a real one.
     void stopRecording();              // Stop the recording.
     std::string getLastRecording();    // Get the last recorded file path.
-    void updateRecordingDir(const std::string& recordingPath); // Output must not be active when calling this.
+    void setRecordingDir(const std::string& recordingPath); // Output must not be active when calling this.
 
     void createSource(std::string name, std::string type);          // Create a new source
     void deleteSource(std::string name);                            // Release a source.

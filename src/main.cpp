@@ -54,7 +54,7 @@ Napi::Value ObsSetRecordingDir(const Napi::CallbackInfo& info) {
   }
 
   std::string recordingPath = info[0].As<Napi::String>().Utf8Value();
-  obs->updateRecordingDir(recordingPath);
+  obs->setRecordingDir(recordingPath);
   return info.Env().Undefined();
 }
 

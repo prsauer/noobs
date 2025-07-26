@@ -238,8 +238,9 @@ void ObsInterface::create_output(const std::string& recordingPath, bool bufferin
   create_signal_handlers(output);
 }
 
-void ObsInterface::updateRecordingDir(const std::string& recordingPath) {
-  blog(LOG_INFO, "Updating recording directory");
+void ObsInterface::setRecordingDir(const std::string& recordingPath) {
+  blog(LOG_INFO, "Set recording directory");
+  // TODO make this work for file output also.
 
   if (!output) {
     blog(LOG_ERROR, "No output to update recording directory");
@@ -481,68 +482,60 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
 }
 
 bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
-    // Get the item position and size
-    vec2 pos; vec2 scale;
+  // Get the item position and size
+  vec2 pos; vec2 scale;
+  obs_sceneitem_get_pos(item, &pos);
+  obs_sceneitem_get_scale(item, &scale);
 
-    obs_sceneitem_get_pos(item, &pos);
-    obs_sceneitem_get_scale(item, &scale);
+  // Calculate actual size with scaling
+  obs_source_t *src = obs_sceneitem_get_source(item);
+  float width =  obs_source_get_width(src) * scale.x;
+  float height = obs_source_get_height(src) * scale.y;
 
-    obs_source_t *src = obs_sceneitem_get_source(item);
-    uint32_t sizex = obs_source_get_width(src);
-    uint32_t sizey = obs_source_get_height(src);
+  // Draw rectangle around the source using the position and size
+  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+  gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
+  gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
 
-    // Calculate actual size with scaling
-    float width = sizex * scale.x;
-    float height = sizey * scale.y;
+  vec4 col = {0.733f, 0.267f, 0.125f, 1.0f}; // #BB4420
+  gs_effect_set_vec4(color, &col);
 
-    // Draw rectangle around the source using the position and size
-    gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-    gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
-    gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
+  gs_technique_begin(tech);
+  gs_technique_begin_pass(tech, 0);
 
-    vec4 col = {0.733f, 0.267f, 0.125f, 1.0f}; // #BB4420
-    gs_effect_set_vec4(color, &col);
+  gs_matrix_push();
+  gs_matrix_identity();
 
-    gs_technique_begin(tech);
-    gs_technique_begin_pass(tech, 0);
+  // Top border
+  gs_matrix_push();
+  gs_matrix_translate3f(pos.x, pos.y, 0.0f);
+  gs_draw_sprite(nullptr, 0, width, 2.0f);
+  gs_matrix_pop();
 
-    gs_matrix_push();
-    gs_matrix_identity();
+  // Bottom border
+  gs_matrix_push();
+  gs_matrix_translate3f(pos.x, pos.y + height - 2.0f, 0.0f);
+  gs_draw_sprite(nullptr, 0, width, 2.0f);
+  gs_matrix_pop();
 
-    // Top border
-    gs_matrix_push();
-    gs_matrix_translate3f(pos.x, pos.y, 0.0f);
-    //gs_matrix_scale3f(width, 1.0f, 1.0f);
-    gs_draw_sprite(nullptr, 0, width, 2.0f);
-    gs_matrix_pop();
+  // Left border
+  gs_matrix_push();
+  gs_matrix_translate3f(pos.x, pos.y, 0.0f);
+  gs_draw_sprite(nullptr, 0, 2.0f, height);
+  gs_matrix_pop();
 
-    // Bottom border
-    gs_matrix_push();
-    gs_matrix_translate3f(pos.x, pos.y + height - 2.0f, 0.0f);
-    // gs_matrix_scale3f(width, 1.0f, 1.0f);
-    gs_draw_sprite(nullptr, 0, width, 2.0f);
-    gs_matrix_pop();
+  // Right border
+  gs_matrix_push();
+  gs_matrix_translate3f(pos.x + width - 2.0f, pos.y, 0.0f);
+  gs_draw_sprite(nullptr, 0, 2.0f, height);
+  gs_matrix_pop();
 
-    // Left border
-    gs_matrix_push();
-    gs_matrix_translate3f(pos.x, pos.y, 0.0f);
-    // gs_matrix_scale3f(1.0f, height, 1.0f);
-    gs_draw_sprite(nullptr, 0, 2.0f, height);
-    gs_matrix_pop();
+  gs_matrix_pop();
 
-    // Right border
-    gs_matrix_push();
-    gs_matrix_translate3f(pos.x + width - 2.0f, pos.y, 0.0f);
-    //  gs_matrix_scale3f(1.0f, height, 1.0f);
-    gs_draw_sprite(nullptr, 0, 2.0f, height);
-    gs_matrix_pop();
+  gs_technique_end_pass(tech);
+  gs_technique_end(tech);
 
-    gs_matrix_pop();
-
-    gs_technique_end_pass(tech);
-    gs_technique_end(tech);
-
-    return true;
+  return true;
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
