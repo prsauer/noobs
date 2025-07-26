@@ -6,11 +6,14 @@ export type Signal = {
 export type SceneItemPosition = {
   x: number;      // X position in pixels
   y: number;      // Y position in pixels
-  width: number;  // Width in pixels, before scaling
-  height: number; // Height in pixels, before scaling
   scaleX: number; // X scaling factor
   scaleY: number; // Y scaling factor
 };
+
+export type SourceDimensions = {
+  height: number; // Height in pixels, before scaling
+  width: number;  // Width in pixels, before scaling
+}
 
 interface Noobs {
   Init(
@@ -27,7 +30,7 @@ interface Noobs {
   StopRecording(): void;
   GetLastRecording(): string;
 
-  GetSourcePos(src: string): SceneItemPosition;
+  GetSourcePos(src: string): SceneItemPosition & SourceDimensions;
   SetSourcePos(src: string, pos: SceneItemPosition): void;
 
   InitPreview(hwnd: Buffer): void;
