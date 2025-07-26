@@ -492,11 +492,11 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
     gs_matrix_identity();
 
     // Top border
-    // gs_matrix_push();
-    // gs_matrix_translate3f(pos.x, pos.y, 0.0f);
-    // gs_matrix_scale3f(width, 1.0f, 1.0f);
-    // gs_draw_sprite(nullptr, 0, width, 1.0f);
-    // gs_matrix_pop();
+    gs_matrix_push();
+    gs_matrix_translate3f(pos.x, pos.y, 0.0f);
+    //gs_matrix_scale3f(width, 1.0f, 1.0f);
+    gs_draw_sprite(nullptr, 0, width, 1.0f);
+    gs_matrix_pop();
 
     // Bottom border
     gs_matrix_push();
