@@ -475,6 +475,9 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
+  gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f); // match display size
+  gs_set_viewport(0, 0, cx, cy);
+
   gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
   gs_eparam_t *solid_color = gs_effect_get_param_by_name(solid, "color");
   gs_technique_t *solid_tech = gs_effect_get_technique(solid, "Solid");
