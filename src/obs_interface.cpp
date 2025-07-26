@@ -513,28 +513,28 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
     gs_matrix_push();
     gs_matrix_translate3f(pos.x, pos.y, 0.0f);
     //gs_matrix_scale3f(width, 1.0f, 1.0f);
-    gs_draw_sprite(nullptr, 0, width, 1.0f);
+    gs_draw_sprite(nullptr, 0, width, 2.0f);
     gs_matrix_pop();
 
     // Bottom border
     gs_matrix_push();
     gs_matrix_translate3f(pos.x, pos.y + height - 1.0f, 0.0f);
     // gs_matrix_scale3f(width, 1.0f, 1.0f);
-    gs_draw_sprite(nullptr, 0, width, 1.0f);
+    gs_draw_sprite(nullptr, 0, width, 2.0f);
     gs_matrix_pop();
 
     // Left border
     gs_matrix_push();
     gs_matrix_translate3f(pos.x, pos.y, 0.0f);
     // gs_matrix_scale3f(1.0f, height, 1.0f);
-    gs_draw_sprite(nullptr, 0, 1.0f, height);
+    gs_draw_sprite(nullptr, 0, 2.0f, height);
     gs_matrix_pop();
 
     // Right border
     gs_matrix_push();
     gs_matrix_translate3f(pos.x + width - 1.0f, pos.y, 0.0f);
     //  gs_matrix_scale3f(1.0f, height, 1.0f);
-    gs_draw_sprite(nullptr, 0, 1.0f, height);
+    gs_draw_sprite(nullptr, 0, 2.0f, height);
     gs_matrix_pop();
 
     gs_matrix_pop();
@@ -809,9 +809,8 @@ std::string ObsInterface::getLastRecording() {
 
   const char* type = obs_output_get_id(output);
 
-
-
   if (strcmp(type, "ffmpeg_muxer") == 0) {
+    blog(LOG_INFO, "Getting last recording path from ffmpeg_muxer");
     return recording_path;
   }
 
@@ -821,6 +820,8 @@ std::string ObsInterface::getLastRecording() {
     blog(LOG_ERROR, "Unknown output type: %s", type);
     throw std::runtime_error("Unknown output type!");
   }
+
+  success = proc_handler_call(ph, "get_last_replay", &cd);
 
   if (!success) {
     blog(LOG_ERROR, "Failed to call procedure handler");
