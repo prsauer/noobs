@@ -198,7 +198,7 @@ obs_output_t* ObsInterface::create_output(const std::string& recordingPath) {
   obs_data_release(settings);
 
   blog(LOG_INFO, "Create venc");
-  video_encoder = obs_video_encoder_create("h264_texture_amf", "simple_h264_stream", NULL, NULL);
+  video_encoder = obs_video_encoder_create("obs_x264", "simple_h264_stream", NULL, NULL);
 
   if (!video_encoder) {
     blog(LOG_ERROR, "Failed to create video encoder!");
