@@ -475,6 +475,30 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
+  gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+  gs_eparam_t *solid_color = gs_effect_get_param_by_name(solid, "color");
+  gs_technique_t *solid_tech = gs_effect_get_technique(solid, "Solid");
+
+  vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+  gs_effect_set_vec4(solid_color, &green);
+
+  gs_technique_begin(solid_tech);
+  gs_technique_begin_pass(solid_tech, 0);
+
+  gs_matrix_push();
+  gs_matrix_identity();
+
+  // Set position and size
+  gs_matrix_translate3f(200.0f, 200.0f, 0.0f);  // position
+  gs_matrix_scale3f(100.0f, 100.0f, 1.0f);     // size
+
+  gs_draw_sprite(nullptr, 0, 0, 0); // Uses internal quad
+
+  gs_matrix_pop();
+
+  gs_technique_end_pass(solid_tech);
+  gs_technique_end(solid_tech);
+
   obs_render_main_texture();
 }
 
