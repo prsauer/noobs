@@ -475,6 +475,9 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
+  // Initially, draw the OBS scene texture
+  obs_render_main_texture();
+
   // Set projection and viewport
   gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
   gs_set_viewport(0, 0, cx, cy);
@@ -499,10 +502,6 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
 
   gs_technique_end_pass(solid_tech);
   gs_technique_end(solid_tech);
-
-  // Finally, draw the OBS scene texture
-  // obs_render_main_texture();
-  // blog(LOG_INFO, "draw_callback: %dx%d", cx, cy);
 }
 
 void ObsInterface::initPreview(HWND parent) {
