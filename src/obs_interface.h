@@ -24,8 +24,8 @@ class ObsInterface {
     void stopRecording();
     std::string getLastRecording();
 
-    void getSourcePos(std::string name, vec2* pos, vec2* size, vec2* scale);
-    void setSourcePos(std::string name, vec2* pos, vec2* size, vec2* scale);
+    void getSourcePos(std::string name, vec2* pos, vec2* size, vec2* scale); // Size is returned to allow clients to calculate scale.
+    void setSourcePos(std::string name, vec2* pos, vec2* scale); // Size does not get set here because it's set by the source itself.
 
     void initPreview(HWND parent); // Must call this before showPreview to setup resources.
     void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.

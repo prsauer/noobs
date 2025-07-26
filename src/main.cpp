@@ -195,10 +195,8 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
     info[0].IsString() && // Source name
     info[1].IsNumber() && // X position (px)
     info[2].IsNumber() && // Y position (px)
-    info[3].IsNumber() && // Width (px)
-    info[4].IsNumber() && // Height (px)
-    info[5].IsNumber() && // Scale factor (X)
-    info[6].IsNumber();   // Scale factor (Y)
+    info[3].IsNumber() && // Scale factor (X)
+    info[4].IsNumber();   // Scale factor (Y)
 
   if (!valid) {
     Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetSourcePos").ThrowAsJavaScriptException();
@@ -211,15 +209,11 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
   float y = info[2].As<Napi::Number>().FloatValue();
   vec2 pos = { x, y };
 
-  float width = info[3].As<Napi::Number>().FloatValue();
-  float height = info[4].As<Napi::Number>().FloatValue();
-  vec2 size = { width, height };
-
-  float scaleX = info[5].As<Napi::Number>().FloatValue();
-  float scaleY = info[6].As<Napi::Number>().FloatValue();
+  float scaleX = info[3].As<Napi::Number>().FloatValue();
+  float scaleY = info[4].As<Napi::Number>().FloatValue();
   vec2 scale = { scaleX, scaleY };
 
-  obs->setSourcePos(name, &pos, &size, &scale);
+  obs->setSourcePos(name, &pos, &scale);
   return info.Env().Undefined();
 }
 
