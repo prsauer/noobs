@@ -476,7 +476,6 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
     // Calculate actual size with scaling
     float width = sizex * scale.x;
     float height = sizey * scale.y;
-    blog(LOG_DEBUG, "Drawing box at (%f, %f) with size (%f, %f) - (%d %d)", pos.x, pos.y, width, height, sizex, sizey);
 
     // Draw rectangle around the source using the position and size
     gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
