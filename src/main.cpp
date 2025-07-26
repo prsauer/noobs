@@ -1,13 +1,6 @@
 #include <napi.h>
 #include <windows.h>
-#include <tlhelp32.h>
-#include <string>
-#include <vector>
 #include <obs.h>
-#include <iostream>
-#include <future>
-#include <chrono>
-
 #include "obs_interface.h"
 
 ObsInterface* obs = nullptr;
@@ -187,7 +180,7 @@ Napi::Value ObsGetSourcePos(const Napi::CallbackInfo& info) {
 
 Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
   if (!obs) {
-    blog(LOG_ERROR, "ObsUpdateSource called but obs is not initialized");
+    blog(LOG_ERROR, "ObsSetSourcePos called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
   }
 
