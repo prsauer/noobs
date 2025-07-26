@@ -473,6 +473,7 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
   signal_handler_connect(sh, "stop", output_signal_handler_stop,  this);
   signal_handler_connect(sh, "saved", output_signal_handler_saved,  this);
 }
+
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   // Set projection and viewport
   gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
