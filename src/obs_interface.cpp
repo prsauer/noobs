@@ -178,15 +178,26 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   blog(LOG_INFO, "Exit init_obs");
 }
 
-obs_output_t* ObsInterface::create_output(const std::string& recordingPath) {
+void ObsInterface::configure_output(const std::string& recordingPath) {
   blog(LOG_INFO, "Create output");
-  obs_output_t *output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
+
+  if (output && obs_output_active(output)) {
+    blog(LOG_ERROR, "Tried to recreate active output");
+    throw std::runtime_error("Failed to create output!");
+  }
+
+  if (output) {
+    blog(LOG_DEBUG, "Releasing output");
+    obs_output_release(output);
+  }
+
+  output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
 
   if (!output) {
     blog(LOG_ERROR, "Failed to create output!");
     throw std::runtime_error("Failed to create output!");
   }
-
+  
   blog(LOG_INFO, "Set output settings");
   obs_data_t *settings = obs_data_create();
   obs_data_set_int(settings, "max_time_sec", 60);
@@ -197,7 +208,24 @@ obs_output_t* ObsInterface::create_output(const std::string& recordingPath) {
   obs_output_update(output, settings);
   obs_data_release(settings);
 
-  blog(LOG_INFO, "Create venc");
+  // Add the signal handler callback.
+  create_signal_handlers(output);
+}
+
+void ObsInterface::configure_video_encoder() {
+  blog(LOG_INFO, "Create video encoder");
+
+  if (!output) {
+    blog(LOG_ERROR, "No output on configure_video_encoder");
+    throw std::runtime_error("Failed to create video encoder!");
+  }
+
+  if (video_encoder) {
+    blog(LOG_DEBUG, "Releasing video encoder");
+    obs_encoder_release(video_encoder);
+    video_encoder = nullptr;
+  }
+
   video_encoder = obs_video_encoder_create("obs_x264", "simple_h264_stream", NULL, NULL);
 
   if (!video_encoder) {
@@ -208,15 +236,28 @@ obs_output_t* ObsInterface::create_output(const std::string& recordingPath) {
   blog(LOG_INFO, "Set video encoder settings");
   obs_data_t* venc_settings = obs_data_create();
   obs_data_set_string(venc_settings, "preset", "speed");  // Faster preset
-  //obs_data_set_int(amf_settings, "bitrate", 2500);
   obs_data_set_string(venc_settings, "rate_control", "CRF");
   obs_data_set_int(venc_settings, "crf", 30);
   obs_data_set_string(venc_settings, "profile", "main");
   obs_data_set_int(venc_settings, "keyint_sec", 1); // Set keyframe interval to 1 second
   obs_encoder_update(video_encoder, venc_settings);
   obs_data_release(venc_settings);
+}
 
-  blog(LOG_INFO, "Create aenc");
+void ObsInterface::configure_audio_encoder() {
+  blog(LOG_INFO, "Create audio encoder");
+
+  if (!output) {
+    blog(LOG_ERROR, "No output on configure_audio_encoder");
+    throw std::runtime_error("Failed to create audio encoder!");
+  }
+
+  if (audio_encoder) {
+    blog(LOG_DEBUG, "Releasing audio encoder");
+    obs_encoder_release(audio_encoder);
+    audio_encoder = nullptr;
+  }
+
   audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "simple_aac", NULL, 0, NULL);
 
   if (!audio_encoder) {
@@ -235,40 +276,50 @@ obs_output_t* ObsInterface::create_output(const std::string& recordingPath) {
 
   obs_encoder_set_video(video_encoder, obs_get_video());
   obs_encoder_set_audio(audio_encoder, obs_get_audio());
-
-  return output;
 }
 
-obs_scene_t* ObsInterface::create_scene() {
-  blog(LOG_INFO, "Create scene and src");
-  obs_scene_t *scene = obs_scene_create("WCR Scene");
+void ObsInterface::configure_scene() {
+  blog(LOG_INFO, "Configure scene");
 
-  if (!scene)
+  if (scene) {
+    blog(LOG_DEBUG, "Releasing scene");
+    obs_scene_release(scene);
+    scene = nullptr;
+  }
+
+  scene = obs_scene_create("WCR Scene");
+
+  if (!scene) {
+    blog(LOG_ERROR, "Failed to create scene!");
     throw std::runtime_error("Failed to create scene!");
+  }
 
   obs_source_t *scene_source = obs_scene_get_source(scene);
 
-  if (!scene_source)
-    throw std::runtime_error("Failed to get scene src!");
+  if (!scene_source) {
+    blog(LOG_ERROR, "Failed to get scene source!");
+    throw std::runtime_error("Failed to get scene source!");
+  }
 
-  obs_set_output_source(0, scene_source);  // 0 = video track
-  return scene;
+  obs_set_output_source(0, scene_source); // 0 = video track
+  obs_scene_add(scene, video_source);
 }
 
-obs_source_t* ObsInterface::create_video_source() {
-  blog(LOG_INFO, "Create display capture source");
+void ObsInterface::configure_video_source() {
+  blog(LOG_INFO, "Create monitor capture source");
+
   // Create settings for monitor capture
   obs_data_t *monitor_settings = obs_data_create();
   obs_data_set_int(monitor_settings, "monitor", 0);  // Monitor 0
   obs_data_set_bool(monitor_settings, "capture_cursor", true);
 
-  obs_source_t *source = obs_source_create("monitor_capture", "Monitor", monitor_settings, NULL);
+  video_source = obs_source_create("monitor_capture", "video_source", monitor_settings, NULL);
   obs_data_release(monitor_settings);
 
-  if (!source)
+  if (!video_source) {
+    blog(LOG_ERROR, "Failed to create video source!");
     throw std::runtime_error("Failed to create video source!");
-
-  return source;
+  }
 }
 
 void call_jscb(Napi::Env env, Napi::Function cb, SignalData* sd) {
@@ -428,15 +479,15 @@ ObsInterface::ObsInterface(
   // Initialize OBS and load required modules.
   init_obs(pluginPath, dataPath);
 
-  // Create the resources we rely on.
-  output = create_output(recordingPath);
-  scene = create_scene();
-  video_source = create_video_source();
-  obs_scene_add(scene, video_source);
-
-  // Add the signal handler callback.
+  // Setup callback function.
   jscb = cb;
-  create_signal_handlers(output);
+
+  // Create the resources we rely on.
+  configure_output(recordingPath);
+  configure_video_encoder();
+  configure_audio_encoder();
+  configure_video_source();
+  configure_scene();
 }
 
 ObsInterface::~ObsInterface() {
@@ -560,4 +611,20 @@ std::string ObsInterface::getLastRecording() {
   
   blog(LOG_INFO, "return path: %s", path.c_str());
   return path;
+}
+
+void ObsInterface::updateSourcePos(int x, int y, float scale) {
+  blog(LOG_INFO, "ObsInterface::moveSource called at (%d, %d)", x, y);
+  obs_sceneitem_t *item = obs_scene_find_source(scene, "video_source");
+
+  if (!item) {
+    blog(LOG_ERROR, "Did not find scene item for video source");
+    return;
+  }
+
+  struct vec2 pos = { (float)x, (float)y };
+  obs_sceneitem_set_pos(item, &pos);
+
+  struct vec2 scalep = { scale, scale };
+  obs_sceneitem_set_scale(item, &scalep);
 }

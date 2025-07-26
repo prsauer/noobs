@@ -18,28 +18,29 @@ async function test() {
   console.log("Data path:", dataPath);
   console.log("Recording path:", recordingPath);
 
-  noobs.ObsInit(pluginPath, logPath, dataPath, recordingPath, cb);
+  noobs.Init(pluginPath, logPath, dataPath, recordingPath, cb);
   await new Promise(resolve => setTimeout(resolve, 1000));
+  noobs.UpdateSource(100, 100, 0.5);
 
   for (let i = 0; i < 2; i++) {
     console.log("Test Recording Loop:", i + 1);
-    noobs.ObsStartBuffer();
+    noobs.StartBuffer();
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    noobs.ObsStartRecording(1);
+    noobs.StartRecording(1);
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    noobs.ObsStopRecording();
+    noobs.StopRecording();
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    const last = noobs.ObsGetLastRecording();
+    const last = noobs.GetLastRecording();
     console.log("Last recording:", last);
 
-    await new Promise(resolve => setTimeout(resolve, 30000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   console.log("Stopping obs...");
-  noobs.ObsShutdown();
+  noobs.Shutdown();
 
   console.log("Test Done");
 }

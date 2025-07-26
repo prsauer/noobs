@@ -24,6 +24,8 @@ class ObsInterface {
     void stopRecording();
     std::string getLastRecording();
 
+    void updateSourcePos(int x, int y, float scale);
+
     void initPreview(HWND parent); // Must call this before showPreview to setup resources.
     void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.
     void hidePreview();
@@ -65,7 +67,9 @@ class ObsInterface {
     void list_input_types();
     void list_output_types();
 
-    obs_output_t* create_output(const std::string& recordingPath);
-    obs_scene_t* create_scene();
-    obs_source_t* create_video_source();
+    void configure_output(const std::string& recordingPath);
+    void configure_video_encoder();
+    void configure_audio_encoder();
+    void configure_scene();
+    void configure_video_source();
 };

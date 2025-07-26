@@ -4,7 +4,7 @@ type Signal = { // TODO export type?
 }
 
 interface Noobs {
-  ObsInit(
+  Init(
     pluginPath: string, 
     logPath: string, 
     dataPath: string,
@@ -12,15 +12,17 @@ interface Noobs {
     cb: (signal: Signal) => void
   ): void;
 
-  ObsShutdown(): void;
-  ObsStartBuffer(): void;
-  ObsStartRecording(offset: number): void;
-  ObsStopRecording(): void;
-  ObsGetLastRecording(): string;
+  Shutdown(): void;
+  StartBuffer(): void;
+  StartRecording(offset: number): void;
+  StopRecording(): void;
+  GetLastRecording(): string;
 
-  ObsInitPreview(hwnd: Buffer): void;
-  ObsShowPreview(x: number, y: number, width: number, height: number): void;
-  ObsHidePreview(): void;
+  UpdateSource(x: number, y: number, scale: number): void;
+
+  InitPreview(hwnd: Buffer): void;
+  ShowPreview(x: number, y: number, width: number, height: number): void;
+  HidePreview(): void;
 }
 
 declare const noobs: Noobs;
