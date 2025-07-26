@@ -191,7 +191,7 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
     throw std::runtime_error("Obs not initialized");
   }
 
-  bool valid = info.Length() == 6 &&
+  bool valid = info.Length() == 5 &&
     info[0].IsString() && // Source name
     info[1].IsNumber() && // X position (px)
     info[2].IsNumber() && // Y position (px)
