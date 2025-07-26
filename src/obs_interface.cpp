@@ -162,8 +162,9 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   std::vector<std::string> modules = { 
     "obs-x264.dll", 
     "obs-ffmpeg.dll",
-    "win-capture.dll", // Required for basically all forms of capture on Windows.
-    "image-source.dll" // Required for image sources.
+    "win-capture.dll",  // Required for basically all forms of capture on Windows.
+    "image-source.dll", // Required for image sources.
+    "win-wasapi.dll"    // Required for WASAPI audio input.
   };
 
   for (const auto& module : modules) {
