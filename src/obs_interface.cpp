@@ -191,7 +191,7 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   blog(LOG_INFO, "Exit init_obs");
 }
 
-void ObsInterface::create_output(const std::string& recordingPath) {
+void ObsInterface::create_output(const std::string& recordingPath, bool buffering) {
   blog(LOG_INFO, "Create output");
 
   if (output) {
@@ -199,20 +199,38 @@ void ObsInterface::create_output(const std::string& recordingPath) {
     obs_output_release(output);
   }
 
-  output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
+  if (buffering) {
+    blog(LOG_INFO, "Creating replay buffer output");
+    output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
+  } else {
+    blog(LOG_INFO, "Creating file output");
+    output = obs_output_create("ffmpeg_muxer", "recording_output", NULL, NULL);
+  }
 
   if (!output) {
     blog(LOG_ERROR, "Failed to create output!");
     throw std::runtime_error("Failed to create output!");
   }
-  
-  blog(LOG_INFO, "Set output settings");
+
   obs_data_t *settings = obs_data_create();
-  obs_data_set_int(settings, "max_time_sec", 60);
-  obs_data_set_int(settings, "max_size_mb", 1024);
-  obs_data_set_string(settings, "directory", recordingPath.c_str());
-  obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
-  obs_data_set_string(settings, "extension", "mp4");
+
+  if (buffering) {
+    blog(LOG_INFO, "Set replay_buffer settings");
+    obs_data_set_int(settings, "max_time_sec", 60);
+    obs_data_set_int(settings, "max_size_mb", 1024);
+    obs_data_set_string(settings, "directory", recordingPath.c_str());
+    obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
+    obs_data_set_string(settings, "extension", "mp4");
+  } else {
+    blog(LOG_INFO, "Set ffmpeg_muxer settings");
+		obs_data_set_string(settings, "extension", "mp4");
+    // Apparently need to specify the exact path for ffmpeg_muxer.
+    // TODO add something to auto generate this ?
+    obs_data_set_string(settings, "path", (recordingPath + "/noobs.mp4").c_str()); 
+    recording_path = recordingPath + "/noobs.mp4";
+  }
+
+  // Apply and release the settings.
   obs_output_update(output, settings);
   obs_data_release(settings);
 
@@ -634,7 +652,8 @@ ObsInterface::ObsInterface(
   const std::string& logPath, 
   const std::string& dataPath,  
   const std::string& recordingPath,
-  Napi::ThreadSafeFunction cb
+  Napi::ThreadSafeFunction cb,
+  bool buffering
 ) {
   // Setup logs first so we have logs for the initialization.
   base_set_log_handler(log_handler, (void*)logPath.c_str());
@@ -647,7 +666,7 @@ ObsInterface::ObsInterface(
   jscb = cb;
 
   // Create the resources we rely on.
-  create_output(recordingPath);
+  create_output(recordingPath, buffering);
   create_scene();
 
   configure_video_encoder();
@@ -721,26 +740,52 @@ void ObsInterface::startBuffering() {
 
 void ObsInterface::startRecording(int offset) {
   blog(LOG_INFO, "ObsInterface::startRecording enter");
-  bool is_active = obs_output_active(output);
 
-  if (!is_active) {
-    blog(LOG_ERROR, "Buffer is not active");
-    throw std::runtime_error("Buffer is not active");
+  const char* type = obs_output_get_id(output);
+
+  if (strcmp(type, "replay_buffer") == 0) {
+    bool is_active = obs_output_active(output);
+
+    if (!is_active) {
+      blog(LOG_WARNING, "Buffer is not active");
+      throw std::runtime_error("Buffer is not active");
+    }
+
+    blog(LOG_INFO, "calling save proc handler");
+    calldata cd;
+    calldata_init(&cd);
+    calldata_set_int(&cd, "offset_seconds", offset);
+    proc_handler_t *ph = obs_output_get_proc_handler(output);
+    bool success = proc_handler_call(ph, "convert", &cd);
+    calldata_free(&cd);
+
+    if (!success) {
+      throw std::runtime_error("Failed to call convert procedure handler");
+    }
+  } else if (strcmp(type, "ffmpeg_muxer") == 0) {
+    blog(LOG_INFO, "Starting ffmpeg_muxer output");
+
+    bool is_active = obs_output_active(output);
+
+    if (is_active) {
+      blog(LOG_WARNING, "Output already active");
+      return;
+    }
+
+    blog(LOG_WARNING, "Call start");
+    bool success = obs_output_start(output);
+
+    if (!success) {
+      const char *err = obs_output_get_last_error(output);
+      blog(LOG_ERROR, "Failed to start recording: %s", err ? err : "Unknown error");
+      throw std::runtime_error("Failed to start recording");
+    }
+  } else {
+    blog(LOG_ERROR, "Unknown output type: %s", type);
+    throw std::runtime_error("Unknown output type!");
   }
 
-  blog(LOG_INFO, "calling save proc handler");
-  calldata cd;
-  calldata_init(&cd);
-  calldata_set_int(&cd, "offset_seconds", offset);
-  proc_handler_t *ph = obs_output_get_proc_handler(output);
-  bool success = proc_handler_call(ph, "convert", &cd);
-  calldata_free(&cd);
-
-  if (!success) {
-    throw std::runtime_error("Failed to call convert procedure handler");
-  }
-
-   blog(LOG_INFO, "ObsInterface::startRecording exit");
+  blog(LOG_INFO, "ObsInterface::startRecording exit");
 }
 
 void ObsInterface::stopRecording() {
@@ -761,10 +806,26 @@ std::string ObsInterface::getLastRecording() {
   calldata cd;
   calldata_init(&cd);
   proc_handler_t *ph = obs_output_get_proc_handler(output);
-  bool success = proc_handler_call(ph, "get_last_replay", &cd);
+
+  const char* type = obs_output_get_id(output);
+
+
+
+  if (strcmp(type, "ffmpeg_muxer") == 0) {
+    return recording_path;
+  }
+
+  bool success;
+
+  if (strcmp(type, "replay_buffer") != 0) {
+    blog(LOG_ERROR, "Unknown output type: %s", type);
+    throw std::runtime_error("Unknown output type!");
+  }
 
   if (!success) {
-    blog(LOG_ERROR, "Failed to call get_last_replay procedure handler");
+    blog(LOG_ERROR, "Failed to call procedure handler");
+    const char *err = obs_output_get_last_error(output);
+    blog(LOG_ERROR, "%s", err ? err : "Unknown error");
     calldata_free(&cd);
     return "";
   }
