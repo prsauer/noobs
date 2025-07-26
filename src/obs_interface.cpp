@@ -461,21 +461,22 @@ void ObsInterface::create_signal_handlers(obs_output_t *output) {
   signal_handler_connect(sh, "stop", output_signal_handler_stop,  this);
   signal_handler_connect(sh, "saved", output_signal_handler_saved,  this);
 }
+
 bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
     // Get the item position and size
-    vec2 pos; vec2 scale; vec2 size;
+    vec2 pos; vec2 scale;
 
     obs_sceneitem_get_pos(item, &pos);
     obs_sceneitem_get_scale(item, &scale);
 
     obs_source_t *src = obs_sceneitem_get_source(item);
-    size.x = obs_source_get_width(src);
-    size.y = obs_source_get_height(src);
+    uint32_t sizex = obs_source_get_width(src);
+    uint32_t sizey = obs_source_get_height(src);
 
     // Calculate actual size with scaling
-    float width = size.x * scale.x;
-    float height = size.y * scale.y;
-    blog(LOG_DEBUG, "Drawing box at (%f, %f) with size (%f, %f)", pos.x, pos.y, width, height);
+    uint32_t width = sizex * scale.x;
+    uint32_t height = sizey * scale.y;
+    blog(LOG_DEBUG, "Drawing box at (%f, %f) with size (%f, %f) - (%d %d)", pos.x, pos.y, width, height, sizex, sizey);
 
     // Draw rectangle around the source using the position and size
     gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
