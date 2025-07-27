@@ -189,6 +189,7 @@ interface Noobs {
   InitPreview(hwnd: Buffer): void;
   ShowPreview(x: number, y: number, width: number, height: number): void;
   HidePreview(): void;
+  GetPreviewScaleFactor(): number;
 }
 
 declare const noobs: Noobs;
