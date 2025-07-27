@@ -530,25 +530,25 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   // Top border
   gs_matrix_push();
   gs_matrix_translate3f(pos.x, pos.y, 0.0f);
-  gs_draw_sprite(nullptr, 0, width, 2.0f);
+  gs_draw_sprite(nullptr, 0, width, 4.0f);
   gs_matrix_pop();
 
   // Bottom border
   gs_matrix_push();
-  gs_matrix_translate3f(pos.x, pos.y + height - 2.0f, 0.0f);
-  gs_draw_sprite(nullptr, 0, width, 2.0f);
+  gs_matrix_translate3f(pos.x, pos.y + height - 4.0f, 0.0f);
+  gs_draw_sprite(nullptr, 0, width, 4.0f);
   gs_matrix_pop();
 
   // Left border
   gs_matrix_push();
   gs_matrix_translate3f(pos.x, pos.y, 0.0f);
-  gs_draw_sprite(nullptr, 0, 2.0f, height);
+  gs_draw_sprite(nullptr, 0, 4.0f, height);
   gs_matrix_pop();
 
   // Right border
   gs_matrix_push();
-  gs_matrix_translate3f(pos.x + width - 2.0f, pos.y, 0.0f);
-  gs_draw_sprite(nullptr, 0, 2.0f, height);
+  gs_matrix_translate3f(pos.x + width - 4.0f, pos.y, 0.0f);
+  gs_draw_sprite(nullptr, 0, 4.0f, height);
   gs_matrix_pop();
 
   gs_matrix_pop();
@@ -560,15 +560,15 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
-    obs_video_info ovi;
+  obs_video_info ovi;
   obs_get_video_info(&ovi);
-
 
   float scaleX = float(cx) / float(ovi.base_width);
   float scaleY = float(cy) / float(ovi.base_height);
 
   float previewScale;
 
+  // Pick the limiting scale factor.
   if (scaleX < scaleY) {
     previewScale = scaleX;
   } else {
@@ -580,16 +580,13 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   int previewX = (cx - previewCX) / 2;
   int previewY = (cy - previewCY) / 2;
 
-  blog(LOG_INFO, "Draw: cx=%d cy=%d base=%dx%d scale=%.2f preview=%dx%d offset=%d,%d",
-     cx, cy, ovi.base_width, ovi.base_height, previewScale,
-     previewCX, previewCY, previewX, previewY);
-
   gs_viewport_push();
 	gs_projection_push();
 
   gs_ortho(0.0f, float(ovi.base_width), 0.0f, float(ovi.base_height), -100.0f, 100.0f);
   gs_set_viewport(previewX, previewY, previewCX, previewCY);
 
+  // Renders the scene now the graphics context is setup.
   obs_render_main_texture();
 
   // Draw boxes around sources.
@@ -667,7 +664,7 @@ void ObsInterface::showPreview(int x, int y, int width, int height) {
     NULL,                          // No Z-order change
     x, y,                          // New position (x, y)
     width, height,                 // New size (width, height)
-     SWP_NOACTIVATE  // Flags
+    SWP_NOACTIVATE                 // Flags
   );
 
   if (!success) {
@@ -679,7 +676,7 @@ void ObsInterface::showPreview(int x, int y, int width, int height) {
   obs_display_size(display, &w, &h); // Get the display size to match the video context.
   blog(LOG_INFO, "Current Display size set to (%d x %d)", w, h);
 
-  obs_display_resize(display, width, height); // Set the display size to match the preview window.
+  obs_display_resize(display, width, height);
   ShowWindow(preview_hwnd, SW_SHOW);
   obs_display_set_enabled(display, true);
 }
