@@ -7,13 +7,12 @@
 ObsInterface* obs = nullptr;
 
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
-  bool valid = info.Length() == 6 &&
+  bool valid = info.Length() == 5 &&
    info[0].IsString() &&   // Plugin path
    info[1].IsString() &&   // Log path
    info[2].IsString() &&   // Data path
    info[3].IsString() &&   // Recording path
-   info[4].IsFunction() && // JavaScript callback
-   info[5].IsBoolean();    // IsBuffer
+   info[4].IsFunction();   // JavaScript callback
 
   if (!valid) {
     Napi::Error::New(info.Env(), "Invalid arguments passed to ObsInit").ThrowAsJavaScriptException();
@@ -25,12 +24,11 @@ Napi::Value ObsInit(const Napi::CallbackInfo& info) {
   std::string dataPath = info[2].As<Napi::String>().Utf8Value();
   std::string recordingPath = info[3].As<Napi::String>().Utf8Value();
   Napi::Function fn = info[4].As<Napi::Function>();
-  bool isBuffer = info[5].As<Napi::Boolean>().Value();
 
   Napi::ThreadSafeFunction jscb =
     Napi::ThreadSafeFunction::New(info.Env(), fn, "JavaScript callback", 0, 1);
 
-  obs = new ObsInterface(pluginPath, logPath, dataPath, recordingPath, jscb, isBuffer);
+  obs = new ObsInterface(pluginPath, logPath, dataPath, recordingPath, jscb);
   return info.Env().Undefined();
 }
 
@@ -55,6 +53,32 @@ Napi::Value ObsSetRecordingDir(const Napi::CallbackInfo& info) {
 
   std::string recordingPath = info[0].As<Napi::String>().Utf8Value();
   obs->setRecordingDir(recordingPath);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetBuffering(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsSetBuffering called");
+
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetBuffering called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetBuffering").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  bool buffering = info[0].As<Napi::Boolean>().Value();
+  bool success = obs->setBuffering(buffering);
+
+  if (!success) {
+    Napi::Error::New(info.Env(), "Failed to set buffering mode, is recording active?").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
   return info.Env().Undefined();
 }
 
@@ -399,6 +423,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("Shutdown", Napi::Function::New(env, ObsShutdown));
   exports.Set("SetRecordingDir", Napi::Function::New(env, ObsSetRecordingDir));
 
+  exports.Set("SetBuffering", Napi::Function::New(env, ObsSetBuffering));
   exports.Set("StartBuffer", Napi::Function::New(env, ObsStartBuffer));
   exports.Set("StartRecording", Napi::Function::New(env, ObsStartRecording));
   exports.Set("StopRecording", Napi::Function::New(env, ObsStopRecording));

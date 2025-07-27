@@ -191,8 +191,13 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   blog(LOG_INFO, "Exit init_obs");
 }
 
-void ObsInterface::create_output(const std::string& recordingPath, bool buffering) {
+bool ObsInterface::create_output() {
   blog(LOG_INFO, "Create output");
+
+  if (output && obs_output_active(output)) {
+    blog(LOG_WARNING, "Stopping the current output before creating a new one");
+    return false;
+  }
 
   if (output) {
     blog(LOG_DEBUG, "Releasing output");
@@ -201,10 +206,10 @@ void ObsInterface::create_output(const std::string& recordingPath, bool bufferin
 
   if (buffering) {
     blog(LOG_INFO, "Creating replay buffer output");
-    output = obs_output_create("replay_buffer", "recording_output", NULL, NULL);
+    output = obs_output_create("replay_buffer", "Buffer Output", NULL, NULL);
   } else {
     blog(LOG_INFO, "Creating file output");
-    output = obs_output_create("ffmpeg_muxer", "recording_output", NULL, NULL);
+    output = obs_output_create("ffmpeg_muxer", "File Output", NULL, NULL);
   }
 
   if (!output) {
@@ -218,17 +223,16 @@ void ObsInterface::create_output(const std::string& recordingPath, bool bufferin
     blog(LOG_INFO, "Set replay_buffer settings");
     obs_data_set_int(settings, "max_time_sec", 60);
     obs_data_set_int(settings, "max_size_mb", 1024);
-    obs_data_set_string(settings, "directory", recordingPath.c_str());
+    obs_data_set_string(settings, "directory", recording_path.c_str());
     obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
     obs_data_set_string(settings, "extension", "mp4");
   } else {
     blog(LOG_INFO, "Set ffmpeg_muxer settings");
 		obs_data_set_string(settings, "extension", "mp4");
     // Need to specify the exact path for ffmpeg_muxer.
-    std::string filename = recordingPath + "/" + get_current_date_time() + ".mp4";
+    std::string filename = recording_path + "/" + get_current_date_time() + ".mp4";
     obs_data_set_string(settings, "path", filename.c_str());
     recording_path = filename;
-
   }
 
   // Apply and release the settings.
@@ -237,6 +241,7 @@ void ObsInterface::create_output(const std::string& recordingPath, bool bufferin
 
   // Add the signal handler callback.
   create_signal_handlers(output);
+  return true;
 }
 
 void ObsInterface::setRecordingDir(const std::string& recordingPath) {
@@ -646,8 +651,7 @@ ObsInterface::ObsInterface(
   const std::string& logPath, 
   const std::string& dataPath,  
   const std::string& recordingPath,
-  Napi::ThreadSafeFunction cb,
-  bool buffering
+  Napi::ThreadSafeFunction cb
 ) {
   // Setup logs first so we have logs for the initialization.
   base_set_log_handler(log_handler, (void*)logPath.c_str());
@@ -658,9 +662,10 @@ ObsInterface::ObsInterface(
 
   // Setup callback function.
   jscb = cb;
+  recording_path = recordingPath;
 
   // Create the resources we rely on.
-  create_output(recordingPath, buffering);
+  create_output();
   create_scene();
 
   configure_video_encoder();
@@ -707,6 +712,12 @@ ObsInterface::~ObsInterface() {
 
   blog(LOG_DEBUG, "Now shutting down OBS");
   obs_shutdown();
+}
+
+bool ObsInterface::setBuffering(bool value) {
+  buffering = value;
+  bool success = create_output();
+  return success;
 }
 
 void ObsInterface::startBuffering() {

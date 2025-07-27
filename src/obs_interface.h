@@ -14,12 +14,12 @@ class ObsInterface {
       const std::string& logPath,       // Where to write logs to
       const std::string& dataPath,      // Where to look for effects
       const std::string& recordingPath, // Where to save recordings
-      Napi::ThreadSafeFunction cb,      // JavaScript callback
-      bool buffering                    // Whether to enable buffering the recording in memory
+      Napi::ThreadSafeFunction cb       // JavaScript callback
     );
 
     ~ObsInterface();
 
+    bool setBuffering(bool buffering); // In buffering mode, the recording is stored in memory and can be converted to a file later.
     void startBuffering();             // Start buffering to memory.
     void startRecording(int offset);   // Convert the active buffered recording to a real one.
     void stopRecording();              // Stop the recording.
@@ -61,6 +61,7 @@ class ObsInterface {
     HWND preview_hwnd = nullptr; // window handle for scene preview
     Napi::ThreadSafeFunction jscb; // javascript callback
     std::string recording_path = ""; 
+    bool buffering = false; // Whether we are buffering the recording in memory.
 
     void init_obs(const std::string& pluginPath, const std::string& dataPath);
     void reset_video();
@@ -80,7 +81,7 @@ class ObsInterface {
     void list_output_types();
 
     void create_scene();
-    void create_output(const std::string& recordingPath, bool buffering);
+    bool create_output();
 
     void configure_video_encoder();
     void configure_audio_encoder();

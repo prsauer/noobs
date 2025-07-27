@@ -18,7 +18,7 @@ async function test() {
   console.log('Data path:', dataPath);
   console.log('Recording path:', recordingPath);
 
-  noobs.Init(pluginPath, logPath, dataPath, recordingPath, cb, true);
+  noobs.Init(pluginPath, logPath, dataPath, recordingPath, cb);
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   console.log('Creating source...');
