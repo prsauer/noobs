@@ -580,6 +580,10 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   int previewX = (cx - previewCX) / 2;
   int previewY = (cy - previewCY) / 2;
 
+  blog(LOG_INFO, "Draw: cx=%d cy=%d base=%dx%d scale=%.2f preview=%dx%d offset=%d,%d",
+     cx, cy, ovi.base_width, ovi.base_height, previewScale,
+     previewCX, previewCY, previewX, previewY);
+
   gs_viewport_push();
 	gs_projection_push();
 
