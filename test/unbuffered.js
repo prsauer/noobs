@@ -1,4 +1,4 @@
-const noobs = require('./index.js');
+const noobs = require('../index.js');
 const path = require('path');
 
 async function test() {
@@ -8,10 +8,10 @@ async function test() {
     console.log('Callback received:', msg);
   };
 
-  const pluginPath = path.resolve(__dirname, 'dist', 'plugins');
-  const logPath = path.resolve(__dirname, 'logs');
-  const dataPath = path.resolve(__dirname, 'dist', 'effects');
-  const recordingPath = path.resolve(__dirname, 'recordings');
+  const pluginPath = path.resolve(__dirname, '../dist', 'plugins');
+  const logPath = path.resolve(__dirname, '../logs');
+  const dataPath = path.resolve(__dirname, '../dist', 'effects');
+  const recordingPath = path.resolve(__dirname, '../recordings');
 
   console.log('Plugin path:', pluginPath);
   console.log('Log path:', logPath);

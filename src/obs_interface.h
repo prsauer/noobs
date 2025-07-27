@@ -51,12 +51,15 @@ class ObsInterface {
     // Reconfigure video sources
   
   private:
-    obs_output_t *output = nullptr;
+    obs_output_t *file_output = nullptr;
+    obs_output_t *buffer_output = nullptr;
     obs_scene_t *scene = nullptr;
     obs_source_t *video_source = nullptr;
     obs_source_t *audio_source = nullptr;
-    obs_encoder_t *video_encoder = nullptr;
-    obs_encoder_t *audio_encoder = nullptr;
+    obs_encoder_t *file_video_encoder = nullptr;
+    obs_encoder_t *file_audio_encoder = nullptr;
+    obs_encoder_t *buffer_video_encoder = nullptr;
+    obs_encoder_t *buffer_audio_encoder = nullptr;
     obs_display_t *display = nullptr;
     HWND preview_hwnd = nullptr; // window handle for scene preview
     Napi::ThreadSafeFunction jscb; // javascript callback
@@ -67,7 +70,8 @@ class ObsInterface {
     void reset_video();
     void reset_audio();
     void load_module(const char* module);
-    void create_signal_handlers(obs_output_t *output);
+    void connect_signal_handlers(obs_output_t *output);
+    void disconnect_signal_handlers(obs_output_t *output);
 
     static void output_signal_handler_starting(void *data, calldata_t *cd);
     static void output_signal_handler_start(void *data, calldata_t *cd);
@@ -81,7 +85,7 @@ class ObsInterface {
     void list_output_types();
 
     void create_scene();
-    bool create_output();
+    void create_output();
 
     void configure_video_encoder();
     void configure_audio_encoder();
