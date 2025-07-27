@@ -560,15 +560,15 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
-  // Initially, draw the OBS scene texture
-  obs_render_main_texture();
-
   // This is some AI code that would draw a rectangle (and works).
   // Set projection and viewport
   gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
   gs_set_viewport(0, 0, cx, cy);
 
-  // This was me trying to understand what OSN does.
+  // Initially, draw the OBS scene texture
+  obs_render_main_texture();
+
+  // Draw boxes around sources.
   obs_scene_t* scene = obs_get_scene_by_name("WCR Scene");
   obs_scene_enum_items(scene, draw_box, NULL);
   obs_scene_release(scene);
