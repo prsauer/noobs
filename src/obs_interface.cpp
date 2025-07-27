@@ -632,6 +632,8 @@ void ObsInterface::showPreview(int x, int y, int width, int height) {
     return;
   }
 
+  blog(LOG_INFO, "Showing preview child window at (%d, %d) with size (%d x %d)", x, y, width, height);
+
   // Resize and move the existing child window.
   bool success = SetWindowPos(
     preview_hwnd,                  // Handle to the child window
