@@ -40,6 +40,7 @@ class ObsInterface {
     void initPreview(HWND parent); // Must call this before showPreview to setup resources.
     void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.
     void hidePreview(); // Hide the preview display.
+    float getPreviewScaleFactor(); // Get the current scale factor of the preview.
 
     std::vector<std::string> get_available_video_encoders();
 

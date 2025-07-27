@@ -195,6 +195,16 @@ Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsGetPreviewScaleFactor(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsGetPreviewScaleFactor called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  float scaleFactor = obs->getPreviewScaleFactor();
+  return Napi::Number::New(info.Env(), scaleFactor);
+}
+
 Napi::Value ObsCreateSource(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsCreateSource called but obs is not initialized");
@@ -443,6 +453,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("HidePreview", Napi::Function::New(env, ObsHidePreview));
+  exports.Set("GetPreviewScaleFactor", Napi::Function::New(env, ObsGetPreviewScaleFactor));
 
   return exports;
 }

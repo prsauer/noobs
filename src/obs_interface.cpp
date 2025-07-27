@@ -692,6 +692,36 @@ void ObsInterface::hidePreview() {
   obs_display_set_enabled(display, false);
 }
 
+float ObsInterface::getPreviewScaleFactor() {
+  blog(LOG_INFO, "ObsInterface::getPreviewScale");
+
+  if (!display) {
+    blog(LOG_ERROR, "Display not initialized");
+    return 1.0f; // Default scale
+  }
+
+  obs_video_info ovi;
+  obs_get_video_info(&ovi);
+
+  uint32_t width, height;
+	obs_display_size(display, &width, &height);
+
+  float scaleX = float(width) / float(ovi.base_width);
+  float scaleY = float(height) / float(ovi.base_height);
+
+  float previewScale;
+
+  // Pick the limiting scale factor.
+  if (scaleX < scaleY) {
+    previewScale = scaleX;
+  } else {
+    previewScale = scaleY;
+  }
+
+  blog(LOG_INFO, "Preview scale factor: %f", previewScale);
+  return previewScale;
+}
+
 ObsInterface::ObsInterface(
   const std::string& pluginPath, 
   const std::string& logPath, 
