@@ -19,12 +19,21 @@ npm install noobs
 
 ## Usage
 
+Initialize
 ```javascript
 import noobs from 'noobs';
 
 ...
 
 noobs.ObsInit(pluginPath, logPath, dataPath, recordingPath, cb);
+```
+
+Overlay
+```
+const hwnd = this.mainWindow.getNativeWindowHandle();
+noobs.InitPreview(hwnd);
+noobs.ShowPreview(x, y, width, height); // Use this for moving/resizing
+// noobs.HidePreview();
 ```
 
 See `test.js` for more.
