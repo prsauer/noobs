@@ -87,6 +87,6 @@ class ObsInterface {
     void create_scene();
     void create_output();
 
-    void configure_video_encoder();
-    void configure_audio_encoder();
+    void create_video_encoders();
+    void create_audio_encoders();
 };

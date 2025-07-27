@@ -265,10 +265,10 @@ void ObsInterface::setRecordingDir(const std::string& recordingPath) {
   obs_data_release(settings);
 }
 
-void ObsInterface::configure_video_encoder() {
+void ObsInterface::create_video_encoders() {
   blog(LOG_INFO, "Create video encoder");
 
-  file_video_encoder = obs_video_encoder_create("obs_x264", "simple_h264_stream", NULL, NULL);
+  file_video_encoder = obs_video_encoder_create("obs_x264", "h264_stream_file", NULL, NULL);
 
 
   if (!file_video_encoder) {
@@ -276,7 +276,7 @@ void ObsInterface::configure_video_encoder() {
     throw std::runtime_error("Failed to create video encoder!");
   }
 
-  buffer_video_encoder = obs_video_encoder_create("obs_x264", "simple_h264_stream", NULL, NULL);
+  buffer_video_encoder = obs_video_encoder_create("obs_x264", "h264_stream_buffer", NULL, NULL);
 
   if (!buffer_video_encoder) {
     blog(LOG_ERROR, "Failed to create buffer video encoder!");
@@ -301,11 +301,11 @@ void ObsInterface::configure_video_encoder() {
   obs_encoder_set_video(buffer_video_encoder, obs_get_video());
 }
 
-void ObsInterface::configure_audio_encoder() {
+void ObsInterface::create_audio_encoders() {
   blog(LOG_INFO, "Create audio encoder");
 
   // if (!output) {
-  //   blog(LOG_ERROR, "No output on configure_audio_encoder");
+  //   blog(LOG_ERROR, "No output on create_audio_encoders");
   //   throw std::runtime_error("Failed to create audio encoder!");
   // }
 
@@ -315,14 +315,14 @@ void ObsInterface::configure_audio_encoder() {
   //   audio_encoder = nullptr;
   // }
 
-  file_audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "simple_aac", NULL, 0, NULL);
+  file_audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "aac_file", NULL, 0, NULL);
 
   if (!file_audio_encoder) {
     blog(LOG_ERROR, "Failed to create audio encoder!");
     throw std::runtime_error("Failed to create audio encoder!");
   }
 
-  buffer_audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "simple_aac", NULL, 0, NULL);
+  buffer_audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "aac_buffer", NULL, 0, NULL);
 
   if (!buffer_audio_encoder) {
     blog(LOG_ERROR, "Failed to create buffer audio encoder!");
@@ -683,8 +683,8 @@ ObsInterface::ObsInterface(
   create_output();
   create_scene();
 
-  configure_video_encoder();
-  configure_audio_encoder();
+  create_video_encoders();
+  create_audio_encoders();
 }
 
 ObsInterface::~ObsInterface() {
