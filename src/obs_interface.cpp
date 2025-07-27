@@ -666,7 +666,6 @@ void ObsInterface::showPreview(int x, int y, int width, int height) {
     return;
   }
 
-  obs_display_resize(display, width, height);
   ShowWindow(preview_hwnd, SW_SHOW);
   obs_display_set_enabled(display, true);
 }
