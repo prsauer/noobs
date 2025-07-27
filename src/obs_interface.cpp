@@ -563,24 +563,28 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
     obs_video_info ovi;
   obs_get_video_info(&ovi);
 
-  float base_aspect = float(ovi.base_width) / ovi.base_height;
-  float disp_aspect = float(cx) / cy;
 
-  int vp_w, vp_h;
-  if (disp_aspect > base_aspect) {
-    vp_h = cy;
-    vp_w = int(vp_h * base_aspect);
+  float scaleX = float(cx) / float(ovi.base_width);
+  float scaleY = float(cy) / float(ovi.base_height);
+
+  float previewScale;
+
+  if (scaleX < scaleY) {
+    previewScale = scaleX;
   } else {
-    vp_w = cx;
-    vp_h = int(vp_w / base_aspect);
+    previewScale = scaleY;
   }
 
-  int vp_x = (cx - vp_w) / 2;
-  int vp_y = (cy - vp_h) / 2;
+  int previewCX = int(previewScale * ovi.base_width);
+  int previewCY = int(previewScale * ovi.base_height);
+  int previewX = (cx - previewCX) / 2;
+  int previewY = (cy - previewCY) / 2;
 
   gs_viewport_push();
-  gs_set_viewport(vp_x, vp_y, vp_w, vp_h);
-  gs_ortho(0.0f, float(vp_w), 0.0f, float(vp_h), -100.0f, 100.0f);
+	gs_projection_push();
+
+  gs_ortho(0.0f, float(ovi.base_width), 0.0f, float(ovi.base_height), -100.0f, 100.0f);
+  gs_set_viewport(previewX, previewY, previewCX, previewCY);
 
   obs_render_main_texture();
 
@@ -589,7 +593,8 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   obs_scene_enum_items(scene, draw_box, NULL);
   obs_scene_release(scene);
 
-  gs_viewport_pop();
+	gs_projection_pop();
+	gs_viewport_pop();
 }
 
 void ObsInterface::initPreview(HWND parent) {
