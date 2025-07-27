@@ -1002,7 +1002,7 @@ void ObsInterface::getSourcePos(std::string name, vec2* pos, vec2* size, vec2* s
 }
 
 void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale) {
-  blog(LOG_INFO, "ObsInterface::moveSource called");
+  blog(LOG_INFO, "ObsInterface::setSourcePos called");
   obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
 
   if (!item) {
@@ -1015,11 +1015,9 @@ void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale) {
 }
 
 void ObsInterface::moveSourcePos(std::string name, float x, float y) {
-  blog(LOG_INFO, "ObsInterface::moveSource called with x: %f, y: %f", x, y);
-
+  // No logs here for performance.
   vec2 pos, size, scale;
   getSourcePos(name, &pos, &size, &scale);
-
   vec2 moved;
   moved.x = pos.x + x;
   moved.y = pos.y + y;
