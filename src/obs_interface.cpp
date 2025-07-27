@@ -565,7 +565,7 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   gs_ortho(0.0f, float(cx), 0.0f, float(cy), -100.0f, 100.0f);
   gs_set_viewport(0, 0, cx, cy);
 
-  // Initially, draw the OBS scene texture
+  // Draw the OBS scene.
   obs_render_main_texture();
 
   // Draw boxes around sources.
