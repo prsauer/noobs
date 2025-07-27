@@ -575,7 +575,7 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
 }
 
 void ObsInterface::initPreview(HWND parent) {
-  blog(LOG_INFO, "ObsInterface::showPreview");
+  blog(LOG_INFO, "ObsInterface::initPreview");
 
   if (!preview_hwnd) {
     blog(LOG_INFO, "Creating preview child window");
@@ -638,7 +638,7 @@ void ObsInterface::showPreview(int x, int y, int width, int height) {
     NULL,                          // No Z-order change
     x, y,                          // New position (x, y)
     width, height,                 // New size (width, height)
-    SWP_NOZORDER | SWP_NOACTIVATE  // Don't change position, Z-order, or activation
+     SWP_NOACTIVATE  // Flags
   );
 
   if (!success) {
@@ -646,6 +646,7 @@ void ObsInterface::showPreview(int x, int y, int width, int height) {
     return;
   }
 
+  obs_display_resize(display, width, height);
   ShowWindow(preview_hwnd, SW_SHOW);
   obs_display_set_enabled(display, true);
 }
