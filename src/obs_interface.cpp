@@ -285,7 +285,7 @@ void ObsInterface::create_video_encoders() {
 
   blog(LOG_INFO, "Set file video encoder settings");
   obs_data_t* venc_settings = obs_data_create();
-  obs_data_set_string(venc_settings, "preset", "speed");  // Faster preset
+  // obs_data_set_string(venc_settings, "preset", "speed");  // Faster preset
   obs_data_set_string(venc_settings, "rate_control", "CRF");
   obs_data_set_int(venc_settings, "crf", 22);
   obs_data_set_string(venc_settings, "profile", "main");
@@ -718,7 +718,6 @@ float ObsInterface::getPreviewScaleFactor() {
     previewScale = scaleY;
   }
 
-  blog(LOG_INFO, "Preview scale factor: %f", previewScale);
   return previewScale;
 }
 
