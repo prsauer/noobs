@@ -224,10 +224,11 @@ void ObsInterface::create_output(const std::string& recordingPath, bool bufferin
   } else {
     blog(LOG_INFO, "Set ffmpeg_muxer settings");
 		obs_data_set_string(settings, "extension", "mp4");
-    // Apparently need to specify the exact path for ffmpeg_muxer.
-    // TODO add something to auto generate this ?
-    obs_data_set_string(settings, "path", (recordingPath + "/noobs.mp4").c_str()); 
-    recording_path = recordingPath + "/noobs.mp4";
+    // Need to specify the exact path for ffmpeg_muxer.
+    std::string filename = recordingPath + "/" + get_current_date_time() + ".mp4";
+    obs_data_set_string(settings, "path", filename.c_str());
+    recording_path = filename;
+
   }
 
   // Apply and release the settings.
