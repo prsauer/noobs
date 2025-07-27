@@ -26,23 +26,16 @@ async function test() {
   const settings1 = noobs.GetSourceSettings('Test Source');
   noobs.SetSourceSettings('Test Source', { ...settings1, monitor: 1 });
 
-  // Start the recording, with 1s offset into the past.
-  noobs.StartRecording();
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-
-  // Add the source to the scene for a second.
   console.log('Adding source to scene...');
   noobs.AddSourceToScene('Test Source');
-  await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  // Remove the source from the scene.
-  console.log('Removing source from scene...');
-  noobs.RemoveSourceFromScene('Test Source');
+  // Start the recording, with 1s offset into the past.
+  noobs.StartRecording();
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   // Stop the recording.
   noobs.StopRecording();
-  await new Promise((resolve) => setTimeout(resolve, 5000));
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   // Get the path to the last recording.
   const last = noobs.GetLastRecording();
@@ -51,6 +44,9 @@ async function test() {
   noobs.Shutdown();
 
   console.log('Last recording:', last);
+  if (last == '') {
+    throw new Error(`No apparent recording`);
+  }
   if (last.endsWith('noobs.mp4')) {
     throw new Error(`Last recording name not correct - ${last}`);
   }
