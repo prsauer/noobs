@@ -154,12 +154,38 @@ export type SourceDimensions = {
 
 interface Noobs {
   Init(
-    pluginPath: string,
-    logPath: string,
-    dataPath: string,
-    recordingPath: string,
-    cb: (signal: Signal) => void,
-    buffering: boolean
+    /** Required configuration */
+    configuration: {
+      /**
+       * The path to the directory where plugins will be loaded from.
+       */
+      pluginPath: string;
+      /**
+       * The path to the directory where OBS logs will be saved.
+       */
+      logPath: string;
+      /**
+       The path to the directory where OBS will load effects from.
+       */
+      effectsPath: string;
+      /**
+       * The path to the directory where recordings will be saved.
+       */
+      recordingPath: string;
+      /**
+       * The callback function to be called when a signal is received.
+       */
+      cb: (signal: Signal) => void;
+    },
+    /** Optional params / settings */
+    options?: {
+      /** If true, noobs will use an in-memory video buffer to make sure we don't miss the start of video recordings. StartRecording must still be called.
+       * If false, noobs will not buffer and simplyh start recording when startRecording is called.
+       *
+       * Default: *true*
+       */
+      buffering?: boolean;
+    }
   ): void;
 
   Shutdown(): void;
