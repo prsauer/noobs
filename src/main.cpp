@@ -428,6 +428,30 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsMoveSourcePos(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsMoveSourcePos called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 3 &&
+    info[0].IsString() && // Source name
+    info[1].IsNumber() && // X position
+    info[2].IsNumber();   // Y position
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsMoveSourcePos").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  std::string name = info[0].As<Napi::String>().Utf8Value();
+  float x = info[1].As<Napi::Number>().FloatValue();
+  float y = info[2].As<Napi::Number>().FloatValue();
+
+  obs->moveSourcePos(name, x, y);
+  return info.Env().Undefined();
+}
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("Init", Napi::Function::New(env, ObsInit));
   exports.Set("Shutdown", Napi::Function::New(env, ObsShutdown));
@@ -449,6 +473,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));
   exports.Set("GetSourcePos", Napi::Function::New(env, ObsGetSourcePos));
   exports.Set("SetSourcePos", Napi::Function::New(env, ObsSetSourcePos));
+  exports.Set("MoveSourcePos", Napi::Function::New(env, ObsMoveSourcePos));
 
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
