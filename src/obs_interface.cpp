@@ -287,7 +287,7 @@ void ObsInterface::create_video_encoders() {
   obs_data_t* venc_settings = obs_data_create();
   obs_data_set_string(venc_settings, "preset", "speed");  // Faster preset
   obs_data_set_string(venc_settings, "rate_control", "CRF");
-  obs_data_set_int(venc_settings, "crf", 30);
+  obs_data_set_int(venc_settings, "crf", 22);
   obs_data_set_string(venc_settings, "profile", "main");
   obs_data_set_int(venc_settings, "keyint_sec", 1); // Set keyframe interval to 1 second
 
