@@ -124,6 +124,11 @@ void ObsInterface::reset_video() {
 
   int success = obs_reset_video(&ovi);
 
+  obs_enter_graphics();
+  int  dt = gs_get_device_type();
+  blog(LOG_INFO, "Device type = %d", dt);  // should be 1 for D3D11
+  obs_leave_graphics();
+
   if (success != OBS_VIDEO_SUCCESS) {
     blog(LOG_ERROR, "Failed to reset video!");
     throw std::runtime_error("Failed to reset video!");
@@ -163,7 +168,14 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
     dp += '/';
   }
 
-  obs_add_data_path(dp.c_str());  // This is deprecated in libobs but it works for now.
+  // We need this before resetting video and audio to ensure the effects
+  // are available. The function is deprecated in libobs but it works for
+  // now.
+  obs_add_data_path(dp.c_str());
+
+  // This must come before loading modules to initialize D3D11.
+  reset_video();
+  reset_audio();
 
   std::vector<std::string> modules = { 
     "obs-x264.dll", 
@@ -184,9 +196,6 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   list_source_types();
   list_input_types();
   list_output_types();
-
-  reset_video();
-  reset_audio();
 
   blog(LOG_INFO, "Exit init_obs");
 }
