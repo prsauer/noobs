@@ -36,7 +36,6 @@ class ObsInterface {
     void removeSourceFromScene(std::string name); // Remove source from scene.
     void getSourcePos(std::string name, vec2* pos, vec2* size, vec2* scale); // Size is returned to allow clients to calculate scale.
     void setSourcePos(std::string name, vec2* pos, vec2* scale); // Size does not get set here because it's set by the source itself.
-    void moveSourcePos(std::string name, float x, float y); // Move source position. Client friendly alternative to setSourcePos.
 
     void initPreview(HWND parent); // Must call this before showPreview to setup resources.
     void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.

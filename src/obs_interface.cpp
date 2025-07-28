@@ -522,6 +522,12 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   float width =  obs_source_get_width(src) * scale.x;
   float height = obs_source_get_height(src) * scale.y;
 
+  if (width <= 0 || height <= 0) {
+    // Don't want to call gs_draw_sprite with zero width or height.
+    // It is obviously nonsense and leads to log spam.
+    return false;
+  }
+
   // Draw rectangle around the source using the position and size
   gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
   gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
@@ -1015,13 +1021,4 @@ void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale) {
 
   obs_sceneitem_set_pos(item, pos);
   obs_sceneitem_set_scale(item, scale);
-}
-
-void ObsInterface::moveSourcePos(std::string name, float x, float y) {
-  vec2 pos, size, scale;
-  getSourcePos(name, &pos, &size, &scale);
-  vec2 moved;
-  moved.x = pos.x + x;
-  moved.y = pos.y + y;
-  setSourcePos(name, &moved, &scale);
 }
