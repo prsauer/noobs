@@ -524,8 +524,8 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
 
   if (width <= 0 || height <= 0) {
     // Don't want to call gs_draw_sprite with zero width or height.
-    // It is obviously nonsense and leads to log spam.
-    return false;
+    // It is obviously nonsense and leads to log spam. Just return early.
+    return true;
   }
 
   // Draw rectangle around the source using the position and size
@@ -708,10 +708,8 @@ void ObsInterface::hidePreview() {
 }
 
 float ObsInterface::getPreviewScaleFactor() {
-  blog(LOG_INFO, "ObsInterface::getPreviewScale");
-
   if (!display) {
-    blog(LOG_ERROR, "Display not initialized");
+    blog(LOG_WARNING, "Display not initialized");
     return 1.0f; // Default scale
   }
 
