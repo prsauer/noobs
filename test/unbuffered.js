@@ -30,7 +30,7 @@ async function test() {
   const p = noobs.GetSourceProperties('Test Source');
   console.log(p[1].items);
 
-  // We need method 2 here which is WGC. We can't use 0 (Auto) or 1 (DCGI) unless we have a graphics context.
+  // We need method 2 here which is WGC. We can't use 0 (Auto) or 1 (DXGI) unless we have a graphics context.
   // Or atlaest that's what ChatGPT thinks. This is only an issue when running as a CLI job. If we run in the context of an
   // electron process it just works fine.
   noobs.SetSourceSettings('Test Source', { ...settings1, monitor_id: p[1].items[1].value, method: 2 });
