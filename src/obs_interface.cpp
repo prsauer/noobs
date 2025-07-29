@@ -511,7 +511,7 @@ void ObsInterface::disconnect_signal_handlers(obs_output_t *output) {
   signal_handler_disconnect(sh, "saved", output_signal_handler_saved,  this);
 }
 
-bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
+bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   // Get the item position and size
   vec2 pos; vec2 scale;
   obs_sceneitem_get_pos(item, &pos);
@@ -575,6 +575,8 @@ bool draw_box(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
 }
 
 void draw_callback(void* data, uint32_t cx, uint32_t cy) {
+  ObsInterface* obsInterface = (ObsInterface*)data;
+
   obs_video_info ovi;
   obs_get_video_info(&ovi);
 
@@ -606,7 +608,9 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
 
   // Draw boxes around sources.
   obs_scene_t* scene = obs_get_scene_by_name("WCR Scene");
-  obs_scene_enum_items(scene, draw_box, NULL);
+  if (obsInterface->getDrawSourceOutlineEnabled()) {
+    obs_scene_enum_items(scene, draw_source_outline, NULL);
+  }
   obs_scene_release(scene);
 
 	gs_projection_pop();
@@ -657,7 +661,7 @@ void ObsInterface::initPreview(HWND parent) {
       return;
     }
 
-    obs_display_add_draw_callback(display, draw_callback, NULL);
+    obs_display_add_draw_callback(display, draw_callback, this);
   }
 
   obs_display_set_enabled(display, false);
@@ -732,6 +736,14 @@ float ObsInterface::getPreviewScaleFactor() {
   }
 
   return previewScale;
+}
+
+void ObsInterface::setDrawSourceOutline(bool enabled) {
+  drawSourceOutline = enabled;
+}
+
+bool ObsInterface::getDrawSourceOutlineEnabled() {
+  return drawSourceOutline;
 }
 
 ObsInterface::ObsInterface(

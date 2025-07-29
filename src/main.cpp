@@ -428,6 +428,22 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsSetDrawSourceOutline(const Napi::CallbackInfo& info) {
+  bool valid =  info.Length() == 1 && info[0].IsBoolean();
+    if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetDrawSourceOutline").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+  bool enabled = info[0].As<Napi::Boolean>();
+  blog(LOG_DEBUG, "ObsSetDrawSourceOutline set to %d", enabled);
+  obs->setDrawSourceOutline(enabled);
+}
+
+Napi::Value ObsGetDrawSourceOutlineEnabled(const Napi::CallbackInfo& info) {
+  return Napi::Boolean::New(info.Env(), obs->getDrawSourceOutlineEnabled());
+}
+
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("Init", Napi::Function::New(env, ObsInit));
   exports.Set("Shutdown", Napi::Function::New(env, ObsShutdown));
@@ -449,6 +465,9 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));
   exports.Set("GetSourcePos", Napi::Function::New(env, ObsGetSourcePos));
   exports.Set("SetSourcePos", Napi::Function::New(env, ObsSetSourcePos));
+
+  exports.Set("setDrawSourceOutline", Napi::Function::New(env, ObsSetDrawSourceOutline));
+  exports.Set("getDrawSourceOutlineEnabled", Napi::Function::New(env, ObsGetDrawSourceOutlineEnabled));
 
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));

@@ -190,6 +190,17 @@ interface Noobs {
   ShowPreview(x: number, y: number, width: number, height: number): void;
   HidePreview(): void;
   GetPreviewScaleFactor(): number;
+  /**
+   * Draws a red border around source preview
+   * @param enabled
+   */
+  setDrawSourceOutline(enabled: bool): void;
+  /**
+   * Gets the current state of the preview outline, a red border around the source preview
+   *
+   * Default: *false*
+   */
+  getDrawSourceOutlineEnabled(): boolean;
 }
 
 declare const noobs: Noobs;
