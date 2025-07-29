@@ -194,13 +194,13 @@ interface Noobs {
    * Draws a red border around source preview
    * @param enabled
    */
-  setDrawSourceOutline(enabled: bool): void;
+  SetDrawSourceOutline(enabled: boolean): void;
   /**
    * Gets the current state of the preview outline, a red border around the source preview
    *
    * Default: *false*
    */
-  getDrawSourceOutlineEnabled(): boolean;
+  GetDrawSourceOutlineEnabled(): boolean;
 }
 
 declare const noobs: Noobs;

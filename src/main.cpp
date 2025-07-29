@@ -466,13 +466,12 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("GetSourcePos", Napi::Function::New(env, ObsGetSourcePos));
   exports.Set("SetSourcePos", Napi::Function::New(env, ObsSetSourcePos));
 
-  exports.Set("setDrawSourceOutline", Napi::Function::New(env, ObsSetDrawSourceOutline));
-  exports.Set("getDrawSourceOutlineEnabled", Napi::Function::New(env, ObsGetDrawSourceOutlineEnabled));
-
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("HidePreview", Napi::Function::New(env, ObsHidePreview));
   exports.Set("GetPreviewScaleFactor", Napi::Function::New(env, ObsGetPreviewScaleFactor));
+  exports.Set("GetDrawSourceOutlineEnabled", Napi::Function::New(env, ObsGetDrawSourceOutlineEnabled));
+  exports.Set("SetDrawSourceOutline", Napi::Function::New(env, ObsSetDrawSourceOutline));
 
   return exports;
 }
