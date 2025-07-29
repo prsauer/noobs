@@ -41,6 +41,8 @@ class ObsInterface {
     void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.
     void hidePreview(); // Hide the preview display.
     float getPreviewScaleFactor(); // Get the current scale factor of the preview.
+    void setDrawSourceOutline(bool enabled); // Red box around source
+    bool getDrawSourceOutlineEnabled();
 
     std::vector<std::string> get_available_video_encoders();
 
@@ -66,6 +68,7 @@ class ObsInterface {
     Napi::ThreadSafeFunction jscb; // javascript callback
     std::string recording_path = ""; 
     bool buffering = false; // Whether we are buffering the recording in memory.
+    bool drawSourceOutline = false; // Draw red outline around source
 
     void init_obs(const std::string& pluginPath, const std::string& dataPath);
     void reset_video();
