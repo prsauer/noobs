@@ -6,3 +6,4 @@ recordings/
 dist/
 logs/
 noobs-*.tgz
+bin/win32-x64-116/

@@ -21,17 +21,39 @@ async function test() {
   noobs.Init(pluginPath, logPath, dataPath, recordingPath, cb);
 
   console.log('Creating source...');
-  noobs.CreateSource('Test Source', 'monitor_capture');
+  const sourceName = 'Test Source';
+  noobs.CreateSource(sourceName, 'monitor_capture');
 
-  const settings1 = noobs.GetSourceSettings('Test Source');
-  noobs.SetSourceSettings('Test Source', { ...settings1, monitor: 1 });
+  const settings1 = noobs.GetSourceSettings(sourceName);
+
+  const properties = noobs.GetSourceProperties(sourceName);
+  console.log('Source properties:', { properties });
+  for (const prop of properties) {
+    if (prop.items) {
+      console.log(prop);
+      if (prop.name === 'monitor_id') {
+        const monitor_id = prop.items[1].value;
+        // 0th item here is 'DUMMY'; I think this is the placeholder in their list for "Select a monitor"
+        console.log(`Setting monitor_id to ${monitor_id}`);
+        noobs.SetSourceSettings(sourceName, {
+          ...settings1,
+          monitor_id,
+        });
+      }
+    } else {
+      console.log(prop);
+    }
+  }
+
+  const settings2 = noobs.GetSourceSettings(sourceName);
+  console.log('Settings 2:', settings2);
 
   console.log('Adding source to scene...');
-  noobs.AddSourceToScene('Test Source');
+  noobs.AddSourceToScene(sourceName);
 
   // Start the recording, with 1s offset into the past.
-  noobs.StartRecording();
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  noobs.StartRecording(0);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   // Stop the recording.
   noobs.StopRecording();
