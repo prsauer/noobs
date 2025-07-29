@@ -24,18 +24,30 @@ async function test() {
   noobs.CreateSource('Test Source', 'monitor_capture');
 
   const settings1 = noobs.GetSourceSettings('Test Source');
-  noobs.SetSourceSettings('Test Source', { ...settings1, monitor: 1 });
+  
+  console.log(settings1);
+
+  const p = noobs.GetSourceProperties('Test Source');
+  console.log(p[1].items);
+
+  // We need method 2 here which is WGC. We can't use 0 (Auto) or 1 (DCGI) unless we have a graphics context.
+  // Or atlaest that's what ChatGPT thinks. This is only an issue when running as a CLI job. If we run in the context of an
+  // electron process it just works fine.
+  noobs.SetSourceSettings('Test Source', { ...settings1, monitor_id: p[1].items[1].value, method: 2 });
+
+  const settings2 = noobs.GetSourceSettings('Test Source');
+  console.log(settings2);
 
   console.log('Adding source to scene...');
   noobs.AddSourceToScene('Test Source');
 
   // Start the recording, with 1s offset into the past.
   noobs.StartRecording();
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 
   // Stop the recording.
   noobs.StopRecording();
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   // Get the path to the last recording.
   const last = noobs.GetLastRecording();
