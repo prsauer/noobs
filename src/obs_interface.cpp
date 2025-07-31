@@ -1,13 +1,8 @@
-#include <iostream>
 #include <windows.h>
 #include <obs.h>
 #include "utils.h"
-#include <chrono>
 #include "obs_interface.h"
 #include <vector>
-#include <thread>
-#include <iostream>
-#include <map>
 #include <string>
 #include <graphics/matrix4.h>
 #include <graphics/vec4.h>
@@ -1004,12 +999,12 @@ void ObsInterface::getSourcePos(std::string name, vec2* pos, vec2* size, vec2* s
   obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
 
   if (!src) {
-    blog(LOG_WARNING, "Did not find source for video source: %s", name);
+    blog(LOG_WARNING, "Did not find source for video source: %s", name.c_str());
     return;
   }
 
   if (!item) {
-    blog(LOG_WARNING, "Did not find scene item for video source: %s", name);
+    blog(LOG_WARNING, "Did not find scene item for video source: %s", name.c_str());
     return;
   }
 
@@ -1025,7 +1020,7 @@ void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale) {
   obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
 
   if (!item) {
-    blog(LOG_WARNING, "Did not find scene item for video source: %s", name);
+    blog(LOG_WARNING, "Did not find scene item for video source: %s", name.c_str());
     return;
   }
 
