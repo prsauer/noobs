@@ -8,17 +8,15 @@ async function test() {
     console.log('Callback received:', msg);
   };
 
-  const pluginPath = path.resolve(__dirname, '../dist', 'obs-plugins');
+  const distPath = path.resolve(__dirname, '../dist');
   const logPath = path.resolve(__dirname, '../logs');
-  const dataPath = path.resolve(__dirname, '../dist', 'data');
   const recordingPath = path.resolve(__dirname, '../recordings');
 
-  console.log('Plugin path:', pluginPath);
+  console.log('Dist path:', distPath);
   console.log('Log path:', logPath);
-  console.log('Data path:', dataPath);
   console.log('Recording path:', recordingPath);
 
-  noobs.Init(pluginPath, logPath, dataPath, recordingPath, cb);
+  noobs.Init(distPath, logPath, recordingPath, cb);
   noobs.SetBuffering(true);
   await new Promise((resolve) => setTimeout(resolve, 1000));
 

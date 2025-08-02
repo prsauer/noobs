@@ -3,6 +3,7 @@
 #include <obs.h>
 #include <napi.h>
 #include <windows.h>
+#include <map>
 
 struct SignalData {
   std::string id;
@@ -12,9 +13,8 @@ struct SignalData {
 class ObsInterface {
   public:
     ObsInterface(
-      const std::string& pluginPath,    // Where to look for plugins
+      const std::string& distPath,      // Where to look for plugins and data
       const std::string& logPath,       // Where to write logs to
-      const std::string& dataPath,      // Where to look for effects
       const std::string& recordingPath, // Where to save recordings
       Napi::ThreadSafeFunction cb       // JavaScript callback
     );
@@ -59,8 +59,6 @@ class ObsInterface {
     obs_output_t *file_output = nullptr;
     obs_output_t *buffer_output = nullptr;
     obs_scene_t *scene = nullptr;
-    obs_source_t *video_source = nullptr;
-    obs_source_t *audio_source = nullptr;
     obs_encoder_t *file_video_encoder = nullptr;
     obs_encoder_t *file_audio_encoder = nullptr;
     obs_encoder_t *buffer_video_encoder = nullptr;
@@ -73,8 +71,9 @@ class ObsInterface {
 
     bool buffering = false; // Whether we are buffering the recording in memory.
     bool drawSourceOutline = false; // Draw red outline around source
+    std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
 
-    void init_obs(const std::string& pluginPath, const std::string& dataPath);
+    void init_obs(const std::string& distPath);
     void reset_video();
     void reset_audio();
     void load_module(const char* module, const char* data); // Load a module, data is optional.

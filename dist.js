@@ -20,17 +20,18 @@ const addonDest = path.join(distRoot, packageName);
 fs.copyFileSync(addonSrc, addonDest);
 
 // Now copy the .dll files we need.
-const binDir = path.resolve(__dirname, 'bin', '64bit');
+const binSrc = path.resolve(__dirname, 'bin', '64bit');
+const binDst = path.resolve(__dirname, 'dist', 'bin');
 
-fs.readdirSync(binDir)
+fs.readdirSync(binSrc)
   .filter((file) => file.endsWith('.dll'))
   .forEach((file) => {
-    const srcPath = path.join(binDir, file);
-    const destPath = path.join(distBin, file);
-    fs.copyFileSync(srcPath, destPath);
+    const src = path.join(binSrc, file);
+    const dst = path.join(binDst, file);
+    fs.copyFileSync(src, dst);
   });
 
-// Copy executable files required.
+  // Copy executable files required.
 const exeFiles = [
   'obs-ffmpeg-mux.exe', // Required for any sort of recording.
   'obs-amf-test.exe',   // For getting AMF encoding capabilities.

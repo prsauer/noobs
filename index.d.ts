@@ -154,9 +154,8 @@ export type SourceDimensions = {
 
 interface Noobs {
   Init(
-    pluginPath: string,
+    distPath: string,
     logPath: string,
-    dataPath: string,
     recordingPath: string,
     cb: (signal: Signal) => void,
   ): void;
