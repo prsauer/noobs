@@ -78,11 +78,11 @@ void ObsInterface::list_output_types()
   }
 }
 
-void ObsInterface::load_module(const char* module) {
+void ObsInterface::load_module(const char* module, const char* data) {
   blog(LOG_INFO, "Loading module: %s", module);
 
   obs_module_t *ptr = NULL;
-  int success = obs_open_module(&ptr, module, NULL);
+  int success = obs_open_module(&ptr, module, data);
 
   if (success != MODULE_SUCCESS) {
     blog(LOG_ERROR, "Failed to open module: %s", module);
@@ -159,13 +159,15 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   std::string dp = dataPath;
 
   if (dp.back() != '/' && dp.back() != '\\') {
-    // Add a trailing slash if not present, else libobs gets upset.
+    // Add a trailing slash if not present.
     dp += '/';
   }
 
-  // We need this before resetting video and audio to ensure the effects
-  // are available. The function is deprecated in libobs but it works for
-  // now.
+  dp += "effects/";
+
+  // Add the effects path. We need this before resetting video and audio
+  //  to ensure the effects are available. The function is deprecated in
+  // libobs but it works for now.
   obs_add_data_path(dp.c_str());
 
   // This must come before loading modules to initialize D3D11.
@@ -181,8 +183,9 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
   };
 
   for (const auto& module : modules) {
-    std::string path = pluginPath + "/" + module;
-    load_module(path.c_str());
+    std::string modulePath = pluginPath + "/" + module;
+    std::string moduleDataPath = dataPath + module;
+    load_module(modulePath.c_str(), moduleDataPath.c_str());
   }
   
   obs_post_load_modules();

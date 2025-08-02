@@ -75,7 +75,7 @@ class ObsInterface {
     void init_obs(const std::string& pluginPath, const std::string& dataPath);
     void reset_video();
     void reset_audio();
-    void load_module(const char* module);
+    void load_module(const char* module, const char* data); // Load a module, data is optional.
     void connect_signal_handlers(obs_output_t *output);
     void disconnect_signal_handlers(obs_output_t *output);
 
