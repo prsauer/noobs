@@ -80,6 +80,7 @@ void ObsInterface::list_output_types()
 
 void ObsInterface::load_module(const char* module, const char* data) {
   blog(LOG_INFO, "Loading module: %s", module);
+  blog(LOG_INFO, "Data path: %s", data);
 
   obs_module_t *ptr = NULL;
   int success = obs_open_module(&ptr, module, data);
@@ -156,35 +157,45 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
     throw std::runtime_error("OBS initialization failed");
   }
   
-  std::string dp = dataPath;
+  std::string effectsPath = dataPath;
 
-  if (dp.back() != '/' && dp.back() != '\\') {
+  if (effectsPath.back() != '/' && effectsPath.back() != '\\') {
     // Add a trailing slash if not present.
-    dp += '/';
+    effectsPath += '\\';
   }
 
-  dp += "effects/";
+  effectsPath += "effects\\";
 
   // Add the effects path. We need this before resetting video and audio
-  //  to ensure the effects are available. The function is deprecated in
+  // to ensure the effects are available. The function is deprecated in
   // libobs but it works for now.
-  obs_add_data_path(dp.c_str());
+  obs_add_data_path(effectsPath.c_str());
 
   // This must come before loading modules to initialize D3D11.
   reset_video();
   reset_audio();
 
+  std::string pluginDataPath = dataPath;
+
+  if (pluginDataPath.back() != '/' && pluginDataPath.back() != '\\') {
+    // Add a trailing slash if not present.
+    pluginDataPath += '\\';
+  }
+
+  pluginDataPath += "obs-plugins\\";
+
+
   std::vector<std::string> modules = { 
-    "obs-x264.dll", 
-    "obs-ffmpeg.dll",
-    "win-capture.dll",  // Required for basically all forms of capture on Windows.
-    "image-source.dll", // Required for image sources.
-    "win-wasapi.dll"    // Required for WASAPI audio input.
+    "obs-x264", 
+    "obs-ffmpeg",
+    "win-capture",  // Required for basically all forms of capture on Windows.
+    "image-source", // Required for image sources.
+    "win-wasapi"    // Required for WASAPI audio input.
   };
 
   for (const auto& module : modules) {
-    std::string modulePath = pluginPath + "/" + module;
-    std::string moduleDataPath = dataPath + module;
+    std::string modulePath = pluginPath + "/" + module + ".dll";
+    std::string moduleDataPath = pluginDataPath + module;
     load_module(modulePath.c_str(), moduleDataPath.c_str());
   }
   
