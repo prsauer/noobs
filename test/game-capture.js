@@ -32,7 +32,7 @@ async function test() {
   noobs.SetSourceSettings('Test Source', {
     ...s,
     capture_mode: 'window',
-    window: 'World of Warcraft:waApplication Window:Wow.exe',
+    window: 'World of Warcraft:waApplication Window:WowClassic.exe',
   });
 
   const s1 = noobs.GetSourceSettings('Test Source');
