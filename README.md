@@ -23,13 +23,12 @@ npm install noobs
 ```javascript
 import noobs from 'noobs';
 
-const pluginPath = ...;
+const distPath = ...;
 const logPath = ...;
-const dataPath = ...;
 const recordingPath = ...;
 const cb = (signal) => console.log(signal);
 
-noobs.Init(pluginPath, logPath, dataPath, recordingPath, cb);
+noobs.Init(distPath, logPath, recordingPath, cb);
 ...
 noobs.Shutdown();
 ```

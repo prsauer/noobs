@@ -7,28 +7,26 @@
 ObsInterface* obs = nullptr;
 
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
-  bool valid = info.Length() == 5 &&
-   info[0].IsString() &&   // Plugin path
+  bool valid = info.Length() == 4 &&
+   info[0].IsString() &&   // Dist path
    info[1].IsString() &&   // Log path
-   info[2].IsString() &&   // Data path
-   info[3].IsString() &&   // Recording path
-   info[4].IsFunction();   // JavaScript callback
+   info[2].IsString() &&   // Recording path
+   info[3].IsFunction();   // JavaScript callback
 
   if (!valid) {
     Napi::Error::New(info.Env(), "Invalid arguments passed to ObsInit").ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
 
-  std::string pluginPath = info[0].As<Napi::String>().Utf8Value();
+  std::string distPath = info[0].As<Napi::String>().Utf8Value();
   std::string logPath = info[1].As<Napi::String>().Utf8Value();
-  std::string dataPath = info[2].As<Napi::String>().Utf8Value();
-  std::string recordingPath = info[3].As<Napi::String>().Utf8Value();
-  Napi::Function fn = info[4].As<Napi::Function>();
+  std::string recordingPath = info[2].As<Napi::String>().Utf8Value();
+  Napi::Function fn = info[3].As<Napi::Function>();
 
   Napi::ThreadSafeFunction jscb =
     Napi::ThreadSafeFunction::New(info.Env(), fn, "JavaScript callback", 0, 1);
 
-  obs = new ObsInterface(pluginPath, logPath, dataPath, recordingPath, jscb);
+  obs = new ObsInterface(distPath, logPath, recordingPath, jscb);
   return info.Env().Undefined();
 }
 
