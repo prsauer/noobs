@@ -161,10 +161,10 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
 
   if (effectsPath.back() != '/' && effectsPath.back() != '\\') {
     // Add a trailing slash if not present.
-    effectsPath += '\\';
+    effectsPath += '/';
   }
 
-  effectsPath += "effects\\";
+  effectsPath += "effects/";
 
   // Add the effects path. We need this before resetting video and audio
   // to ensure the effects are available. The function is deprecated in
@@ -179,10 +179,10 @@ void ObsInterface::init_obs(const std::string& pluginPath, const std::string& da
 
   if (pluginDataPath.back() != '/' && pluginDataPath.back() != '\\') {
     // Add a trailing slash if not present.
-    pluginDataPath += '\\';
+    pluginDataPath += '/';
   }
 
-  pluginDataPath += "obs-plugins\\";
+  pluginDataPath += "obs-plugins/";
 
 
   std::vector<std::string> modules = { 
