@@ -401,7 +401,7 @@ void ObsInterface::deleteSource(std::string name) {
 
   if (it == sources.end()) {
     blog(LOG_WARNING, "Source %s not found", name.c_str());
-    throw std::runtime_error("Source not found!");
+    return;
   }
 
   obs_source_t* source = it->second;
