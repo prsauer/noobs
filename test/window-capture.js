@@ -8,9 +8,9 @@ async function test() {
     console.log('Callback received:', msg);
   };
 
-  const pluginPath = path.resolve(__dirname, '../dist', 'plugins');
+  const pluginPath = path.resolve(__dirname, '../dist', 'obs-plugins');
   const logPath = path.resolve(__dirname, '../logs');
-  const dataPath = path.resolve(__dirname, '../dist', 'effects');
+  const dataPath = path.resolve(__dirname, '../dist', 'data');
   const recordingPath = path.resolve(__dirname, '../recordings');
 
   console.log('Plugin path:', pluginPath);
@@ -33,7 +33,7 @@ async function test() {
     compatibility: true,
   });
 
-    const settings2 = noobs.GetSourceSettings('Test Source');
+  const settings2 = noobs.GetSourceSettings('Test Source');
   console.log(settings2);
 
   console.log('Adding source to scene...');

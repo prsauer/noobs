@@ -69,6 +69,8 @@ class ObsInterface {
     HWND preview_hwnd = nullptr; // window handle for scene preview
     Napi::ThreadSafeFunction jscb; // javascript callback
     std::string recording_path = ""; 
+    std::string unbuffered_output_filename = "";
+
     bool buffering = false; // Whether we are buffering the recording in memory.
     bool drawSourceOutline = false; // Draw red outline around source
 

@@ -31,8 +31,8 @@ async function test() {
 
   noobs.SetSourceSettings('Test Source', {
     ...s,
-    capture_mode: 'window',
-    window: 'World of Warcraft:waApplication Window:WowClassic.exe',
+    capture_mode: 'any_fullscreen',
+    // window: 'World of Warcraft:waApplication Window:Wow.exe',
   });
 
   const s1 = noobs.GetSourceSettings('Test Source');

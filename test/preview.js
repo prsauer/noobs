@@ -4,9 +4,9 @@ const path = require('path');
 async function test() {
   console.log('Starting obs...');
 
-  const pluginPath = path.resolve(__dirname, '../dist', 'plugins');
+  const pluginPath = path.resolve(__dirname, '../dist', 'obs-plugins');
   const logPath = path.resolve(__dirname, '../logs');
-  const dataPath = path.resolve(__dirname, '../dist', 'effects');
+  const dataPath = path.resolve(__dirname, '../dist', 'data');
   const recordingPath = path.resolve(__dirname, '../recordings');
   const cb = () => {};
 

@@ -8,9 +8,9 @@ async function test() {
     console.log('Callback received:', msg);
   };
 
-  const pluginPath = path.resolve(__dirname, '../dist', 'plugins');
+  const pluginPath = path.resolve(__dirname, '../dist', 'obs-plugins');
   const logPath = path.resolve(__dirname, '../logs');
-  const dataPath = path.resolve(__dirname, '../dist', 'effects');
+  const dataPath = path.resolve(__dirname, '../dist', 'data');
   const recordingPath = path.resolve(__dirname, '../recordings');
 
   console.log('Plugin path:', pluginPath);
@@ -38,12 +38,13 @@ async function test() {
 
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
+  const recordingNames = new Set();
   for (let i = 0; i < 2; i++) {
     console.log('Test Recording Loop:', i + 1);
 
     // Start the buffer.
     noobs.StartBuffer();
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Start the recording, with 1s offset into the past.
     noobs.StartRecording(1);
@@ -65,6 +66,11 @@ async function test() {
 
     // Get the path to the last recording.
     const last = noobs.GetLastRecording();
+    recordingNames.add(last);
+    if (recordingNames.size != i + 1) {
+      console.log(recordingNames);
+      throw new Error('Recording names not unique');
+    }
     console.log('Last recording:', last);
 
     // Sleep a bit more for good measure.

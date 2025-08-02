@@ -229,10 +229,10 @@ void ObsInterface::create_output() {
 
   blog(LOG_INFO, "Set ffmpeg_muxer settings");
   obs_data_t *ffmpeg_settings = obs_data_create();
-  // Need to specify the exact path for ffmpeg_muxer.
+  // Need to specify the exact path for ffmpeg_muxer. We will write this again at start recording.
   std::string filename = recording_path + "\\" + get_current_date_time() + ".mp4";
   obs_data_set_string(ffmpeg_settings, "path", filename.c_str());
-  recording_path = filename;
+  unbuffered_output_filename = filename;
 
   // Apply and release the settings.
   obs_output_update(file_output, ffmpeg_settings);
@@ -890,6 +890,14 @@ void ObsInterface::startRecording(int offset) {
       throw std::runtime_error("Failed to call convert procedure handler");
     }
   } else {
+    
+    obs_data_t *ffmpeg_settings = obs_data_create();
+    std::string filename = recording_path + "\\" + get_current_date_time() + ".mp4";
+    obs_data_set_string(ffmpeg_settings,  "path", filename.c_str());
+    obs_output_update(output, ffmpeg_settings);
+    obs_data_release(ffmpeg_settings);
+    unbuffered_output_filename = filename;
+
     blog(LOG_INFO, "Starting ffmpeg_muxer output");
 
     bool is_active = obs_output_active(output);
@@ -938,7 +946,7 @@ std::string ObsInterface::getLastRecording() {
 
   if (!buffering) {
     blog(LOG_INFO, "Getting last recording path from ffmpeg_muxer");
-    return recording_path;
+    return unbuffered_output_filename;
   }
 
   bool success = proc_handler_call(ph, "get_last_replay", &cd);
