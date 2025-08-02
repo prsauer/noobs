@@ -437,6 +437,7 @@ Napi::Value ObsSetDrawSourceOutline(const Napi::CallbackInfo& info) {
   bool enabled = info[0].As<Napi::Boolean>();
   blog(LOG_DEBUG, "ObsSetDrawSourceOutline set to %d", enabled);
   obs->setDrawSourceOutline(enabled);
+  return info.Env().Undefined();
 }
 
 Napi::Value ObsGetDrawSourceOutlineEnabled(const Napi::CallbackInfo& info) {

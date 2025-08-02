@@ -1,6 +1,8 @@
 #pragma once
 
+#include <obs.h>
 #include <napi.h>
+#include <windows.h>
 
 struct SignalData {
   std::string id;
