@@ -109,18 +109,24 @@ void ObsInterface::setVideoContext(int fps, int width, int height) {
     throw std::runtime_error("Invalid video settings");
   }
 
-  reset_video(fps, width, height);
+  int ret = reset_video(fps, width, height);
 
-  // Create the resources we rely on that are reset when resetting the video context.
-  create_output();
-  create_scene();
+  if (ret == OBS_VIDEO_CURRENTLY_ACTIVE) {
+    blog(LOG_WARNING, "Can't reset video as currently active");
+    return;
+  }
 
+  if (ret != OBS_VIDEO_SUCCESS) {
+    blog(LOG_ERROR, "Failed to reset video context: %d", ret);
+    throw std::runtime_error("Failed to reset video context");
+  }
+
+  // Recreate the encoders as they are tied to the video context.
   create_video_encoders();
-  create_audio_encoders();
 }
 
 
-void ObsInterface::reset_video(int fps, int width, int height) {
+int ObsInterface::reset_video(int fps, int width, int height) {
   blog(LOG_INFO, "Reset video");
   obs_video_info ovi = {};
 
@@ -139,30 +145,14 @@ void ObsInterface::reset_video(int fps, int width, int height) {
   ovi.gpu_conversion = true;
   ovi.graphics_module = "libobs-d3d11.dll"; 
 
-  // TODO: don't allow this while output is active.
-  int success = obs_reset_video(&ovi);
-
-  // obs_enter_graphics();
-  // int  dt = gs_get_device_type();
-  // blog(LOG_INFO, "Device type = %d", dt);  // should be 1 for D3D11
-  // obs_leave_graphics();
-
-  if (success != OBS_VIDEO_SUCCESS) {
-    blog(LOG_ERROR, "Failed to reset video!");
-    throw std::runtime_error("Failed to reset video!");
-  }
+  return obs_reset_video(&ovi);
 }
 
-void ObsInterface::reset_audio() {
+bool ObsInterface::reset_audio() {
   struct obs_audio_info oai = {0};
   oai.samples_per_sec = 48000;
   oai.speakers = SPEAKERS_STEREO;
-  bool reset = obs_reset_audio(&oai);
-
-  if (!reset) {
-    blog(LOG_ERROR, "Failed to reset audio!");
-    throw std::runtime_error("Failed to reset audio!");
-  }
+  return obs_reset_audio(&oai);
 }
 
 void ObsInterface::init_obs(const std::string& distPath) {
@@ -199,9 +189,18 @@ void ObsInterface::init_obs(const std::string& distPath) {
   obs_add_data_path(effectsPath.c_str());
 
   // This must come before loading modules to initialize D3D11.
-  // Sensible defaults that can be reconfigured.
-  reset_video(60, 1920, 1080); 
-  reset_audio();
+  // Choose some sensible defaults that can be reconfigured.
+  int rc = reset_video(60, 1920, 1080);
+
+  if (rc != OBS_VIDEO_SUCCESS) {
+    blog(LOG_ERROR, "Failed to reset video!");
+    throw std::runtime_error("Failed to reset video!");
+  }
+
+  if (!reset_audio()) {
+    blog(LOG_ERROR, "Failed to reset audio!");
+    throw std::runtime_error("Failed to reset audio!");
+  }
 
   std::vector<std::string> modules = { 
     "obs-x264", 
@@ -304,12 +303,23 @@ void ObsInterface::setRecordingDir(const std::string& recordingPath) {
 void ObsInterface::create_video_encoders() {
   blog(LOG_INFO, "Create video encoder");
 
-  file_video_encoder = obs_video_encoder_create("obs_x264", "h264_stream_file", NULL, NULL);
+  if (file_video_encoder) {
+    blog(LOG_DEBUG, "Releasing file video encoder");
+    obs_encoder_release(file_video_encoder);
+    file_video_encoder = nullptr;
+  }
 
+  file_video_encoder = obs_video_encoder_create("obs_x264", "h264_stream_file", NULL, NULL);
 
   if (!file_video_encoder) {
     blog(LOG_ERROR, "Failed to create video encoder!");
     throw std::runtime_error("Failed to create video encoder!");
+  }
+
+  if (buffer_video_encoder) {
+    blog(LOG_DEBUG, "Releasing buffer video encoder");
+    obs_encoder_release(buffer_video_encoder);
+    buffer_video_encoder = nullptr;
   }
 
   buffer_video_encoder = obs_video_encoder_create("obs_x264", "h264_stream_buffer", NULL, NULL);
@@ -321,7 +331,6 @@ void ObsInterface::create_video_encoders() {
 
   blog(LOG_INFO, "Set file video encoder settings");
   obs_data_t* venc_settings = obs_data_create();
-  // obs_data_set_string(venc_settings, "preset", "speed");  // Faster preset
   obs_data_set_string(venc_settings, "rate_control", "CRF");
   obs_data_set_int(venc_settings, "crf", 22);
   obs_data_set_string(venc_settings, "profile", "main");
@@ -332,8 +341,9 @@ void ObsInterface::create_video_encoders() {
   obs_data_release(venc_settings);
 
   obs_output_set_video_encoder(file_output, file_video_encoder);
-  obs_encoder_set_video(file_video_encoder, obs_get_video());
   obs_output_set_video_encoder(buffer_output, buffer_video_encoder);
+
+  obs_encoder_set_video(file_video_encoder, obs_get_video());
   obs_encoder_set_video(buffer_video_encoder, obs_get_video());
 }
 

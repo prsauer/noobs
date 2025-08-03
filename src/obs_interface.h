@@ -73,8 +73,8 @@ class ObsInterface {
     std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
 
     void init_obs(const std::string& distPath);
-    void reset_video(int fps, int width, int height);
-    void reset_audio();
+    int reset_video(int fps, int width, int height);
+    bool reset_audio();
     void load_module(const char* module, const char* data); // Load a module, data is optional.
     void connect_signal_handlers(obs_output_t *output);
     void disconnect_signal_handlers(obs_output_t *output);
