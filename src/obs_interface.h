@@ -22,19 +22,19 @@ class ObsInterface {
     ~ObsInterface();
 
     bool setBuffering(bool buffering); // In buffering mode, the recording is stored in memory and can be converted to a file later.
-    void startBuffering();             // Start buffering to memory.
-    void startRecording(int offset);   // Convert the active buffered recording to a real one.
-    void stopRecording();              // Stop the recording.
-    void forceStopRecording();         // Force stop the recording, this will not save the current recording.
-    std::string getLastRecording();    // Get the last recorded file path.
+    void startBuffering(); // Start buffering to memory.
+    void startRecording(int offset); // Convert the active buffered recording to a real one.
+    void stopRecording(); // Stop the recording.
+    void forceStopRecording(); // Force stop the recording, this will not save the current recording.
+    std::string getLastRecording(); // Get the last recorded file path.
     void setRecordingDir(const std::string& recordingPath); // Output must not be active when calling this.
     void setVideoContext(int fps, int width, int height); // Reset video settings.
 
-    void createSource(std::string name, std::string type);          // Create a new source
-    void deleteSource(std::string name);                            // Release a source.
-    obs_data_t* getSourceSettings(std::string name);                // Get the current settings.
+    void createSource(std::string name, std::string type); // Create a new source
+    void deleteSource(std::string name); // Release a source.
+    obs_data_t* getSourceSettings(std::string name); // Get the current settings.
     void setSourceSettings(std::string name, obs_data_t* settings); // Set settings.
-    obs_properties_t* getSourceProperties(std::string name);        // Get the settings schema.
+    obs_properties_t* getSourceProperties(std::string name); // Get the settings schema.
 
     void addSourceToScene(std::string name); // Add source to scene.
     void removeSourceFromScene(std::string name); // Remove source from scene.
@@ -48,23 +48,21 @@ class ObsInterface {
     void setDrawSourceOutline(bool enabled); // Red box around source
     bool getDrawSourceOutlineEnabled();
 
-    std::vector<std::string> get_available_video_encoders();
-
-    // TODO
-    // Configure video 
-    // Configure audio
-    // List audio source
-    // Reconfigure audio sources
-    // Reconfigure video sources
+    std::vector<std::string> listAvailableVideoEncoders(); // Return a list of available video encoders.
+    void setVideoEncoder(std::string id, obs_data_t* settings); // Set the video encoder to use.
   
   private:
     obs_output_t *file_output = nullptr;
     obs_output_t *buffer_output = nullptr;
+
     obs_scene_t *scene = nullptr;
+
     obs_encoder_t *file_video_encoder = nullptr;
     obs_encoder_t *file_audio_encoder = nullptr;
+
     obs_encoder_t *buffer_video_encoder = nullptr;
     obs_encoder_t *buffer_audio_encoder = nullptr;
+    
     obs_display_t *display = nullptr;
     HWND preview_hwnd = nullptr; // window handle for scene preview
     Napi::ThreadSafeFunction jscb; // javascript callback
@@ -94,6 +92,8 @@ class ObsInterface {
     void create_scene();
     void create_output();
 
+    std::string video_encoder_id; // The video encoder ID to use.
+    obs_data_t* video_encoder_settings; // Settings for the video encoder.
     void create_video_encoders();
     void create_audio_encoders();
 };

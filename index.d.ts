@@ -172,6 +172,10 @@ interface Noobs {
   SetRecordingDir(recordingPath: string): void;
   ResetVideoContext(fps: number, width: number, height: number): void;
 
+  // Encoder functions.
+  GetAvailableVideoEncoders(): string[]; // Returns a list of available video encoders.
+  SetVideoEncoder(id: string, settings: ObsData): void; // Create the video encoder to use.
+
   // Source management functions
   CreateSource(name: string, type: string): void;
   DeleteSource(name: string): void;
@@ -191,16 +195,7 @@ interface Noobs {
   ShowPreview(x: number, y: number, width: number, height: number): void;
   HidePreview(): void;
   GetPreviewScaleFactor(): number;
-  /**
-   * Draws a red border around source preview
-   * @param enabled
-   */
   SetDrawSourceOutline(enabled: boolean): void;
-  /**
-   * Gets the current state of the preview outline, a red border around the source preview
-   *
-   * Default: *false*
-   */
   GetDrawSourceOutlineEnabled(): boolean;
 }
 

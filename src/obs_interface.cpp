@@ -8,22 +8,6 @@
 #include <graphics/vec4.h>
 #include <util/platform.h>
 
-std::vector<std::string> ObsInterface::get_available_video_encoders()
-{
-  std::vector<std::string> encoders;
-  size_t idx = 0;
-  const char *encoder_type;
-
-  while (obs_enum_encoder_types(idx++, &encoder_type)) {
-    bool video = obs_get_encoder_type(encoder_type) == OBS_ENCODER_VIDEO;
-
-    if (video)
-      encoders.emplace_back(encoder_type);
-  }
-
-  return encoders;
-}
-
 void ObsInterface::list_encoders(obs_encoder_type type)
 {
   blog(LOG_INFO, "List encoders");
@@ -100,13 +84,20 @@ void ObsInterface::load_module(const char* module, const char* data) {
 
 void ObsInterface::setVideoContext(int fps, int width, int height) {
   blog(LOG_INFO, "Reset video context");
+
   blog(LOG_INFO, "FPS: %d", fps);
   blog(LOG_INFO, "Width: %d", width);
   blog(LOG_INFO, "Height: %d", height);
 
-  if (fps <= 0 || width <= 0 || height <= 0) {
-    blog(LOG_ERROR, "Invalid video settings provided for reset");
-    throw std::runtime_error("Invalid video settings");
+  if (fps <= 10) {
+    blog(LOG_WARNING, "Invalid FPS provided for reset, using default 10");
+    fps = 60;
+  }
+
+  if (width <= 32 || height <= 32) {
+    blog(LOG_WARNING, "Invalid width or height provided for reset, using default 1920x1080");
+    width = 1920;
+    height = 1080;
   }
 
   int ret = reset_video(fps, width, height);
@@ -301,7 +292,7 @@ void ObsInterface::setRecordingDir(const std::string& recordingPath) {
 }
 
 void ObsInterface::create_video_encoders() {
-  blog(LOG_INFO, "Create video encoder");
+  blog(LOG_INFO, "Set video encoder: %s", video_encoder_id.c_str());
 
   if (file_video_encoder) {
     blog(LOG_DEBUG, "Releasing file video encoder");
@@ -309,7 +300,12 @@ void ObsInterface::create_video_encoders() {
     file_video_encoder = nullptr;
   }
 
-  file_video_encoder = obs_video_encoder_create("obs_x264", "h264_stream_file", NULL, NULL);
+  file_video_encoder = obs_video_encoder_create(
+    video_encoder_id.c_str(), 
+    "noobs_file_encoder", 
+    video_encoder_settings, 
+    NULL
+  );
 
   if (!file_video_encoder) {
     blog(LOG_ERROR, "Failed to create video encoder!");
@@ -322,23 +318,17 @@ void ObsInterface::create_video_encoders() {
     buffer_video_encoder = nullptr;
   }
 
-  buffer_video_encoder = obs_video_encoder_create("obs_x264", "h264_stream_buffer", NULL, NULL);
+  buffer_video_encoder = obs_video_encoder_create(
+    video_encoder_id.c_str(), 
+    "noobs_buffer_encoder", 
+    video_encoder_settings, 
+    NULL
+  );
 
   if (!buffer_video_encoder) {
     blog(LOG_ERROR, "Failed to create buffer video encoder!");
     throw std::runtime_error("Failed to create buffer video encoder!");
   }
-
-  blog(LOG_INFO, "Set file video encoder settings");
-  obs_data_t* venc_settings = obs_data_create();
-  obs_data_set_string(venc_settings, "rate_control", "CRF");
-  obs_data_set_int(venc_settings, "crf", 22);
-  obs_data_set_string(venc_settings, "profile", "main");
-  obs_data_set_int(venc_settings, "keyint_sec", 1); // Set keyframe interval to 1 second
-
-  obs_encoder_update(file_video_encoder, venc_settings);
-  obs_encoder_update(buffer_video_encoder, venc_settings);
-  obs_data_release(venc_settings);
 
   obs_output_set_video_encoder(file_output, file_video_encoder);
   obs_output_set_video_encoder(buffer_output, buffer_video_encoder);
@@ -816,6 +806,8 @@ ObsInterface::ObsInterface(
   create_output();
   create_scene();
 
+  video_encoder_id = "obs_x264";
+  video_encoder_settings = obs_data_create();
   create_video_encoders();
   create_audio_encoders();
 }
@@ -1104,4 +1096,26 @@ void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale) {
 
   obs_sceneitem_set_pos(item, pos);
   obs_sceneitem_set_scale(item, scale);
+}
+
+std::vector<std::string> ObsInterface::listAvailableVideoEncoders()
+{
+  std::vector<std::string> encoders;
+  size_t idx = 0;
+  const char *encoder_type;
+
+  while (obs_enum_encoder_types(idx++, &encoder_type)) {
+    bool video = obs_get_encoder_type(encoder_type) == OBS_ENCODER_VIDEO;
+
+    if (video)
+      encoders.emplace_back(encoder_type);
+  }
+
+  return encoders;
+}
+
+void ObsInterface::setVideoEncoder(std::string id, obs_data_t* settings) {
+  video_encoder_id = id;
+  video_encoder_settings = settings;
+  create_video_encoders();
 }

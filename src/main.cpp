@@ -75,6 +75,54 @@ Napi::Value ObsResetVideoContext(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsListVideoEncoders(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsListVideoEncoders called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 0;
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsListVideoEncoders").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  auto encoders = obs->listAvailableVideoEncoders();
+  Napi::Array result = Napi::Array::New(info.Env(), encoders.size());
+
+  for (size_t i = 0; i < encoders.size(); ++i) {
+    result[i] = Napi::String::New(info.Env(), encoders[i]);
+  }
+
+  return result;
+}
+
+Napi::Value ObsSetVideoEncoder(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetVideoEncoder called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 2 &&
+    info[0].IsString() && // Encoder ID
+    info[1].IsObject(); // Settings object
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetVideoEncoder").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  std::string id = info[0].As<Napi::String>().Utf8Value();
+  Napi::Object obj = info[1].As<Napi::Object>();
+
+  obs_data_t* settings = napi_to_data(obj);
+  obs->setVideoEncoder(id, settings);
+  obs_data_release(settings);
+
+  return info.Env().Undefined();
+}
+
 Napi::Value ObsSetBuffering(const Napi::CallbackInfo& info) {
   blog(LOG_INFO, "ObsSetBuffering called");
 
@@ -479,6 +527,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("Shutdown", Napi::Function::New(env, ObsShutdown));
   exports.Set("SetRecordingDir", Napi::Function::New(env, ObsSetRecordingDir));
   exports.Set("ResetVideoContext", Napi::Function::New(env, ObsResetVideoContext));
+  exports.Set("ListVideoEncoders", Napi::Function::New(env, ObsListVideoEncoders));
+  exports.Set("SetVideoEncoder", Napi::Function::New(env, ObsSetVideoEncoder));
 
   exports.Set("SetBuffering", Napi::Function::New(env, ObsSetBuffering));
   exports.Set("StartBuffer", Napi::Function::New(env, ObsStartBuffer));
