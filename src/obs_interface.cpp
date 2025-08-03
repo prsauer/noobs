@@ -98,16 +98,25 @@ void ObsInterface::load_module(const char* module, const char* data) {
   }
 }
 
-void ObsInterface::reset_video() {
-  blog(LOG_INFO, "Setup video info");
+void ObsInterface::resetVideoContext(int fps, int width, int height) {
+  blog(LOG_INFO, "Reset video context");
+
+  blog(LOG_INFO, "FPS: %d", fps);
+  blog(LOG_INFO, "Width: %d", width);
+  blog(LOG_INFO, "Height: %d", height);
+
+  if (fps <= 0 || width <= 0 || height <= 0) {
+    blog(LOG_ERROR, "Invalid video settings provided for reset");
+    throw std::runtime_error("Invalid video settings");
+  }
 
   obs_video_info ovi = {};
 
-  ovi.base_width = 1920;
-  ovi.base_height = 1080;
-  ovi.output_width = 1920;
-  ovi.output_height = 1080;
-  ovi.fps_num = 60;
+  ovi.base_width = width;
+  ovi.base_height = height;
+  ovi.output_width = width;
+  ovi.output_height = height;
+  ovi.fps_num = fps;
   ovi.fps_den = 1;
 
   ovi.output_format = VIDEO_FORMAT_NV12;
@@ -118,12 +127,13 @@ void ObsInterface::reset_video() {
   ovi.gpu_conversion = true;
   ovi.graphics_module = "libobs-d3d11.dll"; 
 
+  // TODO: don't allow this while output is active.
   int success = obs_reset_video(&ovi);
 
-  obs_enter_graphics();
-  int  dt = gs_get_device_type();
-  blog(LOG_INFO, "Device type = %d", dt);  // should be 1 for D3D11
-  obs_leave_graphics();
+  // obs_enter_graphics();
+  // int  dt = gs_get_device_type();
+  // blog(LOG_INFO, "Device type = %d", dt);  // should be 1 for D3D11
+  // obs_leave_graphics();
 
   if (success != OBS_VIDEO_SUCCESS) {
     blog(LOG_ERROR, "Failed to reset video!");
@@ -177,7 +187,8 @@ void ObsInterface::init_obs(const std::string& distPath) {
   obs_add_data_path(effectsPath.c_str());
 
   // This must come before loading modules to initialize D3D11.
-  reset_video();
+  // Sensible defaults that can be reconfigured.
+  resetVideoContext(60, 1920, 1080); 
   reset_audio();
 
   std::vector<std::string> modules = { 

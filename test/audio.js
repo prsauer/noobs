@@ -1,0 +1,56 @@
+const noobs = require('../index.js');
+const path = require('path');
+
+async function test() {
+  console.log('Starting obs...');
+
+  const cb = (msg) => {
+    console.log('Callback received:', msg);
+  };
+
+  const distPath = path.resolve(__dirname, '../dist');
+  const logPath = path.resolve(__dirname, '../logs');
+  const recordingPath = path.resolve(__dirname, '../recordings');
+
+  console.log('Dist path:', distPath);
+  console.log('Log path:', logPath);
+  console.log('Recording path:', recordingPath);
+
+  noobs.Init(distPath, logPath, recordingPath, cb);
+
+  console.log('Creating source...');
+// [INFO] 	- wasapi_input_capture
+// [INFO] 	- wasapi_output_capture
+// [INFO] 	- wasapi_process_output_capture
+  noobs.CreateSource('Test Speaker', 'wasapi_output_capture');
+  const s = noobs.GetSourceProperties('Test Speaker');
+  console.log('Speakers:', s);
+  console.log('Speakers:', s[0].items);
+
+  noobs.CreateSource('Test Mic', 'wasapi_input_capture');
+  const ms = noobs.GetSourceSettings('Test Mic');
+  const mp = noobs.GetSourceProperties('Test Mic');
+  console.log('ms:', ms);
+  console.log('mp:', mp);
+  console.log('Mics:', mp[0].items);
+
+  noobs.CreateSource('Test App', 'wasapi_process_output_capture');
+  const a = noobs.GetSourceProperties('Test App');
+  console.log('Apps:', a[0].items);
+
+  noobs.AddSourceToScene('Test Mic');
+  noobs.AddSourceToScene('Test Speaker');
+  noobs.AddSourceToScene('Test App');
+  
+  noobs.StartRecording(0);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  noobs.StopRecording();
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  
+  noobs.Shutdown();
+  console.log('Test Done');
+}
+
+console.log('Starting test...');
+test();
+console.log('Test now running async');

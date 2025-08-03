@@ -54,6 +54,27 @@ Napi::Value ObsSetRecordingDir(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsResetVideoContext(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsResetVideoContext called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 3 && info[0].IsNumber() && info[1].IsNumber() && info[2].IsNumber();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsResetVideo").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  int fps = info[0].As<Napi::Number>().Int32Value();
+  int width = info[1].As<Napi::Number>().Int32Value();
+  int height = info[2].As<Napi::Number>().Int32Value();
+
+  obs->resetVideoContext(fps, width, height);
+  return info.Env().Undefined();
+}
+
 Napi::Value ObsSetBuffering(const Napi::CallbackInfo& info) {
   blog(LOG_INFO, "ObsSetBuffering called");
 
@@ -447,6 +468,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("Init", Napi::Function::New(env, ObsInit));
   exports.Set("Shutdown", Napi::Function::New(env, ObsShutdown));
   exports.Set("SetRecordingDir", Napi::Function::New(env, ObsSetRecordingDir));
+  exports.Set("ResetVideoContext", Napi::Function::New(env, ObsResetVideoContext));
 
   exports.Set("SetBuffering", Napi::Function::New(env, ObsSetBuffering));
   exports.Set("StartBuffer", Napi::Function::New(env, ObsStartBuffer));

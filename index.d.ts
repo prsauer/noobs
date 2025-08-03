@@ -169,6 +169,7 @@ interface Noobs {
   StopRecording(): void;
   GetLastRecording(): string;
   SetRecordingDir(recordingPath: string): void;
+  ResetVideoContext(fps: number, width: number, height: number): void;
 
   // Source management functions
   CreateSource(name: string, type: string): void;
