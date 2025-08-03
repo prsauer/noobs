@@ -1115,6 +1115,7 @@ std::vector<std::string> ObsInterface::listAvailableVideoEncoders()
 }
 
 void ObsInterface::setVideoEncoder(std::string id, obs_data_t* settings) {
+  // TODO don't allow this if output is active.
   video_encoder_id = id;
   video_encoder_settings = settings;
   create_video_encoders();

@@ -173,7 +173,7 @@ interface Noobs {
   ResetVideoContext(fps: number, width: number, height: number): void;
 
   // Encoder functions.
-  GetAvailableVideoEncoders(): string[]; // Returns a list of available video encoders.
+  ListVideoEncoders(): string[]; // Returns a list of available video encoders.
   SetVideoEncoder(id: string, settings: ObsData): void; // Create the video encoder to use.
 
   // Source management functions
