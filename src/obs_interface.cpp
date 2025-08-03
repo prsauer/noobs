@@ -978,6 +978,20 @@ void ObsInterface::stopRecording() {
   blog(LOG_INFO, "ObsInterface::stopRecording exited");
 }
 
+void ObsInterface::forceStopRecording() {
+  blog(LOG_INFO, "ObsInterface::forceStopRecording enter");
+  obs_output_t* output = buffering ? buffer_output : file_output;
+  bool is_active = obs_output_active(output);
+
+  if (!is_active) {
+    blog(LOG_WARNING, "Output is not active");
+    return;
+  }
+
+  obs_output_force_stop(output);
+  blog(LOG_INFO, "ObsInterface::forceStopRecording exited");
+}
+
 std::string ObsInterface::getLastRecording() {
   blog(LOG_INFO, "calling get last replay proc handler");
   calldata cd;

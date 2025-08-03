@@ -167,6 +167,7 @@ interface Noobs {
   StartBuffer(): void;
   StartRecording(offset: number): void;
   StopRecording(): void;
+  ForceStopRecording(): void;
   GetLastRecording(): string;
   SetRecordingDir(recordingPath: string): void;
   ResetVideoContext(fps: number, width: number, height: number): void;

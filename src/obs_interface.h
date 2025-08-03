@@ -25,6 +25,7 @@ class ObsInterface {
     void startBuffering();             // Start buffering to memory.
     void startRecording(int offset);   // Convert the active buffered recording to a real one.
     void stopRecording();              // Stop the recording.
+    void forceStopRecording();         // Force stop the recording, this will not save the current recording.
     std::string getLastRecording();    // Get the last recorded file path.
     void setRecordingDir(const std::string& recordingPath); // Output must not be active when calling this.
     void setVideoContext(int fps, int width, int height); // Reset video settings.
