@@ -27,7 +27,7 @@ class ObsInterface {
     void stopRecording();              // Stop the recording.
     std::string getLastRecording();    // Get the last recorded file path.
     void setRecordingDir(const std::string& recordingPath); // Output must not be active when calling this.
-    void resetVideoContext(int fps, int width, int height); // Reset video settings.
+    void setVideoContext(int fps, int width, int height); // Reset video settings.
 
     void createSource(std::string name, std::string type);          // Create a new source
     void deleteSource(std::string name);                            // Release a source.
@@ -73,6 +73,7 @@ class ObsInterface {
     std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
 
     void init_obs(const std::string& distPath);
+    void reset_video(int fps, int width, int height);
     void reset_audio();
     void load_module(const char* module, const char* data); // Load a module, data is optional.
     void connect_signal_handlers(obs_output_t *output);

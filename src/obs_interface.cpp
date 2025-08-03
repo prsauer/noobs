@@ -98,9 +98,8 @@ void ObsInterface::load_module(const char* module, const char* data) {
   }
 }
 
-void ObsInterface::resetVideoContext(int fps, int width, int height) {
+void ObsInterface::setVideoContext(int fps, int width, int height) {
   blog(LOG_INFO, "Reset video context");
-
   blog(LOG_INFO, "FPS: %d", fps);
   blog(LOG_INFO, "Width: %d", width);
   blog(LOG_INFO, "Height: %d", height);
@@ -110,6 +109,19 @@ void ObsInterface::resetVideoContext(int fps, int width, int height) {
     throw std::runtime_error("Invalid video settings");
   }
 
+  reset_video(fps, width, height);
+
+  // Create the resources we rely on that are reset when resetting the video context.
+  create_output();
+  create_scene();
+
+  create_video_encoders();
+  create_audio_encoders();
+}
+
+
+void ObsInterface::reset_video(int fps, int width, int height) {
+  blog(LOG_INFO, "Reset video");
   obs_video_info ovi = {};
 
   ovi.base_width = width;
@@ -188,7 +200,7 @@ void ObsInterface::init_obs(const std::string& distPath) {
 
   // This must come before loading modules to initialize D3D11.
   // Sensible defaults that can be reconfigured.
-  resetVideoContext(60, 1920, 1080); 
+  reset_video(60, 1920, 1080); 
   reset_audio();
 
   std::vector<std::string> modules = { 

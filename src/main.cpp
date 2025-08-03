@@ -71,7 +71,7 @@ Napi::Value ObsResetVideoContext(const Napi::CallbackInfo& info) {
   int width = info[1].As<Napi::Number>().Int32Value();
   int height = info[2].As<Napi::Number>().Int32Value();
 
-  obs->resetVideoContext(fps, width, height);
+  obs->setVideoContext(fps, width, height);
   return info.Env().Undefined();
 }
 
