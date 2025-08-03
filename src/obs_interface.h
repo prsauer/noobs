@@ -35,6 +35,7 @@ class ObsInterface {
     obs_data_t* getSourceSettings(std::string name); // Get the current settings.
     void setSourceSettings(std::string name, obs_data_t* settings); // Set settings.
     obs_properties_t* getSourceProperties(std::string name); // Get the settings schema.
+    void setMuteAudioInputs(bool mute); // Mute or unmute all audio inputs.
 
     void addSourceToScene(std::string name); // Add source to scene.
     void removeSourceFromScene(std::string name); // Remove source from scene.

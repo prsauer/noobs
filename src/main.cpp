@@ -388,6 +388,25 @@ Napi::Value ObsGetSourceProperties(const Napi::CallbackInfo& info) {
   return result;
 }
 
+
+Napi::Value ObsSetMuteAudioInputs(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetMuteAudioInputs called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetMuteAudioInputs").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  bool mute = info[0].As<Napi::Boolean>().Value();
+  obs->setMuteAudioInputs(mute);
+  return info.Env().Undefined();
+}
+
 Napi::Value ObsCreateScene(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsCreateScene called but obs is not initialized");
@@ -542,6 +561,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("GetSourceSettings", Napi::Function::New(env, ObsGetSourceSettings));
   exports.Set("SetSourceSettings", Napi::Function::New(env, ObsSetSourceSettings));
   exports.Set("GetSourceProperties", Napi::Function::New(env, ObsGetSourceProperties));
+  exports.Set("SetMuteAudioInputs", Napi::Function::New(env, ObsSetMuteAudioInputs));
 
   exports.Set("AddSourceToScene", Napi::Function::New(env, ObsAddSourceToScene));
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));

@@ -182,6 +182,7 @@ interface Noobs {
   GetSourceSettings(name: string): ObsData;
   SetSourceSettings(name: string, settings: ObsData): void;
   GetSourceProperties(name: string): ObsProperty[];
+  SetMuteAudioInputs(mute: boolean): void; // Mute or unmute all audio inputs.
 
   // Scene management functions
   AddSourceToScene(sourceName: string): void;

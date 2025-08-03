@@ -1120,3 +1120,29 @@ void ObsInterface::setVideoEncoder(std::string id, obs_data_t* settings) {
   video_encoder_settings = settings;
   create_video_encoders();
 }
+
+void ObsInterface::setMuteAudioInputs(bool mute) {
+  if (mute) {
+    blog(LOG_INFO, "Muting all audio input sources");
+  } else {
+    blog(LOG_INFO, "Unmuting all audio input sources");
+  }
+
+  // Loop over all sources, and set the mute state if they are of type "wasapi_input_capture".
+  for (const auto& kv : sources) {
+    const std::string& name = kv.first;
+    obs_source_t* source = kv.second;
+
+    if (!source) {
+      blog(LOG_WARNING, "Source %s not found", name.c_str());
+      continue;
+    }
+
+    const char* type = obs_source_get_id(source);
+
+    if (strcmp(type, "wasapi_input_capture") == 0) {
+      blog(LOG_INFO, "Setting mute for audio input source: %s to %s", name.c_str(), mute ? "true" : "false");
+      obs_source_set_muted(source, mute);
+    }
+  }
+}

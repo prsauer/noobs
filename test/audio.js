@@ -44,6 +44,14 @@ async function test() {
   
   noobs.StartRecording(0);
   await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  console.log("Mute all audio inputs for 2 seconds...");
+  noobs.SetMuteAudioInputs(true);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  console.log("Unmute all audio inputs...");
+  noobs.SetMuteAudioInputs(false);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
   noobs.StopRecording();
   await new Promise((resolve) => setTimeout(resolve, 2000));
   
