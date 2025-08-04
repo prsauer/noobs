@@ -10,28 +10,18 @@
 
 void ObsInterface::list_encoders(obs_encoder_type type)
 {
-  blog(LOG_INFO, "List encoders");
-  blog(LOG_INFO, "List encoders of type: %d", type);
-  
+  blog(LOG_INFO, "Encoders:");
   size_t idx = 0;
   const char *encoder_type;
 
   while (obs_enum_encoder_types(idx++, &encoder_type)) {
-    if (obs_get_encoder_type(encoder_type) != type) {
-      continue;
-    }
-
-    // if (obs_get_encoder_caps(encoder_type) & hide_flags) {
-    //   continue;
-    // }
-
     blog(LOG_INFO, "\t- %s (%s)", encoder_type, obs_encoder_get_display_name(encoder_type));
   }
 };
 
 void ObsInterface::list_source_types()
 {
-  blog(LOG_INFO, "List  src types");
+  blog(LOG_INFO, "Sources:");
   size_t idx = 0;
   const char *src = nullptr;
 
@@ -40,20 +30,9 @@ void ObsInterface::list_source_types()
   }
 }
 
-void ObsInterface::list_input_types()
-{
-  blog(LOG_INFO, "List  input types");
-  size_t idx = 0;
-  const char *src = nullptr;
-
-  while (obs_enum_input_types(idx++, &src)) {
-    blog(LOG_INFO, "\t- %s", src);
-  }
-}
-
 void ObsInterface::list_output_types()
 {
-  blog(LOG_INFO, "List  output types");
+  blog(LOG_INFO, "Outputs:");
   size_t idx = 0;
   const char *src = nullptr;
 
@@ -169,10 +148,12 @@ void ObsInterface::init_obs(const std::string& distPath) {
 
   std::string effectsPath = basePath + "data/effects/";
   std::string pluginPath = basePath + "obs-plugins/";
+  std::string pluginDataPath = basePath + "data/obs-plugins/";
 
   blog(LOG_INFO, "Base path: %s", basePath.c_str());
   blog(LOG_INFO, "Effects path: %s", effectsPath.c_str());
   blog(LOG_INFO, "Plugin path: %s", pluginPath.c_str());
+  blog(LOG_INFO, "Data path: %s", pluginDataPath.c_str());
 
   // Add the effects path. We need this before resetting video and audio
   // to ensure the effects are available. The function is deprecated in
@@ -203,7 +184,7 @@ void ObsInterface::init_obs(const std::string& distPath) {
 
   for (const auto& module : modules) {
     std::string modulePath = pluginPath + module + ".dll";
-    std::string moduleDataPath = pluginPath + module;
+    std::string moduleDataPath = pluginDataPath + module;
     load_module(modulePath.c_str(), moduleDataPath.c_str());
   }
   
@@ -211,7 +192,6 @@ void ObsInterface::init_obs(const std::string& distPath) {
 
   list_encoders();
   list_source_types();
-  list_input_types();
   list_output_types();
 
   blog(LOG_INFO, "Exit init_obs");
@@ -538,7 +518,6 @@ void ObsInterface::connect_signal_handlers(obs_output_t *output) {
   signal_handler_connect(sh, "start", output_signal_handler_start,  this);
   signal_handler_connect(sh, "stopping", output_signal_handler_stopping,  this);
   signal_handler_connect(sh, "stop", output_signal_handler_stop,  this);
-  signal_handler_connect(sh, "saved", output_signal_handler_saved,  this);
 }
 
 void ObsInterface::disconnect_signal_handlers(obs_output_t *output) {
@@ -547,7 +526,6 @@ void ObsInterface::disconnect_signal_handlers(obs_output_t *output) {
   signal_handler_disconnect(sh, "start", output_signal_handler_start,  this);
   signal_handler_disconnect(sh, "stopping", output_signal_handler_stopping,  this);
   signal_handler_disconnect(sh, "stop", output_signal_handler_stop,  this);
-  signal_handler_disconnect(sh, "saved", output_signal_handler_saved,  this);
 }
 
 bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
