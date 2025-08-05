@@ -407,6 +407,60 @@ Napi::Value ObsSetMuteAudioInputs(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsSetOutputVolume(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetOutputVolume called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsNumber();
+  float volume = info[0].As<Napi::Number>().FloatValue();
+
+  if (!valid || (volume < 0.0f || volume > 1.0f)) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetOutputVolume").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  obs->setOutputVolume(volume);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetInputVolume(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetInputVolume called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsNumber();
+  float volume = info[0].As<Napi::Number>().FloatValue();
+
+  if (!valid || (volume < 0.0f || volume > 1.0f)) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetInputVolume").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+  
+  obs->setInputVolume(volume);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetProcessVolume(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetProcessVolume called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsNumber();
+  float volume = info[0].As<Napi::Number>().FloatValue();
+
+  if (!valid || (volume < 0.0f || volume > 1.0f)) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetProcessVolume").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  obs->setProcessVolume(volume);
+  return info.Env().Undefined();
+}
+
 Napi::Value ObsCreateScene(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsCreateScene called but obs is not initialized");
@@ -562,6 +616,10 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("SetSourceSettings", Napi::Function::New(env, ObsSetSourceSettings));
   exports.Set("GetSourceProperties", Napi::Function::New(env, ObsGetSourceProperties));
   exports.Set("SetMuteAudioInputs", Napi::Function::New(env, ObsSetMuteAudioInputs));
+
+  exports.Set("SetOutputVolume", Napi::Function::New(env, ObsSetOutputVolume));
+  exports.Set("SetInputVolume", Napi::Function::New(env, ObsSetInputVolume));
+  exports.Set("SetProcessVolume", Napi::Function::New(env, ObsSetProcessVolume));
 
   exports.Set("AddSourceToScene", Napi::Function::New(env, ObsAddSourceToScene));
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));

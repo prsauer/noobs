@@ -41,7 +41,11 @@ async function test() {
   noobs.AddSourceToScene('Test Mic');
   noobs.AddSourceToScene('Test Speaker');
   noobs.AddSourceToScene('Test App');
-  
+
+  noobs.SetInputVolume(0.25);
+  noobs.SetOutputVolume(0.1);
+  noobs.SetProcessVolume(0.75);  
+
   noobs.StartRecording(0);
   await new Promise((resolve) => setTimeout(resolve, 2000));
 

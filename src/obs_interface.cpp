@@ -382,8 +382,8 @@ void ObsInterface::createSource(std::string name, std::string type) {
   blog(LOG_INFO, "Create source: %s of type %s", name.c_str(), type.c_str());
 
   obs_source_t *source = obs_source_create(
-    type.c_str(), 
-    name.c_str(), 
+    type.c_str(), // Type of source, e.g. "wasapi_input_capture"
+    name.c_str(), // Name of the source, e.g. "My Audio Input"
     NULL, // No settings.
     NULL  // No hotkey data.
   );
@@ -391,6 +391,17 @@ void ObsInterface::createSource(std::string name, std::string type) {
   if (!source) {
     blog(LOG_ERROR, "Failed to create source: %s", name.c_str());
     throw std::runtime_error("Failed to create source!");
+  }
+
+  if (type == AUDIO_OUTPUT) {
+    blog(LOG_INFO, "Setting output volume for source: %s to %d", name.c_str(), output_volume);
+    obs_source_set_volume(source, output_volume);
+  } else if (type == AUDIO_INPUT) {
+    blog(LOG_INFO, "Setting input volume for source: %s to %d", name.c_str(), input_volume);
+    obs_source_set_volume(source, input_volume);
+  } else if (type == AUDIO_PROCESS) {
+    blog(LOG_INFO, "Setting process volume for source: %s to %d", name.c_str(), process_volume);
+    obs_source_set_volume(source, process_volume);
   }
 
   // Store the source in the sources map.
@@ -1100,12 +1111,6 @@ void ObsInterface::setVideoEncoder(std::string id, obs_data_t* settings) {
 }
 
 void ObsInterface::setMuteAudioInputs(bool mute) {
-  if (mute) {
-    blog(LOG_INFO, "Muting all audio input sources");
-  } else {
-    blog(LOG_INFO, "Unmuting all audio input sources");
-  }
-
   // Loop over all sources, and set the mute state if they are of type "wasapi_input_capture".
   for (const auto& kv : sources) {
     const std::string& name = kv.first;
@@ -1118,9 +1123,71 @@ void ObsInterface::setMuteAudioInputs(bool mute) {
 
     const char* type = obs_source_get_id(source);
 
-    if (strcmp(type, "wasapi_input_capture") == 0) {
-      blog(LOG_INFO, "Setting mute for audio input source: %s to %s", name.c_str(), mute ? "true" : "false");
+    if (strcmp(type, AUDIO_INPUT) == 0) {
       obs_source_set_muted(source, mute);
+    }
+  }
+}
+
+void ObsInterface::setOutputVolume(float volume) {
+  blog(LOG_INFO, "Setting output volume to %f", volume);
+  output_volume = volume;
+
+  for (const auto& kv : sources) {
+    const std::string& name = kv.first;
+    obs_source_t* source = kv.second;
+
+    if (!source) {
+      blog(LOG_WARNING, "Source %s not found", name.c_str());
+      continue;
+    }
+
+    const char* type = obs_source_get_id(source);
+
+    if (strcmp(type, AUDIO_OUTPUT) == 0) {
+      obs_source_set_volume(source, output_volume);
+    }
+  }
+}
+
+void ObsInterface::setInputVolume(float volume) {
+  blog(LOG_INFO, "Setting input volume to %f", volume);
+  input_volume = volume;
+
+  for (const auto& kv : sources) {
+    const std::string& name = kv.first;
+    obs_source_t* source = kv.second;
+
+    if (!source) {
+      blog(LOG_WARNING, "Source %s not found", name.c_str());
+      continue;
+    }
+
+    const char* type = obs_source_get_id(source);
+
+    if (strcmp(type, AUDIO_INPUT) == 0) {
+      obs_source_set_volume(source, input_volume);
+    }
+  }
+}
+
+void ObsInterface::setProcessVolume(float volume) {
+  blog(LOG_INFO, "Setting process volume to %f", volume);
+  process_volume = volume;
+
+  for (const auto& kv : sources) {
+    const std::string& name = kv.first;
+    obs_source_t* source = kv.second;
+
+    if (!source) {
+      blog(LOG_WARNING, "Source %s not found", name.c_str());
+      continue;
+    }
+
+    const char* type = obs_source_get_id(source);
+
+    if (strcmp(type, AUDIO_PROCESS) == 0) {
+      obs_source_set_volume(source, process_volume);
     }
   }
 }

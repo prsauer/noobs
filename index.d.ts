@@ -162,7 +162,7 @@ interface Noobs {
 
   Shutdown(): void;
 
-  // Recording functions
+  // Recording functions.
   SetBuffering(buffering: boolean): void; // In buffering mode, the recording is stored in memory and can be converted to a file later.
   StartBuffer(): void;
   StartRecording(offset: number): void;
@@ -176,22 +176,27 @@ interface Noobs {
   ListVideoEncoders(): string[]; // Returns a list of available video encoders.
   SetVideoEncoder(id: string, settings: ObsData): void; // Create the video encoder to use.
 
-  // Source management functions
+  // Source management functions.
   CreateSource(name: string, type: string): void;
   DeleteSource(name: string): void;
   GetSourceSettings(name: string): ObsData;
   SetSourceSettings(name: string, settings: ObsData): void;
   GetSourceProperties(name: string): ObsProperty[];
-  SetMuteAudioInputs(mute: boolean): void; // Mute or unmute all audio inputs.
 
-  // Scene management functions
+  // Audio source management functions.
+  SetMuteAudioInputs(mute: boolean): void; // Mute or unmute all audio inputs.
+  SetInputVolume(volume: number): void; // Set the volume for all audio inputs sources.
+  SetOutputVolume(volume: number): void; // Set the volume for all audio outputs sources.
+  SetProcessVolume(volume: number): void; // Set the volume for all audio process sources.
+
+  // Scene management functions.
   AddSourceToScene(sourceName: string): void;
   RemoveSourceFromScene(sourceName: string): void;
   GetSourcePos(name: string): SceneItemPosition & SourceDimensions;
   SetSourcePos(name: string, pos: SceneItemPosition): void;
   // TODO: Cropping?
 
-  // Preview functions
+  // Preview functions.
   InitPreview(hwnd: Buffer): void;
   ShowPreview(x: number, y: number, width: number, height: number): void;
   HidePreview(): void;
