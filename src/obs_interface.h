@@ -82,6 +82,7 @@ class ObsInterface {
     bool buffering = false; // Whether we are buffering the recording in memory.
     bool drawSourceOutline = false; // Draw red outline around source
     std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
+    std::map<std::string, obs_volmeter_t*> volmeters; // Map of source names to obs_volmeter_t pointers.
 
     void init_obs(const std::string& distPath);
     int reset_video(int fps, int width, int height);
@@ -108,4 +109,11 @@ class ObsInterface {
     obs_data_t* video_encoder_settings; // Settings for the video encoder.
     void create_video_encoders();
     void create_audio_encoders();
+
+    static void volmeter_callback(
+      void *data, 
+      const float magnitude[MAX_AUDIO_CHANNELS],
+      const float peak[MAX_AUDIO_CHANNELS], 
+      const float inputPeak[MAX_AUDIO_CHANNELS]
+    );
 };

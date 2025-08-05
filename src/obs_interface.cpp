@@ -8,6 +8,14 @@
 #include <graphics/vec4.h>
 #include <util/platform.h>
 
+void call_jscb(Napi::Env env, Napi::Function cb, SignalData* sd) {
+  Napi::Object obj = Napi::Object::New(env);
+  obj.Set("id", Napi::String::New(env, sd->id));
+  obj.Set("code", Napi::Number::New(env, sd->code));
+  cb.Call({ obj });
+  delete sd;
+}
+
 void ObsInterface::list_encoders(obs_encoder_type type)
 {
   blog(LOG_INFO, "Encoders:");
@@ -378,6 +386,22 @@ void ObsInterface::create_scene() {
   obs_set_output_source(0, scene_source); // 0 = video track
 }
 
+void ObsInterface::volmeter_callback(void *data, 
+  const float magnitude[MAX_AUDIO_CHANNELS],
+  const float peak[MAX_AUDIO_CHANNELS], 
+  const float inputPeak[MAX_AUDIO_CHANNELS])
+{
+  // blog(LOG_DEBUG, "Volmeter callback triggered: %f %f %f", 
+  //   obs_db_to_mul(magnitude[0]), 
+  //   obs_db_to_mul(peak[0]), 
+  //   obs_db_to_mul(inputPeak[0])
+  // );
+  
+  ObsInterface* self = static_cast<ObsInterface*>(data);
+  SignalData* sd = new SignalData{ "volmeter", 1 }; // TODO real value, proper type?
+  self->jscb.NonBlockingCall(sd, call_jscb);
+}
+
 void ObsInterface::createSource(std::string name, std::string type) {
   blog(LOG_INFO, "Create source: %s of type %s", name.c_str(), type.c_str());
 
@@ -404,6 +428,15 @@ void ObsInterface::createSource(std::string name, std::string type) {
     obs_source_set_volume(source, process_volume);
   }
 
+  if (type == AUDIO_OUTPUT || type == AUDIO_INPUT || type == AUDIO_PROCESS) {
+    obs_volmeter_t *volmeter = obs_volmeter_create(OBS_FADER_CUBIC);
+    obs_volmeter_attach_source(volmeter, source);
+    obs_volmeter_add_callback(volmeter, volmeter_callback, this);
+
+    // Store the volmeter in the volmeters map.
+    volmeters[name] = volmeter;
+  }
+
   // Store the source in the sources map.
   sources[name] = source;
 }
@@ -411,6 +444,20 @@ void ObsInterface::createSource(std::string name, std::string type) {
 void ObsInterface::deleteSource(std::string name) {
   blog(LOG_INFO, "Delete source: %s", name.c_str());
 
+  // First release a volmeter if there is one present.
+  // Only audio sources have volmeters ofcourse.
+  auto vol_it = volmeters.find(name);
+  
+  if (vol_it != volmeters.end()) {
+    obs_volmeter_t* volmeter = vol_it->second;
+    obs_volmeter_remove_callback(volmeter, volmeter_callback, this);
+    obs_volmeter_detach_source(volmeter);
+    obs_volmeter_destroy(volmeter);
+    volmeters.erase(name);
+    blog(LOG_INFO, "Volmeter deleted for source: %s", name.c_str());
+  }
+
+  // Now deal with the source itself.
   auto it = sources.find(name);
 
   if (it == sources.end()) {
@@ -419,6 +466,8 @@ void ObsInterface::deleteSource(std::string name) {
   }
 
   obs_source_t* source = it->second;
+
+  const char* type = obs_source_get_id(source);
   obs_source_release(source);
   sources.erase(name);
   blog(LOG_INFO, "Source deleted: %s", name.c_str());
@@ -478,14 +527,6 @@ obs_properties_t* ObsInterface::getSourceProperties(std::string name) {
   }
 
   return props;
-}
-
-void call_jscb(Napi::Env env, Napi::Function cb, SignalData* sd) {
-  Napi::Object obj = Napi::Object::New(env);
-  obj.Set("id", Napi::String::New(env, sd->id));
-  obj.Set("code", Napi::Number::New(env, sd->code));
-  cb.Call({ obj });
-  delete sd;
 }
 
 void ObsInterface::output_signal_handler_starting(void *data, calldata_t *cd) {
@@ -809,11 +850,21 @@ ObsInterface::~ObsInterface() {
     jscb.Release();
   }
 
+  for (auto& kv : volmeters) {
+    obs_volmeter_t* volmeter = kv.second;
+    obs_volmeter_remove_callback(volmeter, volmeter_callback, this);
+    obs_volmeter_detach_source(volmeter);
+    obs_volmeter_destroy(volmeter);
+    volmeters.erase(kv.first);
+    blog(LOG_INFO, "Volmeter deleted for source: %s", kv.first.c_str());
+  }
+
   for (auto& kv : sources) {
     std::string name = kv.first;
     obs_source_t* source = kv.second;
     blog(LOG_DEBUG, "Releasing source: %s", name.c_str());
     obs_source_release(source);
+    sources.erase(name);
   }
 
   if (scene) {

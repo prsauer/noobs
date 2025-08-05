@@ -43,7 +43,7 @@ async function test() {
   noobs.AddSourceToScene('Test App');
 
   noobs.SetInputVolume(0.25);
-  noobs.SetOutputVolume(0.1);
+  noobs.SetOutputVolume(1); // Vary this and play some music for audible difference in testing.
   noobs.SetProcessVolume(0.75);  
 
   noobs.StartRecording(0);
