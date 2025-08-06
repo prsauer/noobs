@@ -31,7 +31,7 @@ async function test() {
     compatibility: true,
   });
 
-    const settings2 = noobs.GetSourceSettings('Test Source');
+  const settings2 = noobs.GetSourceSettings('Test Source');
   console.log(settings2);
 
   console.log('Adding source to scene...');
