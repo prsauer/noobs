@@ -461,6 +461,25 @@ Napi::Value ObsSetProcessVolume(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsSetVolmeterEnabled(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetVolmeterEnabled called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetVolmeterEnabled").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  bool enabled = info[0].As<Napi::Boolean>().Value();
+  obs->setVolmeterEnabled(enabled);
+  return info.Env().Undefined();
+}
+
 Napi::Value ObsCreateScene(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsCreateScene called but obs is not initialized");
@@ -620,6 +639,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("SetOutputVolume", Napi::Function::New(env, ObsSetOutputVolume));
   exports.Set("SetInputVolume", Napi::Function::New(env, ObsSetInputVolume));
   exports.Set("SetProcessVolume", Napi::Function::New(env, ObsSetProcessVolume));
+
+  exports.Set("SetVolmeterEnabled", Napi::Function::New(env, ObsSetVolmeterEnabled));
 
   exports.Set("AddSourceToScene", Napi::Function::New(env, ObsAddSourceToScene));
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));

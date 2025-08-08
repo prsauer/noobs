@@ -4,14 +4,25 @@
 #include <napi.h>
 #include <windows.h>
 #include <map>
+#include <string>
+#include <optional>
 
 #define AUDIO_INPUT "wasapi_input_capture"
 #define AUDIO_OUTPUT "wasapi_output_capture"
 #define AUDIO_PROCESS "wasapi_process_output_capture"
 
+class ObsInterface;
+
 struct SignalData {
+  std::string type;
   std::string id;
   long long code;
+  std::optional<float> value;
+};
+
+struct SignalContext {
+  ObsInterface* self;
+  std::string id;
 };
 
 class ObsInterface {
@@ -43,6 +54,8 @@ class ObsInterface {
     void setOutputVolume(float volume);
     void setInputVolume(float volume); 
     void setProcessVolume(float volume); 
+
+    void setVolmeterEnabled(bool enabled);
 
     void addSourceToScene(std::string name); // Add source to scene.
     void removeSourceFromScene(std::string name); // Remove source from scene.
@@ -97,7 +110,6 @@ class ObsInterface {
     static void output_signal_handler_start(void *data, calldata_t *cd);
     static void output_signal_handler_stop(void *data, calldata_t *cd);
     static void output_signal_handler_stopping(void *data, calldata_t *cd);
-    static void output_signal_handler_saved(void *data, calldata_t *cd);
 
     void list_encoders(obs_encoder_type type = OBS_ENCODER_VIDEO);
     void list_source_types();
@@ -111,6 +123,8 @@ class ObsInterface {
     obs_data_t* video_encoder_settings; // Settings for the video encoder.
     void create_video_encoders();
     void create_audio_encoders();
+
+    bool volmeter_enabled = false; // Whether the volmeter callback is enabled.
 
     static void volmeter_callback(
       void *data, 

@@ -10,8 +10,14 @@
 
 void call_jscb(Napi::Env env, Napi::Function cb, SignalData* sd) {
   Napi::Object obj = Napi::Object::New(env);
+  obj.Set("type", Napi::String::New(env, sd->type));
   obj.Set("id", Napi::String::New(env, sd->id));
   obj.Set("code", Napi::Number::New(env, sd->code));
+
+  if (sd->value.has_value()) {
+    obj.Set("value", Napi::Number::New(env, sd->value.value()));
+  }
+
   cb.Call({ obj });
   delete sd;
 }
@@ -396,9 +402,15 @@ void ObsInterface::volmeter_callback(void *data,
   //   obs_db_to_mul(peak[0]), 
   //   obs_db_to_mul(inputPeak[0])
   // );
-  
-  ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "volmeter", 1 }; // TODO real value, proper type?
+
+  SignalContext* ctx = static_cast<SignalContext*>(data);
+  ObsInterface* self = ctx->self;
+
+  if (!self->volmeter_enabled) {
+    return;
+  }
+
+  SignalData* sd = new SignalData{ "volmeter", ctx->id.c_str(), 0, obs_db_to_mul(peak[0]) };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
@@ -429,9 +441,13 @@ void ObsInterface::createSource(std::string name, std::string type) {
   }
 
   if (type == AUDIO_OUTPUT || type == AUDIO_INPUT || type == AUDIO_PROCESS) {
+    blog(LOG_INFO, "Creating volmeter for source: %s", name.c_str());
+
     obs_volmeter_t *volmeter = obs_volmeter_create(OBS_FADER_CUBIC);
     obs_volmeter_attach_source(volmeter, source);
-    obs_volmeter_add_callback(volmeter, volmeter_callback, this);
+
+    SignalContext* ctx = new SignalContext{ this, name };
+    obs_volmeter_add_callback(volmeter, volmeter_callback, ctx);
 
     // Store the volmeter in the volmeters map.
     volmeters[name] = volmeter;
@@ -453,8 +469,8 @@ void ObsInterface::deleteSource(std::string name) {
     obs_volmeter_remove_callback(volmeter, volmeter_callback, this);
     obs_volmeter_detach_source(volmeter);
     obs_volmeter_destroy(volmeter);
-    volmeters.erase(name);
     blog(LOG_INFO, "Volmeter deleted for source: %s", name.c_str());
+    volmeters.erase(name);
   }
 
   // Now deal with the source itself.
@@ -532,35 +548,28 @@ obs_properties_t* ObsInterface::getSourceProperties(std::string name) {
 void ObsInterface::output_signal_handler_starting(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "starting", code };
+  SignalData* sd = new SignalData{ "output", "starting", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::output_signal_handler_start(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "start", code };
+  SignalData* sd = new SignalData{ "output", "start", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::output_signal_handler_stop(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "stop", code };
+  SignalData* sd = new SignalData{"output", "stop", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::output_signal_handler_stopping(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
   ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "stopping", code };
-  self->jscb.NonBlockingCall(sd, call_jscb);
-}
-
-void ObsInterface::output_signal_handler_saved(void *data, calldata_t *cd) {
-  long long code = calldata_int(cd, "code");
-  ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "saved", code };
+  SignalData* sd = new SignalData{ "output", "stopping", code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
@@ -845,18 +854,14 @@ ObsInterface::ObsInterface(
 ObsInterface::~ObsInterface() {
   blog(LOG_DEBUG, "Destroying ObsInterface");
 
-  if (jscb) {
-    blog(LOG_DEBUG, "Releasing JavaScript callback");
-    jscb.Release();
-  }
 
   for (auto& kv : volmeters) {
     obs_volmeter_t* volmeter = kv.second;
     obs_volmeter_remove_callback(volmeter, volmeter_callback, this);
     obs_volmeter_detach_source(volmeter);
     obs_volmeter_destroy(volmeter);
-    volmeters.erase(kv.first);
     blog(LOG_INFO, "Volmeter deleted for source: %s", kv.first.c_str());
+    volmeters.erase(kv.first);
   }
 
   for (auto& kv : sources) {
@@ -904,6 +909,11 @@ ObsInterface::~ObsInterface() {
 
   blog(LOG_DEBUG, "Now shutting down OBS");
   obs_shutdown();
+
+  if (jscb) {
+    blog(LOG_DEBUG, "Releasing JavaScript callback");
+    jscb.Release();
+  }
 }
 
 bool ObsInterface::setBuffering(bool value) {
@@ -1249,4 +1259,9 @@ void ObsInterface::setProcessVolume(float volume) {
       obs_source_set_volume(source, process_volume);
     }
   }
+}
+
+void ObsInterface::setVolmeterEnabled(bool enabled) {
+  blog(LOG_INFO, "Setting volmeter enabled: %d", enabled);
+  volmeter_enabled = enabled;
 }

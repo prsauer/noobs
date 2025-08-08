@@ -189,6 +189,8 @@ interface Noobs {
   SetOutputVolume(volume: number): void; // Set the volume for all audio outputs sources.
   SetProcessVolume(volume: number): void; // Set the volume for all audio process sources.
 
+  SetVolmeterEnabled(enabled: boolean): void; // Enable or disable the volume meter.
+
   // Scene management functions.
   AddSourceToScene(sourceName: string): void;
   RemoveSourceFromScene(sourceName: string): void;

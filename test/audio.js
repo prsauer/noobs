@@ -4,8 +4,14 @@ const path = require('path');
 async function test() {
   console.log('Starting obs...');
 
+  let volmeter_callbacks = 0;
+
   const cb = (msg) => {
-    console.log('Callback received:', msg);
+    if (msg.type === 'volmeter') {
+      volmeter_callbacks++;
+    } else {
+      console.log('Callback received:', msg);
+    }
   };
 
   const distPath = path.resolve(__dirname, '../dist');
@@ -46,6 +52,9 @@ async function test() {
   noobs.SetOutputVolume(1); // Vary this and play some music for audible difference in testing.
   noobs.SetProcessVolume(0.75);  
 
+  // Enable the volmeter callback.
+  noobs.SetVolmeterEnabled(true);
+
   noobs.StartRecording(0);
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -59,6 +68,7 @@ async function test() {
   noobs.StopRecording();
   await new Promise((resolve) => setTimeout(resolve, 2000));
   
+  console.log('Volmeter callbacks received:', volmeter_callbacks);
   noobs.Shutdown();
   console.log('Test Done');
 }
