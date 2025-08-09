@@ -272,14 +272,21 @@ Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-Napi::Value ObsGetPreviewScaleFactor(const Napi::CallbackInfo& info) {
+Napi::Value ObsGetPreviewInfo(const Napi::CallbackInfo& info) {
   if (!obs) {
-    blog(LOG_ERROR, "ObsGetPreviewScaleFactor called but obs is not initialized");
+    blog(LOG_ERROR, "ObsGetPreviewInfo called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
   }
 
-  float scaleFactor = obs->getPreviewScaleFactor();
-  return Napi::Number::New(info.Env(), scaleFactor);
+  PreviewInfo previewInfo = obs->getPreviewInfo();
+
+  Napi::Object result = Napi::Object::New(info.Env());
+  result.Set("canvasWidth", Napi::Number::New(info.Env(), previewInfo.canvasWidth));
+  result.Set("canvasHeight", Napi::Number::New(info.Env(), previewInfo.canvasHeight));
+  result.Set("previewWidth", Napi::Number::New(info.Env(), previewInfo.displayWidth));
+  result.Set("previewHeight", Napi::Number::New(info.Env(), previewInfo.displayHeight));
+
+  return result;
 }
 
 Napi::Value ObsGetPreviewDimensions(const Napi::CallbackInfo& info) {
@@ -663,8 +670,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("HidePreview", Napi::Function::New(env, ObsHidePreview));
-  exports.Set("GetPreviewScaleFactor", Napi::Function::New(env, ObsGetPreviewScaleFactor));
-  exports.Set("GetPreviewDimensions", Napi::Function::New(env, ObsGetPreviewDimensions));
+  exports.Set("GetPreviewInfo", Napi::Function::New(env, ObsGetPreviewInfo));
   exports.Set("GetDrawSourceOutlineEnabled", Napi::Function::New(env, ObsGetDrawSourceOutlineEnabled));
   exports.Set("SetDrawSourceOutline", Napi::Function::New(env, ObsSetDrawSourceOutline));
 

@@ -202,8 +202,7 @@ interface Noobs {
   InitPreview(hwnd: Buffer): void;
   ShowPreview(x: number, y: number, width: number, height: number): void;
   HidePreview(): void;
-  GetPreviewScaleFactor(): number;
-  GetPreviewDimensions(): { width: number; height: number };
+  GetPreviewInfo(): { canvasWidth: number; canvasHeight: number; previewWidth: number; previewHeight: number };
   SetDrawSourceOutline(enabled: boolean): void;
   GetDrawSourceOutlineEnabled(): boolean;
 }

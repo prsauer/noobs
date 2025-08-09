@@ -25,6 +25,11 @@ struct SignalContext {
   std::string id;
 };
 
+struct PreviewInfo {
+  uint32_t canvasWidth, canvasHeight;
+  uint32_t displayWidth, displayHeight;
+};
+
 class ObsInterface {
   public:
     ObsInterface(
@@ -65,7 +70,7 @@ class ObsInterface {
     void initPreview(HWND parent); // Must call this before showPreview to setup resources.
     void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.
     void hidePreview(); // Hide the preview display.
-    float getPreviewScaleFactor(); // Get the current scale factor of the preview.
+    PreviewInfo getPreviewInfo(); // Get the current scale factor of the preview.
     vec2 getPreviewDimensions(); // Get the current dimensions of the preview.
     void setDrawSourceOutline(bool enabled); // Red box around source
     bool getDrawSourceOutlineEnabled();

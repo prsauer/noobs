@@ -771,10 +771,10 @@ void ObsInterface::hidePreview() {
   obs_display_set_enabled(display, false);
 }
 
-float ObsInterface::getPreviewScaleFactor() {
+PreviewInfo ObsInterface::getPreviewInfo() {
   if (!display) {
-    blog(LOG_WARNING, "Display not initialized");
-    return 1.0f; // Default scale
+    blog(LOG_WARNING, "Display not initialized when calling getPreviewInfo");
+    return { 1920, 1080, 1920, 1080 }; // Default values
   }
 
   obs_video_info ovi;
@@ -783,19 +783,14 @@ float ObsInterface::getPreviewScaleFactor() {
   uint32_t width, height;
 	obs_display_size(display, &width, &height);
 
-  float scaleX = float(width) / float(ovi.base_width);
-  float scaleY = float(height) / float(ovi.base_height);
+  PreviewInfo info = {
+    ovi.base_width,
+    ovi.base_height,
+    width,
+    height,
+  };
 
-  float previewScale;
-
-  // Pick the limiting scale factor.
-  if (scaleX < scaleY) {
-    previewScale = scaleX;
-  } else {
-    previewScale = scaleY;
-  }
-
-  return previewScale;
+  return info;
 }
 
 vec2 ObsInterface::getPreviewDimensions() {
