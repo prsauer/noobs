@@ -282,6 +282,19 @@ Napi::Value ObsGetPreviewScaleFactor(const Napi::CallbackInfo& info) {
   return Napi::Number::New(info.Env(), scaleFactor);
 }
 
+Napi::Value ObsGetPreviewDimensions(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsGetPreviewDimensions called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  vec2 dimensions = obs->getPreviewDimensions();
+  Napi::Object result = Napi::Object::New(info.Env());
+  result.Set("width", Napi::Number::New(info.Env(), dimensions.x));
+  result.Set("height", Napi::Number::New(info.Env(), dimensions.y));
+  return result;
+}
+
 Napi::Value ObsCreateSource(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsCreateSource called but obs is not initialized");
@@ -651,6 +664,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("HidePreview", Napi::Function::New(env, ObsHidePreview));
   exports.Set("GetPreviewScaleFactor", Napi::Function::New(env, ObsGetPreviewScaleFactor));
+  exports.Set("GetPreviewDimensions", Napi::Function::New(env, ObsGetPreviewDimensions));
   exports.Set("GetDrawSourceOutlineEnabled", Napi::Function::New(env, ObsGetDrawSourceOutlineEnabled));
   exports.Set("SetDrawSourceOutline", Napi::Function::New(env, ObsSetDrawSourceOutline));
 

@@ -798,6 +798,19 @@ float ObsInterface::getPreviewScaleFactor() {
   return previewScale;
 }
 
+vec2 ObsInterface::getPreviewDimensions() {
+  if (!display) {
+    blog(LOG_WARNING, "Display not initialized");
+    return { 1.0f, 1.0f }; // Default dimensions
+  }
+
+  uint32_t width, height;
+	obs_display_size(display, &width, &height);
+
+  vec2 dimensions = { float(width), float(height) };
+  return dimensions;
+}
+
 void ObsInterface::setDrawSourceOutline(bool enabled) {
   drawSourceOutline = enabled;
 }
