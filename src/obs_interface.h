@@ -106,10 +106,11 @@ class ObsInterface {
     void connect_signal_handlers(obs_output_t *output);
     void disconnect_signal_handlers(obs_output_t *output);
 
-    static void output_signal_handler_starting(void *data, calldata_t *cd);
-    static void output_signal_handler_start(void *data, calldata_t *cd);
-    static void output_signal_handler_stop(void *data, calldata_t *cd);
-    static void output_signal_handler_stopping(void *data, calldata_t *cd);
+    SignalContext* starting_ctx;
+    SignalContext* start_ctx;
+    SignalContext* stopping_ctx;
+    SignalContext* stop_ctx;
+    static void output_signal_handler(void *data, calldata_t *cd);
 
     void list_encoders(obs_encoder_type type = OBS_ENCODER_VIDEO);
     void list_source_types();

@@ -446,7 +446,7 @@ void ObsInterface::createSource(std::string name, std::string type) {
     obs_volmeter_t *volmeter = obs_volmeter_create(OBS_FADER_CUBIC);
     obs_volmeter_attach_source(volmeter, source);
 
-    SignalContext* ctx = new SignalContext{ this, name };
+    SignalContext* ctx = new SignalContext{ this, name }; // TODO don't leak this.
     obs_volmeter_add_callback(volmeter, volmeter_callback, ctx);
 
     // Store the volmeter in the volmeters map.
@@ -545,48 +545,30 @@ obs_properties_t* ObsInterface::getSourceProperties(std::string name) {
   return props;
 }
 
-void ObsInterface::output_signal_handler_starting(void *data, calldata_t *cd) {
+void ObsInterface::output_signal_handler(void *data, calldata_t *cd) {
   long long code = calldata_int(cd, "code");
-  ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "output", "starting", code };
-  self->jscb.NonBlockingCall(sd, call_jscb);
-}
 
-void ObsInterface::output_signal_handler_start(void *data, calldata_t *cd) {
-  long long code = calldata_int(cd, "code");
-  ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "output", "start", code };
-  self->jscb.NonBlockingCall(sd, call_jscb);
-}
+  SignalContext* ctx = static_cast<SignalContext*>(data);
+  ObsInterface* self = ctx->self;
 
-void ObsInterface::output_signal_handler_stop(void *data, calldata_t *cd) {
-  long long code = calldata_int(cd, "code");
-  ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{"output", "stop", code };
-  self->jscb.NonBlockingCall(sd, call_jscb);
-}
-
-void ObsInterface::output_signal_handler_stopping(void *data, calldata_t *cd) {
-  long long code = calldata_int(cd, "code");
-  ObsInterface* self = static_cast<ObsInterface*>(data);
-  SignalData* sd = new SignalData{ "output", "stopping", code };
+  SignalData* sd = new SignalData{ "output", ctx->id.c_str(), code };
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
 void ObsInterface::connect_signal_handlers(obs_output_t *output) {
   signal_handler_t *sh = obs_output_get_signal_handler(output);
-  signal_handler_connect(sh, "starting", output_signal_handler_starting,  this);
-  signal_handler_connect(sh, "start", output_signal_handler_start,  this);
-  signal_handler_connect(sh, "stopping", output_signal_handler_stopping,  this);
-  signal_handler_connect(sh, "stop", output_signal_handler_stop,  this);
+  signal_handler_connect(sh, "start", output_signal_handler,  start_ctx);
+  signal_handler_connect(sh, "starting", output_signal_handler,  starting_ctx);
+  signal_handler_connect(sh, "stopping", output_signal_handler,  stopping_ctx);
+  signal_handler_connect(sh, "stop", output_signal_handler,  stop_ctx);
 }
 
 void ObsInterface::disconnect_signal_handlers(obs_output_t *output) {
   signal_handler_t *sh = obs_output_get_signal_handler(output);
-  signal_handler_disconnect(sh, "starting", output_signal_handler_starting,  this);
-  signal_handler_disconnect(sh, "start", output_signal_handler_start,  this);
-  signal_handler_disconnect(sh, "stopping", output_signal_handler_stopping,  this);
-  signal_handler_disconnect(sh, "stop", output_signal_handler_stop,  this);
+  signal_handler_disconnect(sh, "starting", output_signal_handler,  starting_ctx);
+  signal_handler_disconnect(sh, "start", output_signal_handler,  start_ctx);
+  signal_handler_disconnect(sh, "stopping", output_signal_handler,  stopping_ctx);
+  signal_handler_disconnect(sh, "stop", output_signal_handler,  stop_ctx);
 }
 
 bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
@@ -841,6 +823,11 @@ ObsInterface::ObsInterface(
   jscb = cb;
   recording_path = recordingPath;
 
+  starting_ctx = new SignalContext{ this, "starting" };
+  start_ctx = new SignalContext{ this, "start" };
+  stopping_ctx = new SignalContext{ this, "stopping" };
+  stop_ctx = new SignalContext{ this, "stop" };
+
   // Create the resources we rely on.
   create_output();
   create_scene();
@@ -854,7 +841,6 @@ ObsInterface::ObsInterface(
 ObsInterface::~ObsInterface() {
   blog(LOG_DEBUG, "Destroying ObsInterface");
 
-
   for (auto& kv : volmeters) {
     obs_volmeter_t* volmeter = kv.second;
     obs_volmeter_remove_callback(volmeter, volmeter_callback, this);
@@ -863,6 +849,11 @@ ObsInterface::~ObsInterface() {
     blog(LOG_INFO, "Volmeter deleted for source: %s", kv.first.c_str());
     volmeters.erase(kv.first);
   }
+
+  delete starting_ctx;
+  delete start_ctx;
+  delete stopping_ctx;
+  delete stop_ctx;
 
   for (auto& kv : sources) {
     std::string name = kv.first;
