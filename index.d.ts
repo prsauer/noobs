@@ -203,6 +203,7 @@ interface Noobs {
   ShowPreview(x: number, y: number, width: number, height: number): void;
   HidePreview(): void;
   GetPreviewScaleFactor(): number;
+  GetPreviewDimensions(): { width: number; height: number };
   SetDrawSourceOutline(enabled: boolean): void;
   GetDrawSourceOutlineEnabled(): boolean;
 }
