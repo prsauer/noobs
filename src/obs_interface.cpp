@@ -588,13 +588,6 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
     return true;
   }
 
-  const char *name = obs_source_get_name(src);
-  blog(LOG_WARNING, "Source name: %s", name);
-
-  if (strcmp(name, "WCR Overlay") != 0 && strcmp(name, "WCR Window Capture") != 0) {
-    return true;  // Skip drawing on scene source itself
-  }
-
   // Draw rectangle around the source using the position and size
   gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
   gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
