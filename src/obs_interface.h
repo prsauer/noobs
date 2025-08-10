@@ -71,7 +71,6 @@ class ObsInterface {
     void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.
     void hidePreview(); // Hide the preview display.
     PreviewInfo getPreviewInfo(); // Get the current scale factor of the preview.
-    vec2 getPreviewDimensions(); // Get the current dimensions of the preview.
     void setDrawSourceOutline(bool enabled); // Red box around source
     bool getDrawSourceOutlineEnabled();
 

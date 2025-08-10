@@ -289,19 +289,6 @@ Napi::Value ObsGetPreviewInfo(const Napi::CallbackInfo& info) {
   return result;
 }
 
-Napi::Value ObsGetPreviewDimensions(const Napi::CallbackInfo& info) {
-  if (!obs) {
-    blog(LOG_ERROR, "ObsGetPreviewDimensions called but obs is not initialized");
-    throw std::runtime_error("Obs not initialized");
-  }
-
-  vec2 dimensions = obs->getPreviewDimensions();
-  Napi::Object result = Napi::Object::New(info.Env());
-  result.Set("width", Napi::Number::New(info.Env(), dimensions.x));
-  result.Set("height", Napi::Number::New(info.Env(), dimensions.y));
-  return result;
-}
-
 Napi::Value ObsCreateSource(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsCreateSource called but obs is not initialized");

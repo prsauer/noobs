@@ -588,6 +588,12 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
     return true;
   }
 
+  const char *name = obs_source_get_name(src);
+
+  if (strcmp(name, "WCR Scene") == 0) {
+    return true;  // Skip drawing on scene source itself
+  }
+
   // Draw rectangle around the source using the position and size
   gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
   gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
@@ -791,19 +797,6 @@ PreviewInfo ObsInterface::getPreviewInfo() {
   };
 
   return info;
-}
-
-vec2 ObsInterface::getPreviewDimensions() {
-  if (!display) {
-    blog(LOG_WARNING, "Display not initialized");
-    return { 1.0f, 1.0f }; // Default dimensions
-  }
-
-  uint32_t width, height;
-	obs_display_size(display, &width, &height);
-
-  vec2 dimensions = { float(width), float(height) };
-  return dimensions;
 }
 
 void ObsInterface::setDrawSourceOutline(bool enabled) {
