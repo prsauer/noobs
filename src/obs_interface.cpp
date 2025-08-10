@@ -589,6 +589,7 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   }
 
   const char *name = obs_source_get_name(src);
+  blog(LOG_WARNING, "Source name: %s", name);
 
   if (strcmp(name, "WCR Scene") == 0) {
     return true;  // Skip drawing on scene source itself
@@ -630,6 +631,12 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   gs_matrix_push();
   gs_matrix_translate3f(pos.x + width - 4.0f, pos.y, 0.0f);
   gs_draw_sprite(nullptr, 0, 4.0f, height);
+  gs_matrix_pop();
+
+  // Dragging point box (10x10 pixels in bottom-right corner)
+  gs_matrix_push();
+  gs_matrix_translate3f(pos.x + width - 10.0f, pos.y + height - 10.0f, 0.0f);
+  gs_draw_sprite(nullptr, 0, 10.0f, 10.0f);
   gs_matrix_pop();
 
   gs_matrix_pop();
