@@ -591,7 +591,7 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   const char *name = obs_source_get_name(src);
   blog(LOG_WARNING, "Source name: %s", name);
 
-  if (strcmp(name, "WCR Overlay") != 0 || strcmp(name, "WCR Window Capture") != 0) {
+  if (strcmp(name, "WCR Overlay") != 0 && strcmp(name, "WCR Window Capture") != 0) {
     return true;  // Skip drawing on scene source itself
   }
 
