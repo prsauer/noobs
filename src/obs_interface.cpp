@@ -633,10 +633,10 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   gs_draw_sprite(nullptr, 0, 4.0f, height);
   gs_matrix_pop();
 
-  // Dragging point box (30x30 pixels in bottom-right corner)
+  // Dragging point box (25x25 pixels in bottom-right corner)
   gs_matrix_push();
-  gs_matrix_translate3f(pos.x + width - 15.0f, pos.y + height - 15.0f, 0.0f);
-  gs_draw_sprite(nullptr, 0, 30.0f, 30.0f);
+  gs_matrix_translate3f(pos.x + width - 25.0f, pos.y + height - 25.0f, 0.0f);
+  gs_draw_sprite(nullptr, 0, 25.0f, 25.0f);
   gs_matrix_pop();
 
   gs_matrix_pop();
