@@ -482,8 +482,7 @@ void ObsInterface::deleteSource(std::string name) {
   }
 
   obs_source_t* source = it->second;
-
-  const char* type = obs_source_get_id(source);
+  obs_source_remove(source); // ???
   obs_source_release(source);
   sources.erase(name);
   blog(LOG_INFO, "Source deleted: %s", name.c_str());
