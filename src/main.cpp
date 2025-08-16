@@ -274,7 +274,6 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-
 Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsHidePreview called but obs is not initialized");
@@ -282,6 +281,16 @@ Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
   }
 
   obs->hidePreview();
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsDisablePreview(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsDisablePreview called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  obs->disablePreview();
   return info.Env().Undefined();
 }
 
@@ -671,6 +680,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("ConfigurePreview", Napi::Function::New(env, ObsConfigurePreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("HidePreview", Napi::Function::New(env, ObsHidePreview));
+  exports.Set("DisablePreview", Napi::Function::New(env, ObsDisablePreview));
   exports.Set("GetPreviewInfo", Napi::Function::New(env, ObsGetPreviewInfo));
   exports.Set("GetDrawSourceOutlineEnabled", Napi::Function::New(env, ObsGetDrawSourceOutlineEnabled));
   exports.Set("SetDrawSourceOutline", Napi::Function::New(env, ObsSetDrawSourceOutline));

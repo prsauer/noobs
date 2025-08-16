@@ -772,6 +772,7 @@ void ObsInterface::showPreview() {
   }
 
   ShowWindow(preview_hwnd, SW_SHOW);
+  obs_display_set_enabled(display, true);
 }
 
 void ObsInterface::hidePreview() {
@@ -781,6 +782,18 @@ void ObsInterface::hidePreview() {
     ShowWindow(preview_hwnd, SW_HIDE);
     blog(LOG_INFO, "Preview child window hidden");
   }
+}
+
+void ObsInterface::disablePreview() {
+  blog(LOG_INFO, "ObsInterface::disablePreview");
+
+  if (!display) {
+    blog(LOG_ERROR, "Preview window not initialized");
+    return;
+  }
+
+  hidePreview();
+  obs_display_set_enabled(display, false);
 }
 
 PreviewInfo ObsInterface::getPreviewInfo() {

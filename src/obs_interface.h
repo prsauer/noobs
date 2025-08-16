@@ -70,7 +70,8 @@ class ObsInterface {
     void initPreview(HWND parent); // Must call this before showPreview to setup resources.
     void configurePreview(int x, int y, int width, int height); // Move and resize the preview display.
     void showPreview(); // Show the preview display.
-    void hidePreview(); // Hide the preview display.
+    void hidePreview(); // Hide the preview display, but leave it running.
+    void disablePreview(); // Disable the preview display, to save resources.
     PreviewInfo getPreviewInfo(); // Get the dimensions of the display, and the base canvas.
     void setDrawSourceOutline(bool enabled); // Red box around source
     bool getDrawSourceOutlineEnabled();
