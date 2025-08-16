@@ -781,8 +781,6 @@ void ObsInterface::hidePreview() {
     ShowWindow(preview_hwnd, SW_HIDE);
     blog(LOG_INFO, "Preview child window hidden");
   }
-
-  obs_display_set_enabled(display, false);
 }
 
 PreviewInfo ObsInterface::getPreviewInfo() {
