@@ -759,10 +759,7 @@ void ObsInterface::configurePreview(int x, int y, int width, int height) {
   uint32_t w, h;
   obs_display_size(display, &w, &h); // Get the display size to match the video context.
   blog(LOG_INFO, "Current Display size set to (%d x %d)", w, h);
-
   obs_display_resize(display, width, height);
-  ShowWindow(preview_hwnd, SW_SHOW);
-  obs_display_set_enabled(display, true);
 }
 
 void ObsInterface::showPreview() {
