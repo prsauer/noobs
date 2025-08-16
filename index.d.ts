@@ -200,7 +200,8 @@ interface Noobs {
 
   // Preview functions.
   InitPreview(hwnd: Buffer): void;
-  ShowPreview(x: number, y: number, width: number, height: number): void;
+  ConfigurePreview(x: number, y: number, width: number, height: number): void;
+  ShowPreview(): void;
   HidePreview(): void;
   GetPreviewInfo(): { canvasWidth: number; canvasHeight: number; previewWidth: number; previewHeight: number };
   SetDrawSourceOutline(enabled: boolean): void;

@@ -234,11 +234,11 @@ Napi::Value ObsInitPreview(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
-  blog(LOG_INFO, "ObsShowPreview called");
+Napi::Value ObsConfigurePreview(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsConfigurePreview called");
 
   if (!obs) {
-    blog(LOG_ERROR, "ObsShowPreview called but obs is not initialized");
+    blog(LOG_ERROR, "ObsConfigurePreview called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
   }
 
@@ -249,7 +249,7 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
     info[3].IsNumber(); // Height
 
   if (!valid) {
-    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsShowPreview").ThrowAsJavaScriptException();
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsConfigurePreview").ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
 
@@ -258,9 +258,22 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   int width = info[2].As<Napi::Number>().Int32Value();
   int height = info[3].As<Napi::Number>().Int32Value();
 
-  obs->showPreview(x, y, width, height);
+  obs->configurePreview(x, y, width, height);
   return info.Env().Undefined();
 }
+
+Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsShowPreview called");
+
+  if (!obs) {
+    blog(LOG_ERROR, "ObsShowPreview called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  obs->showPreview();
+  return info.Env().Undefined();
+}
+
 
 Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
   if (!obs) {
@@ -655,6 +668,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("SetSourcePos", Napi::Function::New(env, ObsSetSourcePos));
 
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
+  exports.Set("ConfigurePreview", Napi::Function::New(env, ObsConfigurePreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("HidePreview", Napi::Function::New(env, ObsHidePreview));
   exports.Set("GetPreviewInfo", Napi::Function::New(env, ObsGetPreviewInfo));

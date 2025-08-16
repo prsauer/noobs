@@ -68,9 +68,10 @@ class ObsInterface {
     void setSourcePos(std::string name, vec2* pos, vec2* scale); // Size does not get set here because it's set by the source itself.
 
     void initPreview(HWND parent); // Must call this before showPreview to setup resources.
-    void showPreview(int x, int y, int width, int height); // Also used for moving and resizing.
+    void configurePreview(int x, int y, int width, int height); // Move and resize the preview display.
+    void showPreview(); // Show the preview display.
     void hidePreview(); // Hide the preview display.
-    PreviewInfo getPreviewInfo(); // Get the current scale factor of the preview.
+    PreviewInfo getPreviewInfo(); // Get the dimensions of the display, and the base canvas.
     void setDrawSourceOutline(bool enabled); // Red box around source
     bool getDrawSourceOutlineEnabled();
 

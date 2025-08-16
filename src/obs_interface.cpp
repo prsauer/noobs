@@ -732,7 +732,7 @@ void ObsInterface::initPreview(HWND parent) {
   obs_display_set_enabled(display, false);
 }
 
-void ObsInterface::showPreview(int x, int y, int width, int height) {
+void ObsInterface::configurePreview(int x, int y, int width, int height) {
   blog(LOG_INFO, "ObsInterface::showPreview");
 
   if (!preview_hwnd || !display) {
@@ -761,6 +761,18 @@ void ObsInterface::showPreview(int x, int y, int width, int height) {
   blog(LOG_INFO, "Current Display size set to (%d x %d)", w, h);
 
   obs_display_resize(display, width, height);
+  ShowWindow(preview_hwnd, SW_SHOW);
+  obs_display_set_enabled(display, true);
+}
+
+void ObsInterface::showPreview() {
+  blog(LOG_INFO, "ObsInterface::showPreview");
+
+  if (!preview_hwnd || !display) {
+    blog(LOG_ERROR, "Preview window not initialized");
+    return;
+  }
+
   ShowWindow(preview_hwnd, SW_SHOW);
   obs_display_set_enabled(display, true);
 }
