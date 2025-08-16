@@ -740,7 +740,7 @@ void ObsInterface::configurePreview(int x, int y, int width, int height) {
     return;
   }
 
-  blog(LOG_INFO, "Showing preview child window at (%d, %d) with size (%d x %d)", x, y, width, height);
+  blog(LOG_INFO, "Moving preview child window to (%d, %d) with size (%d x %d)", x, y, width, height);
 
   // Resize and move the existing child window.
   bool success = SetWindowPos(
@@ -760,6 +760,7 @@ void ObsInterface::configurePreview(int x, int y, int width, int height) {
   obs_display_size(display, &w, &h); // Get the display size to match the video context.
   blog(LOG_INFO, "Current Display size set to (%d x %d)", w, h);
   obs_display_resize(display, width, height);
+  obs_display_set_enabled(display, true);
 }
 
 void ObsInterface::showPreview() {
@@ -771,7 +772,6 @@ void ObsInterface::showPreview() {
   }
 
   ShowWindow(preview_hwnd, SW_SHOW);
-  obs_display_set_enabled(display, true);
 }
 
 void ObsInterface::hidePreview() {
