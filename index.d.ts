@@ -136,10 +136,10 @@ export type ObsProperty =
   | ObsGenericProperty;
 
 export type Signal = {
-  type: string;
+  type: string; // Either "output" or "volmeter" or "source".
   id: string; // Signal identifier, e.g. "stop"
   code: number; // 0 for success, other values for errors
-  value?: number;
+  value?: number; // Currently only used for volmeters.
 };
 
 export type SceneItemPosition = {

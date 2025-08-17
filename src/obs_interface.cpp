@@ -375,7 +375,7 @@ void ObsInterface::create_audio_encoders() {
 
 void ObsInterface::create_scene() {
   blog(LOG_INFO, "Create scene");
-  scene = obs_scene_create("WCR Scene");
+  scene = obs_scene_create("Base Scene");
 
   if (!scene) {
     blog(LOG_ERROR, "Failed to create scene!");
@@ -455,6 +455,9 @@ void ObsInterface::createSource(std::string name, std::string type) {
 
   // Store the source in the sources map.
   sources[name] = source;
+  uint32_t w = obs_source_get_width(source);
+  uint32_t h = obs_source_get_height(source);
+  sizes[name] = { w, h };
 }
 
 void ObsInterface::deleteSource(std::string name) {
@@ -485,6 +488,7 @@ void ObsInterface::deleteSource(std::string name) {
   obs_source_remove(source); // ???
   obs_source_release(source);
   sources.erase(name);
+  sizes.erase(name);
   blog(LOG_INFO, "Source deleted: %s", name.c_str());
 }
 
@@ -671,15 +675,32 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
   // Renders the scene now the graphics context is setup.
   obs_render_main_texture();
 
-  // Draw boxes around sources.
-  obs_scene_t* scene = obs_get_scene_by_name("WCR Scene");
+  // Draw boxes around sources, if enabled.
   if (obsInterface->getDrawSourceOutlineEnabled()) {
+    obs_scene_t* scene = obs_get_scene_by_name("Base Scene");
     obs_scene_enum_items(scene, draw_source_outline, NULL);
+    obs_scene_release(scene);
   }
-  obs_scene_release(scene);
 
 	gs_projection_pop();
 	gs_viewport_pop();
+
+  // Iterate over the sources and check for changes to size.
+  for (const auto& [name, source] : obsInterface->sources) {
+    SourceSize last = obsInterface->sizes[name];
+
+    uint32_t w = obs_source_get_width(source);
+    uint32_t h = obs_source_get_height(source);
+
+    if (w != last.width || h != last.height) {
+      blog(LOG_INFO, "Source %s changed size from (%d x %d) to (%d x %d)",
+            name.c_str(), last.width, last.height, w, h);
+      obsInterface->sizes[name] = { w, h };
+
+      SignalData* sd = new SignalData{ "source", name.c_str(), 0 };
+      obsInterface->jscb.NonBlockingCall(sd, call_jscb);
+    }
+  }
 }
 
 void ObsInterface::initPreview(HWND parent) {

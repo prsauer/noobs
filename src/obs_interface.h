@@ -30,6 +30,11 @@ struct PreviewInfo {
   uint32_t displayWidth, displayHeight;
 };
 
+struct SourceSize {
+  uint32_t width;
+  uint32_t height;
+};
+
 class ObsInterface {
   public:
     ObsInterface(
@@ -78,7 +83,12 @@ class ObsInterface {
 
     std::vector<std::string> listAvailableVideoEncoders(); // Return a list of available video encoders.
     void setVideoEncoder(std::string id, obs_data_t* settings); // Set the video encoder to use.
-  
+
+    Napi::ThreadSafeFunction jscb; // javascript callback
+    std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
+    std::map<std::string, SourceSize> sizes; // Map of source names to their last known size, used for firing callbacks on size changes. 
+    std::map<std::string, obs_volmeter_t*> volmeters; // Map of source names to obs_volmeter_t pointers.
+
   private:
     obs_output_t *file_output = nullptr;
     obs_output_t *buffer_output = nullptr;
@@ -97,15 +107,11 @@ class ObsInterface {
     
     obs_display_t *display = nullptr;
     HWND preview_hwnd = nullptr; // window handle for scene preview
-    Napi::ThreadSafeFunction jscb; // javascript callback
     std::string recording_path = ""; 
     std::string unbuffered_output_filename = "";
 
     bool buffering = false; // Whether we are buffering the recording in memory.
     bool drawSourceOutline = false; // Draw red outline around source
-    std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
-    std::map<std::string, obs_volmeter_t*> volmeters; // Map of source names to obs_volmeter_t pointers.
-
     void init_obs(const std::string& distPath);
     int reset_video(int fps, int width, int height);
     bool reset_audio();
