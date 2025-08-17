@@ -695,10 +695,8 @@ void draw_callback(void* data, uint32_t cx, uint32_t cy) {
     if (w != last.width || h != last.height) {
       blog(LOG_INFO, "Source %s changed size from (%d x %d) to (%d x %d)",
             name.c_str(), last.width, last.height, w, h);
+      obsInterface->sourceCallback(name);
       obsInterface->sizes[name] = { w, h };
-
-      SignalData* sd = new SignalData{ "source", name.c_str(), 0 };
-      obsInterface->jscb.NonBlockingCall(sd, call_jscb);
     }
   }
 }
@@ -1296,4 +1294,10 @@ void ObsInterface::setProcessVolume(float volume) {
 void ObsInterface::setVolmeterEnabled(bool enabled) {
   blog(LOG_INFO, "Setting volmeter enabled: %d", enabled);
   volmeter_enabled = enabled;
+}
+
+void ObsInterface::sourceCallback(std::string name) {
+  blog(LOG_INFO, "Source callback triggered");
+  SignalData* sd = new SignalData{ "source", name.c_str(), 0 };
+  jscb.NonBlockingCall(sd, call_jscb);
 }

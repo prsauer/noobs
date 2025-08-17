@@ -84,10 +84,10 @@ class ObsInterface {
     std::vector<std::string> listAvailableVideoEncoders(); // Return a list of available video encoders.
     void setVideoEncoder(std::string id, obs_data_t* settings); // Set the video encoder to use.
 
-    Napi::ThreadSafeFunction jscb; // javascript callback
     std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
     std::map<std::string, SourceSize> sizes; // Map of source names to their last known size, used for firing callbacks on size changes. 
     std::map<std::string, obs_volmeter_t*> volmeters; // Map of source names to obs_volmeter_t pointers.
+    void sourceCallback(std::string name); // Send callback for source change.
 
   private:
     obs_output_t *file_output = nullptr;
@@ -107,6 +107,7 @@ class ObsInterface {
     
     obs_display_t *display = nullptr;
     HWND preview_hwnd = nullptr; // window handle for scene preview
+    Napi::ThreadSafeFunction jscb; // javascript callback
     std::string recording_path = ""; 
     std::string unbuffered_output_filename = "";
 
