@@ -116,7 +116,7 @@ class ObsInterface {
     void init_obs(const std::string& distPath);
     int reset_video(int fps, int width, int height);
     bool reset_audio();
-    void load_module(const char* module, const char* data); // Load a module, data is optional.
+    void load_module(const char* module, const char* data, bool allowFail); // Load a module, data is optional.
     void connect_signal_handlers(obs_output_t *output);
     void disconnect_signal_handlers(obs_output_t *output);
 

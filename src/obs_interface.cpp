@@ -55,9 +55,10 @@ void ObsInterface::list_output_types()
   }
 }
 
-void ObsInterface::load_module(const char* module, const char* data) {
+void ObsInterface::load_module(const char* module, const char* data, bool allowFail) {
   blog(LOG_INFO, "Loading module: %s", module);
   blog(LOG_INFO, "Data path: %s", data);
+  blog(LOG_INFO, "Allow fail: %d", allowFail);
 
   obs_module_t *ptr = NULL;
   int success = obs_open_module(&ptr, module, data);
@@ -69,8 +70,12 @@ void ObsInterface::load_module(const char* module, const char* data) {
 
   bool initmod = obs_init_module(ptr);
 
-  if (!initmod) {
-    blog(LOG_ERROR, "Failed to initialize module!");
+  if (initmod) {
+    blog(LOG_INFO, "Module initialized successfully!");
+  } else if (allowFail) {
+    blog(LOG_INFO, "Module initialization failed, but allowed to fail: %s", module);
+  } else {
+    blog(LOG_ERROR, "Failed to initialize module: %s", module);
     throw std::runtime_error("Module initialization failed!");
   }
 }
@@ -189,17 +194,22 @@ void ObsInterface::init_obs(const std::string& distPath) {
   }
 
   std::vector<std::string> modules = { 
-    "obs-x264", 
-    "obs-ffmpeg",
+    "obs-x264",     // Software encoder.
+    "obs-ffmpeg",   // Contains AMF (AMD) encoder support.
     "win-capture",  // Required for basically all forms of capture on Windows.
     "image-source", // Required for image sources.
-    "win-wasapi"    // Required for WASAPI audio input.
+    "win-wasapi",   // Required for WASAPI audio input.
+    "obs-nvenc",    // Required for NVENC video encoding.
+    "obs-qsv11",    // Required for QSV video encoding.
   };
 
   for (const auto& module : modules) {
     std::string modulePath = pluginPath + module + ".dll";
     std::string moduleDataPath = pluginDataPath + module;
-    load_module(modulePath.c_str(), moduleDataPath.c_str());
+
+    // NVENC and QSV require hardware support. Don't fail if they aren't present.
+    bool allowFail = module == "obs-nvenc" || module == "obs-qsv11";
+    load_module(modulePath.c_str(), moduleDataPath.c_str(), allowFail);
   }
   
   obs_post_load_modules();
@@ -1297,7 +1307,7 @@ void ObsInterface::setVolmeterEnabled(bool enabled) {
 }
 
 void ObsInterface::sourceCallback(std::string name) {
-  blog(LOG_INFO, "Source callback triggered");
+  blog(LOG_INFO, "Source callback triggered for %s", name.c_str());
   SignalData* sd = new SignalData{ "source", name.c_str(), 0 };
   jscb.NonBlockingCall(sd, call_jscb);
 }
