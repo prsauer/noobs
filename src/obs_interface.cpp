@@ -525,14 +525,21 @@ void ObsInterface::setSourceSettings(std::string name, obs_data_t* settings) {
   obs_source_t* source = it->second;
   obs_source_update(source, settings);
 
-  // It might be an audio source and we might be changing the device, which
-  // can leave the volmeter referencing the stale audio stream.
+  // If this is an audio source, it may have an attached volmeter.
   auto vol_it = volmeters.find(name);
   
   if (vol_it != volmeters.end()) {
+    // Rebind it. This avoids leaving it attached to stale audio stream
+    // in the event of a device change.
     blog(LOG_INFO, "Rebinding volmeter for source: %s", name.c_str());
     obs_volmeter_t* volmeter = vol_it->second;
     obs_volmeter_attach_source(volmeter, source); // rebinds if needed
+
+    // Flush the volmeter: send a zero signal in-case it never triggers
+    // any more callbacks. That can happen on selecting a device
+    // with no audio.
+    SignalData* sd = new SignalData{ "volmeter", name, 0, 0 };
+    jscb.NonBlockingCall(sd, call_jscb);
   }
 }
 
