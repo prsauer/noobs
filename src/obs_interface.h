@@ -85,6 +85,7 @@ class ObsInterface {
     std::map<std::string, SourceSize> sizes; // Map of source names to their last known size, used for firing callbacks on size changes. 
     std::map<std::string, obs_volmeter_t*> volmeters; // Map of source names to obs_volmeter_t pointers.
     void sourceCallback(std::string name); // Send callback for source change.
+    void zeroVolmeter(std::string name); // Zero the volmeter for a source.
 
   private:
     obs_output_t *file_output = nullptr;

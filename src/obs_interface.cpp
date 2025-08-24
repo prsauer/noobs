@@ -538,8 +538,7 @@ void ObsInterface::setSourceSettings(std::string name, obs_data_t* settings) {
     // Flush the volmeter: send a zero signal in-case it never triggers
     // any more callbacks. That can happen on selecting a device
     // with no audio.
-    SignalData* sd = new SignalData{ "volmeter", name, 0, 0 };
-    jscb.NonBlockingCall(sd, call_jscb);
+    zeroVolmeter(name);
   }
 }
 
@@ -1277,5 +1276,11 @@ void ObsInterface::setVolmeterEnabled(bool enabled) {
 void ObsInterface::sourceCallback(std::string name) {
   blog(LOG_INFO, "Source callback triggered for %s", name.c_str());
   SignalData* sd = new SignalData{ "source", name.c_str(), 0 };
+  jscb.NonBlockingCall(sd, call_jscb);
+}
+
+void ObsInterface::zeroVolmeter(std::string name) {
+  blog(LOG_INFO, "Zeroing volmeter for %s", name.c_str());
+  SignalData* sd = new SignalData{ "volmeter", name.c_str(), 0, 0 };
   jscb.NonBlockingCall(sd, call_jscb);
 }
