@@ -439,17 +439,6 @@ void ObsInterface::createSource(std::string name, std::string type) {
     throw std::runtime_error("Failed to create source!");
   }
 
-  if (type == AUDIO_OUTPUT) {
-    blog(LOG_INFO, "Setting output volume for source: %s to %d", name.c_str(), output_volume);
-    obs_source_set_volume(source, output_volume);
-  } else if (type == AUDIO_INPUT) {
-    blog(LOG_INFO, "Setting input volume for source: %s to %d", name.c_str(), input_volume);
-    obs_source_set_volume(source, input_volume);
-  } else if (type == AUDIO_PROCESS) {
-    blog(LOG_INFO, "Setting process volume for source: %s to %d", name.c_str(), process_volume);
-    obs_source_set_volume(source, process_volume);
-  }
-
   if (type == AUDIO_OUTPUT || type == AUDIO_INPUT || type == AUDIO_PROCESS) {
     blog(LOG_INFO, "Creating volmeter for source: %s", name.c_str());
 
@@ -762,7 +751,7 @@ void ObsInterface::initPreview(HWND parent) {
 }
 
 void ObsInterface::configurePreview(int x, int y, int width, int height) {
-  blog(LOG_INFO, "ObsInterface::showPreview");
+  blog(LOG_INFO, "ObsInterface::configurePreview");
 
   if (!preview_hwnd || !display) {
     blog(LOG_ERROR, "Preview window not initialized");
@@ -1238,67 +1227,26 @@ void ObsInterface::setMuteAudioInputs(bool mute) {
   }
 }
 
-void ObsInterface::setOutputVolume(float volume) {
-  blog(LOG_INFO, "Setting output volume to %f", volume);
-  output_volume = volume;
+void ObsInterface::setSourceVolume(std::string name, float volume) {
+  blog(LOG_INFO, "Setting source %s volume to %f", name.c_str(), volume);
 
-  for (const auto& kv : sources) {
-    const std::string& name = kv.first;
-    obs_source_t* source = kv.second;
+  auto it = sources.find(name);
 
-    if (!source) {
-      blog(LOG_WARNING, "Source %s not found", name.c_str());
-      continue;
-    }
-
-    const char* type = obs_source_get_id(source);
-
-    if (strcmp(type, AUDIO_OUTPUT) == 0) {
-      obs_source_set_volume(source, output_volume);
-    }
+  if (it == sources.end()) {
+    blog(LOG_WARNING, "Source %s not found when setting volume", name.c_str());
+    return;
   }
-}
 
-void ObsInterface::setInputVolume(float volume) {
-  blog(LOG_INFO, "Setting input volume to %f", volume);
-  input_volume = volume;
+  obs_source_t* source = it->second;
+  const char* type = obs_source_get_id(source);
+  bool audio = strcmp(type, AUDIO_OUTPUT) == 0 ||  strcmp(type, AUDIO_INPUT) == 0  || strcmp(type, AUDIO_PROCESS) == 0;
 
-  for (const auto& kv : sources) {
-    const std::string& name = kv.first;
-    obs_source_t* source = kv.second;
-
-    if (!source) {
-      blog(LOG_WARNING, "Source %s not found", name.c_str());
-      continue;
-    }
-
-    const char* type = obs_source_get_id(source);
-
-    if (strcmp(type, AUDIO_INPUT) == 0) {
-      obs_source_set_volume(source, input_volume);
-    }
+  if (!audio) {
+    blog(LOG_WARNING, "Source %s is not a valid audio source", name.c_str());
+    return;
   }
-}
 
-void ObsInterface::setProcessVolume(float volume) {
-  blog(LOG_INFO, "Setting process volume to %f", volume);
-  process_volume = volume;
-
-  for (const auto& kv : sources) {
-    const std::string& name = kv.first;
-    obs_source_t* source = kv.second;
-
-    if (!source) {
-      blog(LOG_WARNING, "Source %s not found", name.c_str());
-      continue;
-    }
-
-    const char* type = obs_source_get_id(source);
-
-    if (strcmp(type, AUDIO_PROCESS) == 0) {
-      obs_source_set_volume(source, process_volume);
-    }
-  }
+  obs_source_set_volume(source, volume);
 }
 
 void ObsInterface::setVolmeterEnabled(bool enabled) {

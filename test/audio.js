@@ -48,9 +48,10 @@ async function test() {
   noobs.AddSourceToScene('Test Speaker');
   noobs.AddSourceToScene('Test App');
 
-  noobs.SetInputVolume(0.25);
-  noobs.SetOutputVolume(1); // Vary this and play some music for audible difference in testing.
-  noobs.SetProcessVolume(0.75);  
+  // Vary the volumes.
+  noobs.SetSourceVolume('Test Mic', 0.25);
+  noobs.SetSourceVolume('Test Speaker', 0.5);
+  noobs.SetSourceVolume('Test App', 0.75);
 
   // Enable the volmeter callback.
   noobs.SetVolmeterEnabled(true);

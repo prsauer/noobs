@@ -61,11 +61,8 @@ class ObsInterface {
     void setSourceSettings(std::string name, obs_data_t* settings); // Set settings.
     obs_properties_t* getSourceProperties(std::string name); // Get the settings schema.
     void setMuteAudioInputs(bool mute); // Mute or unmute all audio inputs.
-    void setOutputVolume(float volume);
-    void setInputVolume(float volume); 
-    void setProcessVolume(float volume); 
-
-    void setVolmeterEnabled(bool enabled);
+    void setSourceVolume(std::string name, float volume); // Set the volume of an audio source.
+    void setVolmeterEnabled(bool enabled); // Enable volmeters.
 
     void addSourceToScene(std::string name); // Add source to scene.
     void removeSourceFromScene(std::string name); // Remove source from scene.
@@ -100,10 +97,6 @@ class ObsInterface {
 
     obs_encoder_t *buffer_video_encoder = nullptr;
     obs_encoder_t *buffer_audio_encoder = nullptr;
-
-    float output_volume = 1.0f; // Volume for the output.
-    float input_volume = 1.0f; // Volume for the input.
-    float process_volume = 1.0f; // Volume for the process.
     
     obs_display_t *display = nullptr;
     HWND preview_hwnd = nullptr; // window handle for scene preview

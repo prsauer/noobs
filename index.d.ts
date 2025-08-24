@@ -187,10 +187,7 @@ interface Noobs {
 
   // Audio source management functions.
   SetMuteAudioInputs(mute: boolean): void; // Mute or unmute all audio inputs.
-  SetInputVolume(volume: number): void; // Set the volume for all audio inputs sources.
-  SetOutputVolume(volume: number): void; // Set the volume for all audio outputs sources.
-  SetProcessVolume(volume: number): void; // Set the volume for all audio process sources.
-
+  SetSourceVolume(name: string, volume: number): void; // Set the volume for a specific audio source (0.0 to 1.0).
   SetVolmeterEnabled(enabled: boolean): void; // Enable or disable the volume meter.
 
   // Scene management functions.
