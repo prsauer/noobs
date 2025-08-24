@@ -533,12 +533,14 @@ void ObsInterface::setSourceSettings(std::string name, obs_data_t* settings) {
     // in the event of a device change.
     blog(LOG_INFO, "Rebinding volmeter for source: %s", name.c_str());
     obs_volmeter_t* volmeter = vol_it->second;
-    obs_volmeter_attach_source(volmeter, source); // rebinds if needed
+    obs_volmeter_attach_source(volmeter, source);
 
-    // Flush the volmeter: send a zero signal in-case it never triggers
-    // any more callbacks. That can happen on selecting a device
-    // with no audio.
-    zeroVolmeter(name);
+    blog(LOG_INFO, "11111111: %s", name.c_str());
+
+    // Flush the volmeter: send a zero signal in-case it never triggers any
+    // more callbacks. That can happen on selecting a device with no audio.
+    this->zeroVolmeter(name);
+    blog(LOG_INFO, "22222222222: %s", name.c_str());
   }
 }
 
