@@ -56,6 +56,10 @@ async function test() {
   // Enable the volmeter callback.
   noobs.SetVolmeterEnabled(true);
 
+  // Make a token change to the settings.
+  const ss = noobs.GetSourceSettings('Test Speaker');
+  noobs.SetSourceSettings('Test Speaker', ss);
+
   noobs.StartRecording(0);
   await new Promise((resolve) => setTimeout(resolve, 2000));
 

@@ -523,8 +523,17 @@ void ObsInterface::setSourceSettings(std::string name, obs_data_t* settings) {
   }
 
   obs_source_t* source = it->second;
-
   obs_source_update(source, settings);
+
+  // It might be an audio source and we might be changing the device, which
+  // can leave the volmeter referencing the stale audio stream.
+  auto vol_it = volmeters.find(name);
+  
+  if (vol_it != volmeters.end()) {
+    blog(LOG_INFO, "Rebinding volmeter for source: %s", name.c_str());
+    obs_volmeter_t* volmeter = vol_it->second;
+    obs_volmeter_attach_source(volmeter, source); // rebinds if needed
+  }
 }
 
 obs_properties_t* ObsInterface::getSourceProperties(std::string name) {
@@ -1239,7 +1248,11 @@ void ObsInterface::setSourceVolume(std::string name, float volume) {
 
   obs_source_t* source = it->second;
   const char* type = obs_source_get_id(source);
-  bool audio = strcmp(type, AUDIO_OUTPUT) == 0 ||  strcmp(type, AUDIO_INPUT) == 0  || strcmp(type, AUDIO_PROCESS) == 0;
+  
+  bool audio = 
+    strcmp(type, AUDIO_OUTPUT) == 0 || 
+    strcmp(type, AUDIO_INPUT) == 0  || 
+    strcmp(type, AUDIO_PROCESS) == 0;
 
   if (!audio) {
     blog(LOG_WARNING, "Source %s is not a valid audio source", name.c_str());
