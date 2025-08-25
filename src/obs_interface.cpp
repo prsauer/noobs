@@ -488,7 +488,7 @@ void ObsInterface::deleteSource(std::string name) {
   auto it = sources.find(name);
 
   if (it == sources.end()) {
-    blog(LOG_WARNING, "Source %s not found", name.c_str());
+    blog(LOG_WARNING, "Source %s not found when deleting", name.c_str());
     return;
   }
 
@@ -506,7 +506,7 @@ obs_data_t* ObsInterface::getSourceSettings(std::string name) {
   auto it = sources.find(name);
 
   if (it == sources.end()) {
-    blog(LOG_WARNING, "Source %s not found", name.c_str());
+    blog(LOG_WARNING, "Source %s not found when getting settings", name.c_str());
     throw std::runtime_error("Source not found!");
   }
 
@@ -527,7 +527,7 @@ void ObsInterface::setSourceSettings(std::string name, obs_data_t* settings) {
   auto it = sources.find(name);
 
   if (it == sources.end()) {
-    blog(LOG_WARNING, "Source %s not found", name.c_str());
+    blog(LOG_WARNING, "Source %s not found when setting settings", name.c_str());
     throw std::runtime_error("Source not found!");
   }
 
@@ -555,7 +555,7 @@ obs_properties_t* ObsInterface::getSourceProperties(std::string name) {
   auto it = sources.find(name);
 
   if (it == sources.end()) {
-    blog(LOG_WARNING, "Source %s not found", name.c_str());
+    blog(LOG_WARNING, "Source %s not found when getting properties", name.c_str());
     throw std::runtime_error("Source not found!");
   }
 
@@ -1133,7 +1133,7 @@ void ObsInterface::addSourceToScene(std::string name) {
   auto it = sources.find(name);
 
   if (it == sources.end()) {
-    blog(LOG_WARNING, "Source %s not found", name.c_str());
+    blog(LOG_WARNING, "Source %s not found when adding to scene", name.c_str());
     throw std::runtime_error("Source not found!");
   }
 
@@ -1170,7 +1170,7 @@ void ObsInterface::getSourcePos(std::string name, vec2* pos, vec2* size, vec2* s
   auto it = sources.find(name);
 
   if (it == sources.end()) {
-    blog(LOG_WARNING, "Source %s not found", name.c_str());
+    blog(LOG_WARNING, "Source %s not found when getting source position", name.c_str());
     throw std::runtime_error("Source not found!");
   }
 
@@ -1238,7 +1238,7 @@ void ObsInterface::setMuteAudioInputs(bool mute) {
     obs_source_t* source = kv.second;
 
     if (!source) {
-      blog(LOG_WARNING, "Source %s not found", name.c_str());
+      blog(LOG_WARNING, "Source %s not found when muting audio inputs", name.c_str());
       continue;
     }
 
