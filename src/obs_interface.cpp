@@ -440,26 +440,31 @@ std::string ObsInterface::createSource(std::string name, std::string type) {
     throw std::runtime_error("Failed to create source!");
   }
 
+  // The name might not match what we asked for if there is a duplicate.
+  // So pass it back to the client to avoid potential for a mismatch.
+  std::string real_name = obs_source_get_name(source);
+
   if (type == AUDIO_OUTPUT || type == AUDIO_INPUT || type == AUDIO_PROCESS) {
-    blog(LOG_INFO, "Creating volmeter for source: %s", name.c_str());
+    blog(LOG_INFO, "Creating volmeter for source: %s", real_name.c_str());
 
     obs_volmeter_t *volmeter = obs_volmeter_create(OBS_FADER_CUBIC);
     obs_volmeter_attach_source(volmeter, source);
 
-    SignalContext* ctx = new SignalContext{ this, name }; // TODO don't leak this.
+    SignalContext* ctx = new SignalContext{ this, real_name }; // TODO don't leak this.
     obs_volmeter_add_callback(volmeter, volmeter_callback, ctx);
 
     // Store the volmeter in the volmeters map.
-    volmeters[name] = volmeter;
+    volmeters[real_name] = volmeter;
   }
 
   // Store the source in the sources map.
-  sources[name] = source;
+  sources[real_name] = source;
+
+  // Store the dimensions so we can fire a callback if they change.
   uint32_t w = obs_source_get_width(source);
   uint32_t h = obs_source_get_height(source);
-  sizes[name] = { w, h };
+  sizes[real_name] = { w, h };
 
-  std::string real_name = obs_source_get_name(source);
   return real_name;
 }
 
