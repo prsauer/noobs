@@ -179,7 +179,7 @@ interface Noobs {
   SetVideoEncoder(id: string, settings: ObsData): void; // Create the video encoder to use.
 
   // Source management functions.
-  CreateSource(name: string, type: string): void;
+  CreateSource(name: string, type: string): string; // Returns the name of the source, which may vary in the event of a name conflict.
   DeleteSource(name: string): void;
   GetSourceSettings(name: string): ObsData;
   SetSourceSettings(name: string, settings: ObsData): void;

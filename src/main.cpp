@@ -329,8 +329,8 @@ Napi::Value ObsCreateSource(const Napi::CallbackInfo& info) {
   std::string name = info[0].As<Napi::String>().Utf8Value();
   std::string type = info[1].As<Napi::String>().Utf8Value();
 
-  obs->createSource(name, type);
-  return info.Env().Undefined();
+  std::string real_name = obs->createSource(name, type);
+  return Napi::String::New(info.Env(), real_name);
 }
 
 Napi::Value ObsDeleteSource(const Napi::CallbackInfo& info) {
@@ -471,28 +471,6 @@ Napi::Value ObsSetVolmeterEnabled(const Napi::CallbackInfo& info) {
 
   bool enabled = info[0].As<Napi::Boolean>().Value();
   obs->setVolmeterEnabled(enabled);
-  return info.Env().Undefined();
-}
-
-Napi::Value ObsCreateScene(const Napi::CallbackInfo& info) {
-  if (!obs) {
-    blog(LOG_ERROR, "ObsCreateScene called but obs is not initialized");
-    throw std::runtime_error("Obs not initialized");
-  }
-
-  bool valid = info.Length() == 2 &&
-   info[0].IsString() && // Scene name
-   info[1].IsString();   // Source type
-
-  if (!valid) {
-    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsCreateScene").ThrowAsJavaScriptException();
-    return info.Env().Undefined();
-  }
-
-  std::string name = info[0].As<Napi::String>().Utf8Value();
-  std::string type = info[1].As<Napi::String>().Utf8Value();
-
-  obs->createSource(name, type);
   return info.Env().Undefined();
 }
 

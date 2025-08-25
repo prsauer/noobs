@@ -201,14 +201,15 @@ void ObsInterface::init_obs(const std::string& distPath) {
     "win-wasapi",   // Required for WASAPI audio input.
     "obs-nvenc",    // Required for NVENC video encoding.
     "obs-qsv11",    // Required for QSV video encoding.
+    "obs-filters"   // Required for audio filters.
   };
 
   for (const auto& module : modules) {
     std::string modulePath = pluginPath + module + ".dll";
     std::string moduleDataPath = pluginDataPath + module;
 
-    // NVENC and QSV require hardware support. Don't fail if they aren't present.
-    bool allowFail = module == "obs-nvenc" || module == "obs-qsv11";
+    // NVENC fails if there is no NVENC hardware support.
+    bool allowFail = module == "obs-nvenc";
     load_module(modulePath.c_str(), moduleDataPath.c_str(), allowFail);
   }
   
@@ -424,7 +425,7 @@ void ObsInterface::volmeter_callback(void *data,
   self->jscb.NonBlockingCall(sd, call_jscb);
 }
 
-void ObsInterface::createSource(std::string name, std::string type) {
+std::string ObsInterface::createSource(std::string name, std::string type) {
   blog(LOG_INFO, "Create source: %s of type %s", name.c_str(), type.c_str());
 
   obs_source_t *source = obs_source_create(
@@ -457,6 +458,9 @@ void ObsInterface::createSource(std::string name, std::string type) {
   uint32_t w = obs_source_get_width(source);
   uint32_t h = obs_source_get_height(source);
   sizes[name] = { w, h };
+
+  std::string real_name = obs_source_get_name(source);
+  return real_name;
 }
 
 void ObsInterface::deleteSource(std::string name) {
@@ -535,12 +539,9 @@ void ObsInterface::setSourceSettings(std::string name, obs_data_t* settings) {
     obs_volmeter_t* volmeter = vol_it->second;
     obs_volmeter_attach_source(volmeter, source);
 
-    blog(LOG_INFO, "11111111: %s", name.c_str());
-
     // Flush the volmeter: send a zero signal in-case it never triggers any
     // more callbacks. That can happen on selecting a device with no audio.
-    this->zeroVolmeter(name);
-    blog(LOG_INFO, "22222222222: %s", name.c_str());
+    zeroVolmeter(name);
   }
 }
 

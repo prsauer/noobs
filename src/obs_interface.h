@@ -55,7 +55,7 @@ class ObsInterface {
     void setRecordingDir(const std::string& recordingPath); // Output must not be active when calling this.
     void setVideoContext(int fps, int width, int height); // Reset video settings.
 
-    void createSource(std::string name, std::string type); // Create a new source
+    std::string createSource(std::string name, std::string type); // Create a new source, returns the name of the source which can vary from the requested.
     void deleteSource(std::string name); // Release a source.
     obs_data_t* getSourceSettings(std::string name); // Get the current settings.
     void setSourceSettings(std::string name, obs_data_t* settings); // Set settings.
