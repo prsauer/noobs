@@ -40,18 +40,18 @@ async function test() {
   console.log('mp:', mp);
   console.log('Mics:', mp[0].items);
 
-  noobs.CreateSource('Test App', 'wasapi_process_output_capture');
-  const a = noobs.GetSourceProperties('Test App');
-  console.log('Apps:', a[0].items);
+  // noobs.CreateSource('Test App', 'wasapi_process_output_capture');
+  // const a = noobs.GetSourceProperties('Test App');
+  // console.log('Apps:', a[0].items);
 
   noobs.AddSourceToScene('Test Mic');
   noobs.AddSourceToScene('Test Speaker');
-  noobs.AddSourceToScene('Test App');
+  // noobs.AddSourceToScene('Test App');
 
   // Vary the volumes.
   noobs.SetSourceVolume('Test Mic', 0.25);
   noobs.SetSourceVolume('Test Speaker', 0.5);
-  noobs.SetSourceVolume('Test App', 0.75);
+  // noobs.SetSourceVolume('Test App', 0.75);
 
   // Enable the volmeter callback.
   noobs.SetVolmeterEnabled(true);
@@ -68,6 +68,24 @@ async function test() {
   await new Promise((resolve) => setTimeout(resolve, 2000));
   console.log("Unmute all audio inputs...");
   noobs.SetMuteAudioInputs(false);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  console.log("Set force mono")
+  noobs.SetForceMono(true);
+  noobs.CreateSource('Test Force Mono Source', 'wasapi_input_capture');
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  console.log("Unset force mono")
+  noobs.SetForceMono(false);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  console.log("Set Audio suppression")
+  noobs.SetAudioSuppression(true);
+  noobs.CreateSource('Test Audio Suppression Source', 'wasapi_input_capture');
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  console.log("Unset Audio suppression")
+  noobs.SetAudioSuppression(false);
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
   noobs.StopRecording();

@@ -457,6 +457,33 @@ std::string ObsInterface::createSource(std::string name, std::string type) {
     volmeters[real_name] = volmeter;
   }
 
+  if (type == AUDIO_INPUT && force_mono) {
+    blog(LOG_INFO, "Setting force mono for new source: %s", real_name.c_str());
+    uint32_t flags = obs_source_get_flags(source);
+    obs_source_set_flags(source, flags | OBS_SOURCE_FLAG_FORCE_MONO);
+  }
+
+  if (type == AUDIO_INPUT && audio_suppression) {
+    blog(LOG_INFO, "Setting up filter for new source: %s", real_name.c_str());
+    std::string filter_name = "Filter for " + real_name;
+
+
+    obs_source_t *filter = obs_source_create(
+      "noise_suppress_filter_v2",   
+      filter_name.c_str(),   
+      nullptr, // Defaults are sensible.
+      nullptr
+    );
+
+    if (!filter) {
+      blog(LOG_ERROR, "Failed to create filter for source: %s", real_name.c_str());
+      throw std::runtime_error("Failed to create filter!");
+    }
+
+    filters[real_name] = filter;
+    obs_source_filter_add(source, filter);
+  }
+
   // Store the source in the sources map.
   sources[real_name] = source;
 
@@ -493,6 +520,18 @@ void ObsInterface::deleteSource(std::string name) {
   }
 
   obs_source_t* source = it->second;
+
+  // Remove and release any filters.
+  auto filter_it = filters.find(name);
+  
+  if (filter_it != filters.end()) {
+    obs_source_t* filter = filter_it->second;
+    obs_source_filter_remove(source, filter);
+    obs_source_release(filter);
+    filters.erase(name);
+    blog(LOG_INFO, "Filter deleted for source: %s", name.c_str());
+  }
+
   obs_source_remove(source); // ???
   obs_source_release(source);
   sources.erase(name);
@@ -919,6 +958,17 @@ ObsInterface::~ObsInterface() {
   for (auto& kv : sources) {
     std::string name = kv.first;
     obs_source_t* source = kv.second;
+
+    auto filter_it = filters.find(name);
+
+    if (filter_it != filters.end()) {
+      obs_source_t* filter = filter_it->second;
+      obs_source_filter_remove(source, filter);
+      obs_source_release(filter);
+      filters.erase(name);
+      blog(LOG_INFO, "Filter removed for source: %s on shutdown", name.c_str());
+    }
+
     blog(LOG_DEBUG, "Releasing source: %s", name.c_str());
     obs_source_release(source);
     sources.erase(name);
@@ -1279,6 +1329,93 @@ void ObsInterface::setSourceVolume(std::string name, float volume) {
 void ObsInterface::setVolmeterEnabled(bool enabled) {
   blog(LOG_INFO, "Setting volmeter enabled: %d", enabled);
   volmeter_enabled = enabled;
+}
+
+void ObsInterface::setForceMono(bool enabled) {
+  blog(LOG_INFO, "Setting force mono: %s", enabled ? "enabled" : "disabled");
+  force_mono = enabled;
+
+  // Loop over existing sources and update the force mono flags.
+  for (const auto& kv : sources) {
+    const std::string& name = kv.first;
+    obs_source_t* source = kv.second;
+
+    if (!source) {
+      blog(LOG_WARNING, "Source %s not found when setting force mono", name.c_str());
+      continue;
+    }
+
+    const char* type = obs_source_get_id(source);
+
+    if (strcmp(type, AUDIO_INPUT) != 0) {
+      // Force mono is only applicable to microphones, skip other types.
+      continue;
+    }
+
+    if (enabled) {
+      blog(LOG_INFO, "Setting force mono for source %s", name.c_str());
+      uint32_t flags = obs_source_get_flags(source);
+      obs_source_set_flags(source, flags | OBS_SOURCE_FLAG_FORCE_MONO);
+    } else {
+      blog(LOG_INFO, "Clearing force mono for source %s", name.c_str());
+      uint32_t flags = obs_source_get_flags(source);
+      obs_source_set_flags(source, flags & ~OBS_SOURCE_FLAG_FORCE_MONO);
+    }
+  }
+}
+
+void ObsInterface::setAudioSuppression(bool enabled) {
+  blog(LOG_INFO, "Setting audio suppression enabled: %d", enabled);
+  audio_suppression = enabled;
+
+  // Loop over existing sources and add filters to any that need it.
+  for (const auto& kv : sources) {
+    const std::string& name = kv.first;
+    obs_source_t* source = kv.second;
+
+    if (!source) {
+      blog(LOG_WARNING, "Source %s not found when adding filters", name.c_str());
+      continue;
+    }
+
+    const char* type = obs_source_get_id(source);
+
+    if (strcmp(type, AUDIO_INPUT) != 0) {
+      // Don't care about non-input sources. This is purely for suppressing
+      // microphone background noise.
+      continue;
+    }
+
+    // Check for a filter existing and add or remove it as appropriate.
+    auto filter_it = filters.find(name);
+    
+    if (audio_suppression && filter_it == filters.end()) {
+      blog(LOG_INFO, "Setting up filter for source: %s", name.c_str());
+      
+      std::string filter_name = "Filter for " + name;
+
+      obs_source_t *filter = obs_source_create(
+        "noise_suppress_filter_v2",   
+        filter_name.c_str(),   
+        nullptr, // Defaults are sensible.
+        nullptr
+      );
+
+      if (!filter) {
+        blog(LOG_ERROR, "Failed to create filter for source: %s", name.c_str());
+        throw std::runtime_error("Failed to create filter!");
+      }
+
+      filters[name] = filter;
+      obs_source_filter_add(source, filter);
+    } else if (!audio_suppression && filter_it != filters.end()) {
+      blog(LOG_INFO, "Removing filters for source: %s", name.c_str());
+      obs_source_t* filter = filter_it->second;
+      obs_source_filter_remove(source, filter);
+      filters.erase(name);
+      obs_source_release(filter);
+    }
+  }
 }
 
 void ObsInterface::sourceCallback(std::string name) {

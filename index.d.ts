@@ -189,6 +189,8 @@ interface Noobs {
   SetMuteAudioInputs(mute: boolean): void; // Mute or unmute all audio inputs.
   SetSourceVolume(name: string, volume: number): void; // Set the volume for a specific audio source (0.0 to 1.0).
   SetVolmeterEnabled(enabled: boolean): void; // Enable or disable the volume meter.
+  SetAudioSuppression(enabled: boolean): void; // Enable or disable audio suppression (noise gate).
+  SetForceMono(enabled: boolean): void; // Enable or disable the force mono audio setting.
 
   // Scene management functions.
   AddSourceToScene(sourceName: string): void;

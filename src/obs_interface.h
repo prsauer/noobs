@@ -63,6 +63,8 @@ class ObsInterface {
     void setMuteAudioInputs(bool mute); // Mute or unmute all audio inputs.
     void setSourceVolume(std::string name, float volume); // Set the volume of an audio source.
     void setVolmeterEnabled(bool enabled); // Enable volmeters.
+    void setAudioSuppression(bool enabled); // Enable audio suppression.
+    void setForceMono(bool enabled); // Enable force mono audio.
 
     void addSourceToScene(std::string name); // Add source to scene.
     void removeSourceFromScene(std::string name); // Remove source from scene.
@@ -84,6 +86,8 @@ class ObsInterface {
     std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
     std::map<std::string, SourceSize> sizes; // Map of source names to their last known size, used for firing callbacks on size changes. 
     std::map<std::string, obs_volmeter_t*> volmeters; // Map of source names to obs_volmeter_t pointers.
+    std::map<std::string, obs_source_t*> filters; // Map of source names to obs_source_t filter pointers.
+
     void sourceCallback(std::string name); // Send callback for source change.
     void zeroVolmeter(std::string name); // Zero the volmeter for a source.
 
@@ -134,6 +138,8 @@ class ObsInterface {
     void create_audio_encoders();
 
     bool volmeter_enabled = false; // Whether the volmeter callback is enabled.
+    bool audio_suppression = false; // Whether audio suppression is enabled.
+    bool force_mono = false; // Whether force mono audio is enabled.
 
     static void volmeter_callback(
       void *data, 

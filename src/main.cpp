@@ -474,6 +474,42 @@ Napi::Value ObsSetVolmeterEnabled(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsSetAudioSuppression(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetAudioSuppression called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetAudioSuppression").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  bool enabled = info[0].As<Napi::Boolean>().Value();
+  obs->setAudioSuppression(enabled);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetForceMono(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetForceMono called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetForceMono").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  bool enabled = info[0].As<Napi::Boolean>().Value();
+  obs->setForceMono(enabled);
+  return info.Env().Undefined();
+}
+
 Napi::Value ObsAddSourceToScene(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsAddSourceToScene called but obs is not initialized");
@@ -609,6 +645,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("SetMuteAudioInputs", Napi::Function::New(env, ObsSetMuteAudioInputs));
   exports.Set("SetSourceVolume", Napi::Function::New(env, ObsSetSourceVolume));
   exports.Set("SetVolmeterEnabled", Napi::Function::New(env, ObsSetVolmeterEnabled));
+  exports.Set("SetAudioSuppression", Napi::Function::New(env, ObsSetAudioSuppression));
+  exports.Set("SetForceMono", Napi::Function::New(env, ObsSetForceMono));
 
   exports.Set("AddSourceToScene", Napi::Function::New(env, ObsAddSourceToScene));
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));
