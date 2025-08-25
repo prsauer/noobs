@@ -1332,7 +1332,7 @@ void ObsInterface::setVolmeterEnabled(bool enabled) {
 }
 
 void ObsInterface::setForceMono(bool enabled) {
-  blog(LOG_INFO, "Setting force mono: %s", enabled ? "enabled" : "disabled");
+  blog(LOG_INFO, "%s force mono on all input sources", enabled ? "Enabling" : "Disabling");
   force_mono = enabled;
 
   // Loop over existing sources and update the force mono flags.
@@ -1353,11 +1353,11 @@ void ObsInterface::setForceMono(bool enabled) {
     }
 
     if (enabled) {
-      blog(LOG_INFO, "Setting force mono for source %s", name.c_str());
+      blog(LOG_INFO, "Setting force mono flag on source %s", name.c_str());
       uint32_t flags = obs_source_get_flags(source);
       obs_source_set_flags(source, flags | OBS_SOURCE_FLAG_FORCE_MONO);
     } else {
-      blog(LOG_INFO, "Clearing force mono for source %s", name.c_str());
+      blog(LOG_INFO, "Unsetting force mono flag on source %s", name.c_str());
       uint32_t flags = obs_source_get_flags(source);
       obs_source_set_flags(source, flags & ~OBS_SOURCE_FLAG_FORCE_MONO);
     }
@@ -1365,7 +1365,7 @@ void ObsInterface::setForceMono(bool enabled) {
 }
 
 void ObsInterface::setAudioSuppression(bool enabled) {
-  blog(LOG_INFO, "Setting audio suppression enabled: %d", enabled);
+  blog(LOG_INFO, "%s audio suppression on all input devices", enabled ? "Enabling" : "Disabling");
   audio_suppression = enabled;
 
   // Loop over existing sources and add filters to any that need it.
