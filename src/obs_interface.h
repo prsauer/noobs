@@ -40,19 +40,18 @@ class ObsInterface {
     ObsInterface(
       const std::string& distPath,      // Where to look for plugins and data
       const std::string& logPath,       // Where to write logs to
-      const std::string& recordingPath, // Where to save recordings
       Napi::ThreadSafeFunction cb       // JavaScript callback
     );
 
     ~ObsInterface();
 
-    bool setBuffering(bool buffering); // In buffering mode, the recording is stored in memory and can be converted to a file later.
     void startBuffering(); // Start buffering to memory.
     void startRecording(int offset); // Convert the active buffered recording to a real one.
     void stopRecording(); // Stop the recording.
     void forceStopRecording(); // Force stop the recording, this will not save the current recording.
     std::string getLastRecording(); // Get the last recorded file path.
-    void setRecordingDir(const std::string& recordingPath); // Output must not be active when calling this.
+    void setBuffering(bool buffer); // Enable or disable buffering.
+    void setRecordingDir(const std::string& recordingPath); // Set the recording path.
     void setVideoContext(int fps, int width, int height); // Reset video settings.
 
     std::string createSource(std::string name, std::string type); // Create a new source, returns the name of the source which can vary from the requested.
@@ -92,16 +91,11 @@ class ObsInterface {
     void zeroVolmeter(std::string name); // Zero the volmeter for a source.
 
   private:
-    obs_output_t *file_output = nullptr;
-    obs_output_t *buffer_output = nullptr;
-
+    obs_output_t *output = nullptr;
     obs_scene_t *scene = nullptr;
 
-    obs_encoder_t *file_video_encoder = nullptr;
-    obs_encoder_t *file_audio_encoder = nullptr;
-
-    obs_encoder_t *buffer_video_encoder = nullptr;
-    obs_encoder_t *buffer_audio_encoder = nullptr;
+    obs_encoder_t *video_encoder = nullptr;
+    obs_encoder_t *audio_encoder = nullptr;
     
     obs_display_t *display = nullptr;
     HWND preview_hwnd = nullptr; // window handle for scene preview
@@ -132,8 +126,8 @@ class ObsInterface {
     void create_scene();
     void create_output();
 
-    std::string video_encoder_id; // The video encoder ID to use.
-    obs_data_t* video_encoder_settings; // Settings for the video encoder.
+    std::string video_encoder_id = "obs_x264"; // The video encoder ID to use.
+    obs_data_t* video_encoder_settings = obs_data_create(); // Settings for the video encoder.
     void create_video_encoders();
     void create_audio_encoders();
 

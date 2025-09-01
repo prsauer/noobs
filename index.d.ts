@@ -158,7 +158,6 @@ interface Noobs {
   Init(
     distPath: string,
     logPath: string,
-    recordingPath: string,
     cb: (signal: Signal) => void,
   ): void;
 

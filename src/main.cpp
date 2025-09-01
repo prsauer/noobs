@@ -7,11 +7,10 @@
 ObsInterface* obs = nullptr;
 
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
-  bool valid = info.Length() == 4 &&
+  bool valid = info.Length() == 3 &&
    info[0].IsString() &&   // Dist path
    info[1].IsString() &&   // Log path
-   info[2].IsString() &&   // Recording path
-   info[3].IsFunction();   // JavaScript callback
+   info[2].IsFunction();   // JavaScript callback
 
   if (!valid) {
     Napi::Error::New(info.Env(), "Invalid arguments passed to ObsInit").ThrowAsJavaScriptException();
@@ -20,13 +19,12 @@ Napi::Value ObsInit(const Napi::CallbackInfo& info) {
 
   std::string distPath = info[0].As<Napi::String>().Utf8Value();
   std::string logPath = info[1].As<Napi::String>().Utf8Value();
-  std::string recordingPath = info[2].As<Napi::String>().Utf8Value();
-  Napi::Function fn = info[3].As<Napi::Function>();
+  Napi::Function fn = info[2].As<Napi::Function>();
 
   Napi::ThreadSafeFunction jscb =
     Napi::ThreadSafeFunction::New(info.Env(), fn, "JavaScript callback", 0, 1);
 
-  obs = new ObsInterface(distPath, logPath, recordingPath, jscb);
+  obs = new ObsInterface(distPath, logPath, jscb);
   return info.Env().Undefined();
 }
 
@@ -118,7 +116,6 @@ Napi::Value ObsSetVideoEncoder(const Napi::CallbackInfo& info) {
 
   obs_data_t* settings = napi_to_data(obj);
   obs->setVideoEncoder(id, settings);
-  obs_data_release(settings);
 
   return info.Env().Undefined();
 }
@@ -139,12 +136,7 @@ Napi::Value ObsSetBuffering(const Napi::CallbackInfo& info) {
   }
 
   bool buffering = info[0].As<Napi::Boolean>().Value();
-  bool success = obs->setBuffering(buffering);
-
-  if (!success) {
-    Napi::Error::New(info.Env(), "Failed to set buffering mode, is recording active?").ThrowAsJavaScriptException();
-    return info.Env().Undefined();
-  }
+  obs->setBuffering(buffering);
 
   return info.Env().Undefined();
 }

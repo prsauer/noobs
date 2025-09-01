@@ -225,163 +225,114 @@ void ObsInterface::init_obs(const std::string& distPath) {
 void ObsInterface::create_output() {
   blog(LOG_INFO, "Create outputs");
 
+  const char* type = buffering ? "replay_buffer" : "ffmpeg_muxer";
+  const char* name = buffering ? "Buffer Output" : "File Output";
+
+  if (output) {
+    blog(LOG_DEBUG, "Releasing existing output");
+    obs_output_release(output);
+  }
+
   blog(LOG_INFO, "Creating replay buffer output");
-  buffer_output = obs_output_create("replay_buffer", "Buffer Output", NULL, NULL);
+  output = obs_output_create(type, name, NULL, NULL);
 
-  if (!buffer_output) {
-    blog(LOG_ERROR, "Failed to create buffer output!");
-    throw std::runtime_error("Failed to create buffer output!");
+  if (!output) {
+    blog(LOG_ERROR, "Failed to create output!");
+    throw std::runtime_error("Failed to create output!");
   }
 
-  blog(LOG_INFO, "Creating file output");
-  file_output = obs_output_create("ffmpeg_muxer", "File Output", NULL, NULL);
+  obs_data_t *settings = obs_data_create();
 
-  if (!file_output) {
-    blog(LOG_ERROR, "Failed to create file output!");
-    throw std::runtime_error("Failed to create file output!");
+  if (buffering) {
+    blog(LOG_INFO, "Set replay buffer settings");
+    obs_data_set_int(settings, "max_time_sec", 60);
+    obs_data_set_int(settings, "max_size_mb", 1024);
+    obs_data_set_string(settings, "directory", recording_path.c_str());
+    obs_data_set_string(settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
+    obs_data_set_string(settings, "extension", "mp4");
+  } else {
+    blog(LOG_INFO, "Set ffmpeg_muxer settings");
+    // Need to specify the exact path for ffmpeg_muxer. We will write this again at start recording.
+    std::string filename = recording_path + "\\" + get_current_date_time() + ".mp4";
+    obs_data_set_string(settings, "path", filename.c_str());
+    unbuffered_output_filename = filename;
   }
 
-  obs_data_t *buffer_settings = obs_data_create();
-  blog(LOG_INFO, "Set replay_buffer settings");
-  obs_data_set_int(buffer_settings, "max_time_sec", 60);
-  obs_data_set_int(buffer_settings, "max_size_mb", 1024);
-  obs_data_set_string(buffer_settings, "directory", recording_path.c_str());
-  obs_data_set_string(buffer_settings, "format", "%CCYY-%MM-%DD %hh-%mm-%ss");
-  obs_data_set_string(buffer_settings, "extension", "mp4");
-  obs_output_update(buffer_output, buffer_settings);
-  obs_data_release(buffer_settings);
-
-  blog(LOG_INFO, "Set ffmpeg_muxer settings");
-  obs_data_t *ffmpeg_settings = obs_data_create();
-  // Need to specify the exact path for ffmpeg_muxer. We will write this again at start recording.
-  std::string filename = recording_path + "\\" + get_current_date_time() + ".mp4";
-  obs_data_set_string(ffmpeg_settings, "path", filename.c_str());
-  unbuffered_output_filename = filename;
-
-  // Apply and release the settings.
-  obs_output_update(file_output, ffmpeg_settings);
-  obs_data_release(ffmpeg_settings);
-
-  // Add the signal handler callback.
-  connect_signal_handlers(buffer_output);
-  connect_signal_handlers(file_output);
+  obs_output_update(output, settings);
+  obs_data_release(settings);
+  connect_signal_handlers(output);
 }
 
 void ObsInterface::setRecordingDir(const std::string& recordingPath) {
-  blog(LOG_INFO, "Set recording directory");
-  // TODO make this work for file output also.
+  blog(LOG_INFO, "Set recording directory. Path: %s", recordingPath.c_str());
 
-  obs_output_t *output = buffering ? buffer_output : file_output;
-
-  if (!output) {
-    blog(LOG_ERROR, "No output to update recording directory");
-    throw std::runtime_error("Output not initialized");
-  }
-
-  // check its not active
   if (obs_output_active(output)) {
     blog(LOG_ERROR, "Output is active, cannot update recording path");
     throw std::runtime_error("Output is active, cannot update recording path");
   }
 
-  obs_data_t *settings = obs_output_get_settings(output);
+  recording_path = recordingPath;
+  create_output();
 
-  if (!settings) {
-    blog(LOG_ERROR, "Failed to get output settings");
-    throw std::runtime_error("Failed to get output settings");
-  }
-
-  obs_data_set_string(settings, "directory", recordingPath.c_str());
-  obs_output_update(output, settings);
-  obs_data_release(settings);
+  create_video_encoders();
+  create_audio_encoders();
 }
 
 void ObsInterface::create_video_encoders() {
   blog(LOG_INFO, "Set video encoder: %s", video_encoder_id.c_str());
 
-  if (file_video_encoder) {
+  if (video_encoder) {
     blog(LOG_DEBUG, "Releasing file video encoder");
-    obs_encoder_release(file_video_encoder);
-    file_video_encoder = nullptr;
+    obs_encoder_release(video_encoder);
+    video_encoder = nullptr;
   }
 
-  file_video_encoder = obs_video_encoder_create(
+  video_encoder = obs_video_encoder_create(
     video_encoder_id.c_str(), 
     "noobs_file_encoder", 
     video_encoder_settings, 
     NULL
   );
 
-  if (!file_video_encoder) {
+  if (!video_encoder) {
     blog(LOG_ERROR, "Failed to create video encoder!");
     throw std::runtime_error("Failed to create video encoder!");
   }
 
-  if (buffer_video_encoder) {
-    blog(LOG_DEBUG, "Releasing buffer video encoder");
-    obs_encoder_release(buffer_video_encoder);
-    buffer_video_encoder = nullptr;
-  }
-
-  buffer_video_encoder = obs_video_encoder_create(
-    video_encoder_id.c_str(), 
-    "noobs_buffer_encoder", 
-    video_encoder_settings, 
-    NULL
-  );
-
-  if (!buffer_video_encoder) {
-    blog(LOG_ERROR, "Failed to create buffer video encoder!");
-    throw std::runtime_error("Failed to create buffer video encoder!");
-  }
-
-  obs_output_set_video_encoder(file_output, file_video_encoder);
-  obs_output_set_video_encoder(buffer_output, buffer_video_encoder);
-
-  obs_encoder_set_video(file_video_encoder, obs_get_video());
-  obs_encoder_set_video(buffer_video_encoder, obs_get_video());
+  obs_output_set_video_encoder(output, video_encoder);
+  obs_encoder_set_video(video_encoder, obs_get_video());
 }
 
 void ObsInterface::create_audio_encoders() {
   blog(LOG_INFO, "Create audio encoder");
 
-  // if (!output) {
-  //   blog(LOG_ERROR, "No output on create_audio_encoders");
-  //   throw std::runtime_error("Failed to create audio encoder!");
-  // }
-
-  // if (audio_encoder) {
-  //   blog(LOG_DEBUG, "Releasing audio encoder");
-  //   obs_encoder_release(audio_encoder);
-  //   audio_encoder = nullptr;
-  // }
-
-  file_audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "aac_file", NULL, 0, NULL);
-
-  if (!file_audio_encoder) {
-    blog(LOG_ERROR, "Failed to create audio encoder!");
-    throw std::runtime_error("Failed to create audio encoder!");
+  if (audio_encoder) {
+    blog(LOG_DEBUG, "Releasing audio encoder");
+    obs_encoder_release(audio_encoder);
+    audio_encoder = nullptr;
   }
 
-  buffer_audio_encoder = obs_audio_encoder_create("ffmpeg_aac", "aac_buffer", NULL, 0, NULL);
+  audio_encoder = obs_audio_encoder_create(
+    "ffmpeg_aac", 
+    "aac_file",
+    NULL, 
+    0, 
+    NULL
+  );
 
-  if (!buffer_audio_encoder) {
-    blog(LOG_ERROR, "Failed to create buffer audio encoder!");
-    throw std::runtime_error("Failed to create buffer audio encoder!");
+  if (!audio_encoder) {
+    blog(LOG_ERROR, "Failed to create audio encoder!");
+    throw std::runtime_error("Failed to create audio encoder!");
   }
 
   blog(LOG_INFO, "Set audio encoder settings");
   obs_data_t *aenc_settings = obs_data_create();
   obs_data_set_int(aenc_settings, "bitrate", 128);
-  obs_encoder_update(file_audio_encoder, aenc_settings);
-  obs_encoder_update(buffer_audio_encoder, aenc_settings);
+  obs_encoder_update(audio_encoder, aenc_settings);
   obs_data_release(aenc_settings);
 
-  obs_output_set_audio_encoder(file_output, file_audio_encoder, 0);
-  obs_encoder_set_audio(file_audio_encoder, obs_get_audio());
-
-  obs_output_set_audio_encoder(buffer_output, buffer_audio_encoder, 0);
-  obs_encoder_set_audio(buffer_audio_encoder, obs_get_audio());
+  obs_output_set_audio_encoder(output, audio_encoder, 0);
+  obs_encoder_set_audio(audio_encoder, obs_get_audio());
 }
 
 void ObsInterface::create_scene() {
@@ -909,7 +860,6 @@ bool ObsInterface::getDrawSourceOutlineEnabled() {
 ObsInterface::ObsInterface(
   const std::string& distPath, 
   const std::string& logPath, 
-  const std::string& recordingPath,
   Napi::ThreadSafeFunction cb
 ) {
   // Setup logs first so we have logs for the initialization.
@@ -921,19 +871,16 @@ ObsInterface::ObsInterface(
 
   // Setup callback function.
   jscb = cb;
-  recording_path = recordingPath;
 
+  // Contexts for signal callbacks.
   starting_ctx = new SignalContext{ this, "starting" };
   start_ctx = new SignalContext{ this, "start" };
   stopping_ctx = new SignalContext{ this, "stopping" };
   stop_ctx = new SignalContext{ this, "stop" };
 
   // Create the resources we rely on.
-  create_output();
   create_scene();
-
-  video_encoder_id = "obs_x264";
-  video_encoder_settings = obs_data_create();
+  create_output();
   create_video_encoders();
   create_audio_encoders();
 }
@@ -979,24 +926,14 @@ ObsInterface::~ObsInterface() {
     obs_scene_release(scene);
   }
 
-  if (buffer_output) {
-    if (obs_output_active(buffer_output)) {
+  if (output) {
+    if (obs_output_active(output)) {
       blog(LOG_DEBUG, "Force stopping output");
-      obs_output_force_stop(buffer_output);
+      obs_output_force_stop(output);
     }
       
     blog(LOG_DEBUG, "Releasing output");
-    obs_output_release(buffer_output);
-  }
-
-  if (file_output) {
-    if (obs_output_active(file_output)) {
-      blog(LOG_DEBUG, "Force stopping output");
-      obs_output_force_stop(file_output);
-    }
-      
-    blog(LOG_DEBUG, "Releasing output");
-    obs_output_release(file_output);
+    obs_output_release(output);
   }
 
   // if (video_encoder) {
@@ -1018,16 +955,14 @@ ObsInterface::~ObsInterface() {
   }
 }
 
-bool ObsInterface::setBuffering(bool value) {
-  obs_output_t* output = buffering ? buffer_output : file_output;
-
+void ObsInterface::setBuffering(bool value) {
   if (obs_output_active(output)) {
     blog(LOG_ERROR, "Cannot change buffering state while output is active");
-    return false;
+    throw new std::runtime_error("Cannot change buffering state while output is active");
   }
 
   buffering = value;
-  return buffering;
+  create_output();
 }
 
 void ObsInterface::startBuffering() {
@@ -1037,8 +972,6 @@ void ObsInterface::startBuffering() {
     blog(LOG_ERROR, "Buffering is not enabled!");
     throw std::runtime_error("Buffering is not enabled!");
   }
-
-  obs_output_t* output = buffer_output;
 
   if (!output) {
     blog(LOG_ERROR, "Output is not initialized!");
@@ -1064,7 +997,11 @@ void ObsInterface::startBuffering() {
 
 void ObsInterface::startRecording(int offset) {
   blog(LOG_INFO, "ObsInterface::startRecording enter");
-  obs_output_t* output = buffering ? buffer_output : file_output;
+
+  if (recording_path == "") {
+    blog(LOG_ERROR, "Recording path is not set");
+    throw std::runtime_error("Recording path is not set");
+  }
 
   if (buffering) {
     bool is_active = obs_output_active(output);
@@ -1083,10 +1020,10 @@ void ObsInterface::startRecording(int offset) {
     calldata_free(&cd);
 
     if (!success) {
+      blog(LOG_ERROR, "Failed to call convert procedure handler");
       throw std::runtime_error("Failed to call convert procedure handler");
     }
   } else {
-    
     obs_data_t *ffmpeg_settings = obs_data_create();
     std::string filename = recording_path + "\\" + get_current_date_time() + ".mp4";
     obs_data_set_string(ffmpeg_settings,  "path", filename.c_str());
@@ -1118,7 +1055,6 @@ void ObsInterface::startRecording(int offset) {
 
 void ObsInterface::stopRecording() {
   blog(LOG_INFO, "ObsInterface::stopRecording enter");
-  obs_output_t* output = buffering ? buffer_output : file_output;
   bool is_active = obs_output_active(output);
 
   if (!is_active) {
@@ -1132,7 +1068,6 @@ void ObsInterface::stopRecording() {
 
 void ObsInterface::forceStopRecording() {
   blog(LOG_INFO, "ObsInterface::forceStopRecording enter");
-  obs_output_t* output = buffering ? buffer_output : file_output;
   bool is_active = obs_output_active(output);
 
   if (!is_active) {
@@ -1149,7 +1084,6 @@ std::string ObsInterface::getLastRecording() {
   calldata cd;
   calldata_init(&cd);
 
-  obs_output_t* output = buffering ? buffer_output : file_output;
   proc_handler_t *ph = obs_output_get_proc_handler(output);
 
   const char* type = obs_output_get_id(output);
@@ -1275,8 +1209,13 @@ std::vector<std::string> ObsInterface::listAvailableVideoEncoders()
 }
 
 void ObsInterface::setVideoEncoder(std::string id, obs_data_t* settings) {
-  // TODO don't allow this if output is active.
+  if (obs_output_active(output)) {
+    blog(LOG_WARNING, "Cannot change video encoder while output is active");
+    throw new std::runtime_error("Output is active when trying to change encoder");
+  }
+
   video_encoder_id = id;
+  obs_data_release(video_encoder_settings);
   video_encoder_settings = settings;
   create_video_encoders();
 }

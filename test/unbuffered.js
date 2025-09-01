@@ -16,7 +16,8 @@ async function test() {
   console.log('Log path:', logPath);
   console.log('Recording path:', recordingPath);
 
-  noobs.Init(distPath, logPath, recordingPath, cb);
+  noobs.Init(distPath, logPath, cb);
+  noobs.SetRecordingDir(recordingPath);
 
   console.log('Creating source...');
   const name = noobs.CreateSource('Test Source', 'monitor_capture');

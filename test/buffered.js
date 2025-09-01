@@ -16,8 +16,9 @@ async function test() {
   console.log('Log path:', logPath);
   console.log('Recording path:', recordingPath);
 
-  noobs.Init(distPath, logPath, recordingPath, cb);
+  noobs.Init(distPath, logPath, cb);
   noobs.SetBuffering(true);
+  noobs.SetRecordingDir(recordingPath);
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   console.log('Creating source...');
