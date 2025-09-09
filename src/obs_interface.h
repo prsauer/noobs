@@ -85,6 +85,7 @@ class ObsInterface {
     std::map<std::string, obs_source_t*> sources; // Map of source names to obs_source_t pointers. 
     std::map<std::string, SourceSize> sizes; // Map of source names to their last known size, used for firing callbacks on size changes. 
     std::map<std::string, obs_volmeter_t*> volmeters; // Map of source names to obs_volmeter_t pointers.
+    std::map<std::string, SignalContext*> volmeter_cb_ctx; // Map of volmeter callback contexts.
     std::map<std::string, obs_source_t*> filters; // Map of source names to obs_source_t filter pointers.
 
     void sourceCallback(std::string name); // Send callback for source change.

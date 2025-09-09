@@ -196,7 +196,6 @@ interface Noobs {
   RemoveSourceFromScene(sourceName: string): void;
   GetSourcePos(name: string): SceneItemPosition & SourceDimensions;
   SetSourcePos(name: string, pos: SceneItemPosition): void;
-  // TODO: Cropping?
 
   // Preview functions.
   InitPreview(hwnd: Buffer): void;

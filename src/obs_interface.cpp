@@ -401,11 +401,12 @@ std::string ObsInterface::createSource(std::string name, std::string type) {
     obs_volmeter_t *volmeter = obs_volmeter_create(OBS_FADER_CUBIC);
     obs_volmeter_attach_source(volmeter, source);
 
-    SignalContext* ctx = new SignalContext{ this, real_name }; // TODO don't leak this.
+    SignalContext* ctx = new SignalContext{ this, real_name };
     obs_volmeter_add_callback(volmeter, volmeter_callback, ctx);
 
     // Store the volmeter in the volmeters map.
     volmeters[real_name] = volmeter;
+    volmeter_cb_ctx[real_name] = ctx; // Track this so we can free it later.
   }
 
   if (type == AUDIO_INPUT && force_mono) {
@@ -462,6 +463,15 @@ void ObsInterface::deleteSource(std::string name) {
     volmeters.erase(name);
   }
 
+  // Now deal with the callback context.
+  auto ctx_it = volmeter_cb_ctx.find(name);
+
+  if (ctx_it != volmeter_cb_ctx.end()) {
+    SignalContext* ctx = ctx_it->second;
+    delete ctx;
+    volmeter_cb_ctx.erase(ctx_it);
+  }
+
   // Now deal with the source itself.
   auto it = sources.find(name);
 
@@ -508,7 +518,6 @@ obs_data_t* ObsInterface::getSourceSettings(std::string name) {
     throw std::runtime_error("Failed to get source settings!");
   }
 
-  // obs_data_release(settings); TODO release after returning to client.
   return settings;
 }
 
@@ -743,8 +752,8 @@ void ObsInterface::initPreview(HWND parent) {
 
     gs_init_data gs_data = {};
     gs_data.adapter = 0;
-    gs_data.cx = 1920; // TODO get from video context?
-    gs_data.cy = 1080; // TODO get from video context?
+    gs_data.cx = 1920; // Gets overwritten when we call configurePreview().
+    gs_data.cy = 1080; // Gets overwritten when we call configurePreview().
     gs_data.format = GS_BGRA;
     gs_data.zsformat = GS_ZS_NONE;
     gs_data.num_backbuffers = 1;
@@ -787,9 +796,6 @@ void ObsInterface::configurePreview(int x, int y, int width, int height) {
     return;
   }
 
-  uint32_t w, h;
-  obs_display_size(display, &w, &h); // Get the display size to match the video context.
-  blog(LOG_INFO, "Current Display size set to (%d x %d)", w, h);
   obs_display_resize(display, width, height);
   obs_display_set_enabled(display, true);
 }
@@ -895,6 +901,12 @@ ObsInterface::~ObsInterface() {
     obs_volmeter_destroy(volmeter);
     blog(LOG_INFO, "Volmeter deleted for source: %s", kv.first.c_str());
     volmeters.erase(kv.first);
+  }
+
+  for (auto& kv : volmeter_cb_ctx) {
+    SignalContext* ctx = kv.second;
+    delete ctx;
+    volmeter_cb_ctx.erase(kv.first);
   }
 
   delete starting_ctx;
@@ -1114,22 +1126,25 @@ std::string ObsInterface::getLastRecording() {
 void ObsInterface::addSourceToScene(std::string name) {
   blog(LOG_INFO, "ObsInterface::addSourceToScene called for source: %s", name.c_str());
 
+  obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
+
+  if (item) {
+    blog(LOG_WARNING, "Source %s already in scene", name.c_str());
+    return;
+  }
+
   auto it = sources.find(name);
 
   if (it == sources.end()) {
     blog(LOG_WARNING, "Source %s not found when adding to scene", name.c_str());
-    throw std::runtime_error("Source not found!");
+    return;
   }
 
   obs_source_t* source = it->second;
-
-  // TODO refuse to add twice?
-  obs_sceneitem_t *item = obs_scene_add(scene, source);
+  item = obs_scene_add(scene, source);
 
   if (!item) {
     blog(LOG_ERROR, "Failed to add source to scene: %s", name.c_str());
-    obs_source_release(source);
-    throw std::runtime_error("Failed to add source to scene");
   }
   
   blog(LOG_INFO, "ObsInterface::addSourceToScene exited");
