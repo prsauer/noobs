@@ -10,3 +10,4 @@ obs_data_t* napi_to_data(Napi::Object obj);
 
 Napi::Object property_to_napi(Napi::Env env, obs_property_t* property);
 Napi::Array properties_to_napi(Napi::Env env, obs_properties_t* properties);
+std::string get_current_date_time();

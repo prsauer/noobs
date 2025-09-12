@@ -7,30 +7,24 @@
 ObsInterface* obs = nullptr;
 
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
-  bool valid = info.Length() == 6 &&
-   info[0].IsString() &&   // Plugin path
+  bool valid = info.Length() == 3 &&
+   info[0].IsString() &&   // Dist path
    info[1].IsString() &&   // Log path
-   info[2].IsString() &&   // Data path
-   info[3].IsString() &&   // Recording path
-   info[4].IsFunction() && // JavaScript callback
-   info[5].IsBoolean();    // IsBuffer
+   info[2].IsFunction();   // JavaScript callback
 
   if (!valid) {
     Napi::Error::New(info.Env(), "Invalid arguments passed to ObsInit").ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
 
-  std::string pluginPath = info[0].As<Napi::String>().Utf8Value();
+  std::string distPath = info[0].As<Napi::String>().Utf8Value();
   std::string logPath = info[1].As<Napi::String>().Utf8Value();
-  std::string dataPath = info[2].As<Napi::String>().Utf8Value();
-  std::string recordingPath = info[3].As<Napi::String>().Utf8Value();
-  Napi::Function fn = info[4].As<Napi::Function>();
-  bool isBuffer = info[5].As<Napi::Boolean>().Value();
+  Napi::Function fn = info[2].As<Napi::Function>();
 
   Napi::ThreadSafeFunction jscb =
     Napi::ThreadSafeFunction::New(info.Env(), fn, "JavaScript callback", 0, 1);
 
-  obs = new ObsInterface(pluginPath, logPath, dataPath, recordingPath, jscb, isBuffer);
+  obs = new ObsInterface(distPath, logPath, jscb);
   return info.Env().Undefined();
 }
 
@@ -54,7 +48,96 @@ Napi::Value ObsSetRecordingDir(const Napi::CallbackInfo& info) {
   }
 
   std::string recordingPath = info[0].As<Napi::String>().Utf8Value();
-  obs->updateRecordingDir(recordingPath);
+  obs->setRecordingDir(recordingPath);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsResetVideoContext(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsResetVideoContext called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 3 && info[0].IsNumber() && info[1].IsNumber() && info[2].IsNumber();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsResetVideo").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  int fps = info[0].As<Napi::Number>().Int32Value();
+  int width = info[1].As<Napi::Number>().Int32Value();
+  int height = info[2].As<Napi::Number>().Int32Value();
+
+  obs->setVideoContext(fps, width, height);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsListVideoEncoders(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsListVideoEncoders called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 0;
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsListVideoEncoders").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  auto encoders = obs->listAvailableVideoEncoders();
+  Napi::Array result = Napi::Array::New(info.Env(), encoders.size());
+
+  for (size_t i = 0; i < encoders.size(); ++i) {
+    result[i] = Napi::String::New(info.Env(), encoders[i]);
+  }
+
+  return result;
+}
+
+Napi::Value ObsSetVideoEncoder(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetVideoEncoder called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 2 &&
+    info[0].IsString() && // Encoder ID
+    info[1].IsObject(); // Settings object
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetVideoEncoder").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  std::string id = info[0].As<Napi::String>().Utf8Value();
+  Napi::Object obj = info[1].As<Napi::Object>();
+
+  obs_data_t* settings = napi_to_data(obj);
+  obs->setVideoEncoder(id, settings);
+
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetBuffering(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsSetBuffering called");
+
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetBuffering called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetBuffering").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  bool buffering = info[0].As<Napi::Boolean>().Value();
+  obs->setBuffering(buffering);
+
   return info.Env().Undefined();
 }
 
@@ -96,6 +179,16 @@ Napi::Value ObsStopRecording(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsForceStopRecording(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsForceStopRecording called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  obs->forceStopRecording();
+  return info.Env().Undefined();
+}
+
 Napi::Value ObsGetLastRecording(const Napi::CallbackInfo& info) {
   if (!obs) {
     blog(LOG_ERROR, "ObsGetLastRecording called but obs is not initialized");
@@ -133,11 +226,11 @@ Napi::Value ObsInitPreview(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
-  blog(LOG_INFO, "ObsShowPreview called");
+Napi::Value ObsConfigurePreview(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsConfigurePreview called");
 
   if (!obs) {
-    blog(LOG_ERROR, "ObsShowPreview called but obs is not initialized");
+    blog(LOG_ERROR, "ObsConfigurePreview called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
   }
 
@@ -148,7 +241,7 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
     info[3].IsNumber(); // Height
 
   if (!valid) {
-    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsShowPreview").ThrowAsJavaScriptException();
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsConfigurePreview").ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
 
@@ -157,7 +250,19 @@ Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
   int width = info[2].As<Napi::Number>().Int32Value();
   int height = info[3].As<Napi::Number>().Int32Value();
 
-  obs->showPreview(x, y, width, height);
+  obs->configurePreview(x, y, width, height);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsShowPreview(const Napi::CallbackInfo& info) {
+  blog(LOG_INFO, "ObsShowPreview called");
+
+  if (!obs) {
+    blog(LOG_ERROR, "ObsShowPreview called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  obs->showPreview();
   return info.Env().Undefined();
 }
 
@@ -169,6 +274,33 @@ Napi::Value ObsHidePreview(const Napi::CallbackInfo& info) {
 
   obs->hidePreview();
   return info.Env().Undefined();
+}
+
+Napi::Value ObsDisablePreview(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsDisablePreview called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  obs->disablePreview();
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsGetPreviewInfo(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsGetPreviewInfo called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  PreviewInfo previewInfo = obs->getPreviewInfo();
+
+  Napi::Object result = Napi::Object::New(info.Env());
+  result.Set("canvasWidth", Napi::Number::New(info.Env(), previewInfo.canvasWidth));
+  result.Set("canvasHeight", Napi::Number::New(info.Env(), previewInfo.canvasHeight));
+  result.Set("previewWidth", Napi::Number::New(info.Env(), previewInfo.displayWidth));
+  result.Set("previewHeight", Napi::Number::New(info.Env(), previewInfo.displayHeight));
+
+  return result;
 }
 
 Napi::Value ObsCreateSource(const Napi::CallbackInfo& info) {
@@ -189,8 +321,8 @@ Napi::Value ObsCreateSource(const Napi::CallbackInfo& info) {
   std::string name = info[0].As<Napi::String>().Utf8Value();
   std::string type = info[1].As<Napi::String>().Utf8Value();
 
-  obs->createSource(name, type);
-  return info.Env().Undefined();
+  std::string real_name = obs->createSource(name, type);
+  return Napi::String::New(info.Env(), real_name);
 }
 
 Napi::Value ObsDeleteSource(const Napi::CallbackInfo& info) {
@@ -277,25 +409,96 @@ Napi::Value ObsGetSourceProperties(const Napi::CallbackInfo& info) {
   return result;
 }
 
-Napi::Value ObsCreateScene(const Napi::CallbackInfo& info) {
+
+Napi::Value ObsSetMuteAudioInputs(const Napi::CallbackInfo& info) {
   if (!obs) {
-    blog(LOG_ERROR, "ObsCreateScene called but obs is not initialized");
+    blog(LOG_ERROR, "ObsSetMuteAudioInputs called but obs is not initialized");
     throw std::runtime_error("Obs not initialized");
   }
 
-  bool valid = info.Length() == 2 &&
-   info[0].IsString() && // Scene name
-   info[1].IsString();   // Source type
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
 
   if (!valid) {
-    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsCreateScene").ThrowAsJavaScriptException();
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetMuteAudioInputs").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  bool mute = info[0].As<Napi::Boolean>().Value();
+  obs->setMuteAudioInputs(mute);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetSourceVolume(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetSourceVolume called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 2 && info[0].IsString() && info[1].IsNumber();
+  std::string name = info[0].As<Napi::String>().Utf8Value();
+  float volume = info[1].As<Napi::Number>().FloatValue();
+
+  if (!valid || (volume < 0.0f || volume > 1.0f)) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetOutputVolume").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  obs->setSourceVolume(name,volume);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetVolmeterEnabled(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetVolmeterEnabled called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetVolmeterEnabled").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+
+  bool enabled = info[0].As<Napi::Boolean>().Value();
+  obs->setVolmeterEnabled(enabled);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetAudioSuppression(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetAudioSuppression called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetAudioSuppression").ThrowAsJavaScriptException();
     return info.Env().Undefined();
   }
 
-  std::string name = info[0].As<Napi::String>().Utf8Value();
-  std::string type = info[1].As<Napi::String>().Utf8Value();
+  bool enabled = info[0].As<Napi::Boolean>().Value();
+  obs->setAudioSuppression(enabled);
+  return info.Env().Undefined();
+}
 
-  obs->createSource(name, type);
+Napi::Value ObsSetForceMono(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetForceMono called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 1 && info[0].IsBoolean();
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetForceMono").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+
+  bool enabled = info[0].As<Napi::Boolean>().Value();
+  obs->setForceMono(enabled);
   return info.Env().Undefined();
 }
 
@@ -394,14 +597,36 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
+Napi::Value ObsSetDrawSourceOutline(const Napi::CallbackInfo& info) {
+  bool valid =  info.Length() == 1 && info[0].IsBoolean();
+    if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetDrawSourceOutline").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+  bool enabled = info[0].As<Napi::Boolean>();
+  blog(LOG_DEBUG, "ObsSetDrawSourceOutline set to %d", enabled);
+  obs->setDrawSourceOutline(enabled);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsGetDrawSourceOutlineEnabled(const Napi::CallbackInfo& info) {
+  return Napi::Boolean::New(info.Env(), obs->getDrawSourceOutlineEnabled());
+}
+
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("Init", Napi::Function::New(env, ObsInit));
   exports.Set("Shutdown", Napi::Function::New(env, ObsShutdown));
   exports.Set("SetRecordingDir", Napi::Function::New(env, ObsSetRecordingDir));
+  exports.Set("ResetVideoContext", Napi::Function::New(env, ObsResetVideoContext));
+  exports.Set("ListVideoEncoders", Napi::Function::New(env, ObsListVideoEncoders));
+  exports.Set("SetVideoEncoder", Napi::Function::New(env, ObsSetVideoEncoder));
 
+  exports.Set("SetBuffering", Napi::Function::New(env, ObsSetBuffering));
   exports.Set("StartBuffer", Napi::Function::New(env, ObsStartBuffer));
   exports.Set("StartRecording", Napi::Function::New(env, ObsStartRecording));
   exports.Set("StopRecording", Napi::Function::New(env, ObsStopRecording));
+  exports.Set("ForceStopRecording", Napi::Function::New(env, ObsForceStopRecording));
   exports.Set("GetLastRecording", Napi::Function::New(env, ObsGetLastRecording));
 
   exports.Set("CreateSource", Napi::Function::New(env, ObsCreateSource));
@@ -409,6 +634,11 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("GetSourceSettings", Napi::Function::New(env, ObsGetSourceSettings));
   exports.Set("SetSourceSettings", Napi::Function::New(env, ObsSetSourceSettings));
   exports.Set("GetSourceProperties", Napi::Function::New(env, ObsGetSourceProperties));
+  exports.Set("SetMuteAudioInputs", Napi::Function::New(env, ObsSetMuteAudioInputs));
+  exports.Set("SetSourceVolume", Napi::Function::New(env, ObsSetSourceVolume));
+  exports.Set("SetVolmeterEnabled", Napi::Function::New(env, ObsSetVolmeterEnabled));
+  exports.Set("SetAudioSuppression", Napi::Function::New(env, ObsSetAudioSuppression));
+  exports.Set("SetForceMono", Napi::Function::New(env, ObsSetForceMono));
 
   exports.Set("AddSourceToScene", Napi::Function::New(env, ObsAddSourceToScene));
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));
@@ -416,8 +646,13 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("SetSourcePos", Napi::Function::New(env, ObsSetSourcePos));
 
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
+  exports.Set("ConfigurePreview", Napi::Function::New(env, ObsConfigurePreview));
   exports.Set("ShowPreview", Napi::Function::New(env, ObsShowPreview));
   exports.Set("HidePreview", Napi::Function::New(env, ObsHidePreview));
+  exports.Set("DisablePreview", Napi::Function::New(env, ObsDisablePreview));
+  exports.Set("GetPreviewInfo", Napi::Function::New(env, ObsGetPreviewInfo));
+  exports.Set("GetDrawSourceOutlineEnabled", Napi::Function::New(env, ObsGetDrawSourceOutlineEnabled));
+  exports.Set("SetDrawSourceOutline", Napi::Function::New(env, ObsSetDrawSourceOutline));
 
   return exports;
 }

@@ -19,12 +19,55 @@ npm install noobs
 
 ## Usage
 
+### Lifecycle
 ```javascript
 import noobs from 'noobs';
 
-...
+const distPath = ...;
+const logPath = ...;
+const recordingPath = ...;
+const cb = (signal) => console.log(signal);
 
-noobs.ObsInit(pluginPath, logPath, dataPath, recordingPath, cb);
+noobs.Init(distPath, logPath, recordingPath, cb);
+...
+noobs.Shutdown();
+```
+
+### Sources
+```javascript
+noobs.CreateSource('Test Source', 'monitor_capture'); // Creates a source
+noobs.AddSourceToScene('Test Source'); // Add the source to the scene
+const s = noobs.GetSourceSettings('Test Source'); // View current settings
+const p = noobs.GetSourceProperties('Test Source'); // View settings schema
+noobs.SetSourceSettings('Test Source', { ...s, monitor: 1 });
+noobs.RemoveSourceFromScene('Test Source'); // Remove a source from the scene
+noobs.DeleteSource('Test Source') // Release a source
+```
+
+###  Basic Recording Usage
+```javascript
+noobs.StartRecording();
+...
+noobs.StopRecording();
+```
+
+### Buffer Recording
+```javascript
+noobs.SetBuffering(true);
+
+noobs.StartBuffering();
+...
+noobs.StartRecording(5); // include last 5 seconds of the recording buffer
+...
+noobs.StopRecording();
+```
+
+### Preview
+```javascript
+const hwnd = this.mainWindow.getNativeWindowHandle();
+noobs.InitPreview(hwnd);
+noobs.ShowPreview(x, y, width, height); // Use this for moving/resizing
+// noobs.HidePreview();
 ```
 
 See `test.js` for more.

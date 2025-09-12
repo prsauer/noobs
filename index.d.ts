@@ -1,15 +1,21 @@
 // OBS Data Types
-export type ObsDataValue = string | number | boolean | ObsData | ObsData[] | null;
+export type ObsDataValue =
+  | string
+  | number
+  | boolean
+  | ObsData
+  | ObsData[]
+  | null;
 
 export interface ObsData {
   [key: string]: ObsDataValue;
 }
 
 // OBS Property Types
-export type ObsPropertyType = 
+export type ObsPropertyType =
   | 'invalid'
   | 'bool'
-  | 'int' 
+  | 'int'
   | 'float'
   | 'text'
   | 'path'
@@ -114,7 +120,7 @@ export interface ObsGenericProperty extends ObsPropertyBase {
   type: 'invalid' | 'unknown';
 }
 
-export type ObsProperty = 
+export type ObsProperty =
   | ObsIntProperty
   | ObsFloatProperty
   | ObsTextProperty
@@ -130,59 +136,76 @@ export type ObsProperty =
   | ObsGenericProperty;
 
 export type Signal = {
-  id: string;   // Signal identifier, e.g. "stop"
+  type: string; // Either "output" or "volmeter" or "source".
+  id: string; // Signal identifier, e.g. "stop"
   code: number; // 0 for success, other values for errors
-}
+  value?: number; // Currently only used for volmeters.
+};
 
 export type SceneItemPosition = {
-  x: number;      // X position in pixels
-  y: number;      // Y position in pixels
+  x: number; // X position in pixels
+  y: number; // Y position in pixels
   scaleX: number; // X scaling factor
   scaleY: number; // Y scaling factor
 };
 
 export type SourceDimensions = {
   height: number; // Height in pixels, before scaling
-  width: number;  // Width in pixels, before scaling
-}
+  width: number; // Width in pixels, before scaling
+};
 
 interface Noobs {
   Init(
-    pluginPath: string, 
-    logPath: string, 
-    dataPath: string,
-    recordingPath: string,
+    distPath: string,
+    logPath: string,
     cb: (signal: Signal) => void,
-    buffering: boolean,
   ): void;
 
   Shutdown(): void;
-  
-  // Recording functions
+
+  // Recording functions.
+  SetBuffering(buffering: boolean): void; // In buffering mode, the recording is stored in memory and can be converted to a file later.
   StartBuffer(): void;
   StartRecording(offset: number): void;
   StopRecording(): void;
+  ForceStopRecording(): void;
   GetLastRecording(): string;
   SetRecordingDir(recordingPath: string): void;
+  ResetVideoContext(fps: number, width: number, height: number): void;
 
-  // Source management functions
-  CreateSource(name: string, type: string): void;
+  // Encoder functions.
+  ListVideoEncoders(): string[]; // Returns a list of available video encoders.
+  SetVideoEncoder(id: string, settings: ObsData): void; // Create the video encoder to use.
+
+  // Source management functions.
+  CreateSource(name: string, type: string): string; // Returns the name of the source, which may vary in the event of a name conflict.
   DeleteSource(name: string): void;
   GetSourceSettings(name: string): ObsData;
   SetSourceSettings(name: string, settings: ObsData): void;
   GetSourceProperties(name: string): ObsProperty[];
 
-  // Scene management functions
+  // Audio source management functions.
+  SetMuteAudioInputs(mute: boolean): void; // Mute or unmute all audio inputs.
+  SetSourceVolume(name: string, volume: number): void; // Set the volume for a specific audio source (0.0 to 1.0).
+  SetVolmeterEnabled(enabled: boolean): void; // Enable or disable the volume meter.
+  SetAudioSuppression(enabled: boolean): void; // Enable or disable audio suppression (noise gate).
+  SetForceMono(enabled: boolean): void; // Enable or disable the force mono audio setting.
+
+  // Scene management functions.
   AddSourceToScene(sourceName: string): void;
   RemoveSourceFromScene(sourceName: string): void;
   GetSourcePos(name: string): SceneItemPosition & SourceDimensions;
   SetSourcePos(name: string, pos: SceneItemPosition): void;
-  // TODO: Cropping?
 
-  // Preview functions
+  // Preview functions.
   InitPreview(hwnd: Buffer): void;
-  ShowPreview(x: number, y: number, width: number, height: number): void;
+  ConfigurePreview(x: number, y: number, width: number, height: number): void;
+  ShowPreview(): void;
   HidePreview(): void;
+  DisablePreview(): void;
+  GetPreviewInfo(): { canvasWidth: number; canvasHeight: number; previewWidth: number; previewHeight: number };
+  SetDrawSourceOutline(enabled: boolean): void;
+  GetDrawSourceOutlineEnabled(): boolean;
 }
 
 declare const noobs: Noobs;

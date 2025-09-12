@@ -1,6 +1,6 @@
 {
   "name": "noobs",
-  "version": "0.0.60",
+  "version": "0.0.131",
   "description": "A native Node.js addon with libobs bindings for Warcraft Recorder.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -8,7 +8,9 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "build": "node-gyp rebuild && node dist.js"
+    "preinstall": "if test \"%PATH%\" = \"%PATH%\" ; then rm binding.gyp ; fi ",
+    "build": "node-gyp rebuild && node dist.js",
+    "configure-cursor-anysphere": "node-gyp configure -- -f compile_commands_json && copy build\\Release\\compile_commands.json src\\compile_commands.json"
   },
   "files": [
     "index.js",
