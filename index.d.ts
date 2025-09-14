@@ -155,10 +155,10 @@ export type SourceDimensions = {
 };
 
 export type Crop = {
-  left: number; // Pixels to crop from the left
-  right: number; // Pixels to crop from the right
-  top: number; // Pixels to crop from the top
-  bottom: number; // Pixels to crop from the bottom
+  cropLeft: number; // Pixels to crop from the left
+  cropRight: number; // Pixels to crop from the right
+  cropTop: number; // Pixels to crop from the top
+  cropBottom: number; // Pixels to crop from the bottom
 };
 
 interface Noobs {

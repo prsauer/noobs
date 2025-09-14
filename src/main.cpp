@@ -558,16 +558,20 @@ Napi::Value ObsGetSourcePos(const Napi::CallbackInfo& info) {
   obs->getSourcePos(name, &pos, &size, &scale, &crop);
 
   Napi::Object result = Napi::Object::New(info.Env());
+
   result.Set("x", Napi::Number::New(info.Env(), pos.x));
   result.Set("y", Napi::Number::New(info.Env(), pos.y));
+
   result.Set("width", Napi::Number::New(info.Env(), size.x));
   result.Set("height", Napi::Number::New(info.Env(), size.y));
   result.Set("scaleX", Napi::Number::New(info.Env(), scale.x));
   result.Set("scaleY", Napi::Number::New(info.Env(), scale.y));
+
   result.Set("cropLeft", Napi::Number::New(info.Env(), crop.left));
   result.Set("cropRight", Napi::Number::New(info.Env(), crop.right));
   result.Set("cropTop", Napi::Number::New(info.Env(), crop.top));
   result.Set("cropBottom", Napi::Number::New(info.Env(), crop.bottom));
+
   return result;
 }
 
@@ -607,25 +611,23 @@ Napi::Value ObsSetSourceCrop(const Napi::CallbackInfo& info) {
     throw std::runtime_error("Obs not initialized");
   }
 
-  bool valid = info.Length() == 5 &&
-    info[0].IsString() &&  // Source name
-    info[1].IsNumber() &&  // Pixels left
-    info[2].IsNumber() &&  // Pixels right
-    info[3].IsNumber() &&  // Pixels top
-    info[4].IsNumber();    // Pixels bottom
+  bool valid = info.Length() == 2 &&
+    info[0].IsString() && // Source name
+    info[1].IsObject();   // Crop definition.
 
   if (!valid) {
     Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetSourceCrop").ThrowAsJavaScriptException();
     return info.Env().Undefined();  
   }
-  
-  std::string name = info[0].As<Napi::String>().Utf8Value();
-  int cropLeft = info[1].As<Napi::Number>().Int32Value();
-  int cropRight = info[2].As<Napi::Number>().Int32Value();
-  int cropTop = info[3].As<Napi::Number>().Int32Value();
-  int cropBottom = info[4].As<Napi::Number>().Int32Value();
 
-  obs_sceneitem_crop crop = { cropLeft, cropRight, cropTop, cropBottom };
+  std::string name = info[0].As<Napi::String>().Utf8Value();
+  Napi::Object obj = info[1].As<Napi::Object>();
+  int left = obj.Get("cropLeft").As<Napi::Number>().Int32Value();
+  int right = obj.Get("cropRight").As<Napi::Number>().Int32Value();
+  int top = obj.Get("cropTop").As<Napi::Number>().Int32Value();
+  int bottom = obj.Get("cropBottom").As<Napi::Number>().Int32Value();
+
+  obs_sceneitem_crop crop = { left, right, top, bottom };
   obs->setSourceCrop(name, &crop);
 
   return info.Env().Undefined();
