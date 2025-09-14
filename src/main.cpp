@@ -601,35 +601,14 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
   float scaleY = position.Get("scaleY").As<Napi::Number>().FloatValue();
   vec2 scale = { scaleX, scaleY };
 
-  obs->setSourcePos(name, &pos, &scale);
-  return info.Env().Undefined();
-}
+  int cropLeft = position.Get("cropLeft").As<Napi::Number>().Int32Value();
+  int cropRight = position.Get("cropRight").As<Napi::Number>().Int32Value();
+  int cropTop = position.Get("cropTop").As<Napi::Number>().Int32Value();
+  int cropBottom = position.Get("cropBottom").As<Napi::Number>().Int32Value();
 
-Napi::Value ObsSetSourceCrop(const Napi::CallbackInfo& info) {
-  if (!obs) {
-    blog(LOG_ERROR, "ObsSetSourceCrop called but obs is not initialized");
-    throw std::runtime_error("Obs not initialized");
-  }
+  obs_sceneitem_crop crop = { cropLeft, cropRight, cropTop, cropBottom };
 
-  bool valid = info.Length() == 2 &&
-    info[0].IsString() && // Source name
-    info[1].IsObject();   // Crop definition.
-
-  if (!valid) {
-    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetSourceCrop").ThrowAsJavaScriptException();
-    return info.Env().Undefined();  
-  }
-
-  std::string name = info[0].As<Napi::String>().Utf8Value();
-  Napi::Object obj = info[1].As<Napi::Object>();
-  int left = obj.Get("cropLeft").As<Napi::Number>().Int32Value();
-  int right = obj.Get("cropRight").As<Napi::Number>().Int32Value();
-  int top = obj.Get("cropTop").As<Napi::Number>().Int32Value();
-  int bottom = obj.Get("cropBottom").As<Napi::Number>().Int32Value();
-
-  obs_sceneitem_crop crop = { left, right, top, bottom };
-  obs->setSourceCrop(name, &crop);
-
+  obs->setSourcePos(name, &pos, &scale, &crop);
   return info.Env().Undefined();
 }
 
@@ -680,7 +659,6 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));
   exports.Set("GetSourcePos", Napi::Function::New(env, ObsGetSourcePos));
   exports.Set("SetSourcePos", Napi::Function::New(env, ObsSetSourcePos));
-  exports.Set("SetSourceCrop", Napi::Function::New(env, ObsSetSourceCrop));
 
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ConfigurePreview", Napi::Function::New(env, ObsConfigurePreview));

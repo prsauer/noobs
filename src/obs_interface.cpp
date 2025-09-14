@@ -1196,7 +1196,7 @@ void ObsInterface::getSourcePos(std::string name, vec2* pos, vec2* size, vec2* s
   size->y = obs_source_get_height(source);
 }
 
-void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale) {
+void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale, obs_sceneitem_crop* crop) {
   obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
 
   if (!item) {
@@ -1206,16 +1206,6 @@ void ObsInterface::setSourcePos(std::string name, vec2* pos, vec2* scale) {
 
   obs_sceneitem_set_pos(item, pos);
   obs_sceneitem_set_scale(item, scale);
-}
-
-void ObsInterface::setSourceCrop(std::string name, obs_sceneitem_crop* crop) {
-  obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
-
-  if (!item) {
-    blog(LOG_WARNING, "Did not find scene item for video source: %s", name.c_str());
-    return;
-  }
-
   obs_sceneitem_set_crop(item, crop);
 }
 

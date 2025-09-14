@@ -147,6 +147,10 @@ export type SceneItemPosition = {
   y: number; // Y position in pixels
   scaleX: number; // X scaling factor
   scaleY: number; // Y scaling factor
+  cropLeft: number; // Pixels to crop from the left
+  cropRight: number; // Pixels to crop from the right
+  cropTop: number; // Pixels to crop from the top
+  cropBottom: number; // Pixels to crop from the bottom
 };
 
 export type SourceDimensions = {
@@ -201,9 +205,8 @@ interface Noobs {
   // Scene management functions.
   AddSourceToScene(sourceName: string): void;
   RemoveSourceFromScene(sourceName: string): void;
-  GetSourcePos(name: string): SceneItemPosition & SourceDimensions & Crop;
+  GetSourcePos(name: string): SceneItemPosition & SourceDimensions;
   SetSourcePos(name: string, pos: SceneItemPosition): void;
-  SetSourceCrop(name: string, crop: Crop): void;
 
   // Preview functions.
   InitPreview(hwnd: Buffer): void;
