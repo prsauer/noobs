@@ -597,14 +597,15 @@ void ObsInterface::disconnect_signal_handlers(obs_output_t *output) {
 
 bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   // Get the item position and size
-  vec2 pos; vec2 scale;
+  vec2 pos; vec2 scale; obs_sceneitem_crop crop;
   obs_sceneitem_get_pos(item, &pos);
   obs_sceneitem_get_scale(item, &scale);
+  obs_sceneitem_get_crop(item, &crop);
 
   // Calculate actual size with scaling
   obs_source_t *src = obs_sceneitem_get_source(item);
-  float width =  obs_source_get_width(src) * scale.x;
-  float height = obs_source_get_height(src) * scale.y;
+  float width =  obs_source_get_width(src) * scale.x - (crop.left + crop.right);
+  float height = obs_source_get_height(src) * scale.y - (crop.top + crop.bottom);
 
   if (width <= 0 || height <= 0) {
     // Don't want to call gs_draw_sprite with zero width or height.
