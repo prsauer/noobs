@@ -605,8 +605,7 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
   int cropRight = position.Get("cropRight").As<Napi::Number>().Int32Value();
   int cropTop = position.Get("cropTop").As<Napi::Number>().Int32Value();
   int cropBottom = position.Get("cropBottom").As<Napi::Number>().Int32Value();
-
-  obs_sceneitem_crop crop = { cropLeft, cropRight, cropTop, cropBottom };
+  obs_sceneitem_crop crop = { cropLeft, cropTop, cropRight, cropBottom }; // Careful with ordering.
 
   obs->setSourcePos(name, &pos, &scale, &crop);
   return info.Env().Undefined();

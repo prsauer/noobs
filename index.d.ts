@@ -158,13 +158,6 @@ export type SourceDimensions = {
   width: number; // Width in pixels, before scaling
 };
 
-export type Crop = {
-  cropLeft: number; // Pixels to crop from the left
-  cropRight: number; // Pixels to crop from the right
-  cropTop: number; // Pixels to crop from the top
-  cropBottom: number; // Pixels to crop from the bottom
-};
-
 interface Noobs {
   Init(
     distPath: string,
