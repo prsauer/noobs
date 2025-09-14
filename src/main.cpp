@@ -554,8 +554,8 @@ Napi::Value ObsGetSourcePos(const Napi::CallbackInfo& info) {
 
   std::string name = info[0].As<Napi::String>().Utf8Value();
 
-  vec2 pos; vec2 size; vec2 scale;
-  obs->getSourcePos(name, &pos, &size, &scale);
+  vec2 pos; vec2 size; vec2 scale; obs_sceneitem_crop crop;
+  obs->getSourcePos(name, &pos, &size, &scale, &crop);
 
   Napi::Object result = Napi::Object::New(info.Env());
   result.Set("x", Napi::Number::New(info.Env(), pos.x));
@@ -564,6 +564,10 @@ Napi::Value ObsGetSourcePos(const Napi::CallbackInfo& info) {
   result.Set("height", Napi::Number::New(info.Env(), size.y));
   result.Set("scaleX", Napi::Number::New(info.Env(), scale.x));
   result.Set("scaleY", Napi::Number::New(info.Env(), scale.y));
+  result.Set("cropLeft", Napi::Number::New(info.Env(), crop.left));
+  result.Set("cropRight", Napi::Number::New(info.Env(), crop.right));
+  result.Set("cropTop", Napi::Number::New(info.Env(), crop.top));
+  result.Set("cropBottom", Napi::Number::New(info.Env(), crop.bottom));
   return result;
 }
 
@@ -594,6 +598,36 @@ Napi::Value ObsSetSourcePos(const Napi::CallbackInfo& info) {
   vec2 scale = { scaleX, scaleY };
 
   obs->setSourcePos(name, &pos, &scale);
+  return info.Env().Undefined();
+}
+
+Napi::Value ObsSetSourceCrop(const Napi::CallbackInfo& info) {
+  if (!obs) {
+    blog(LOG_ERROR, "ObsSetSourceCrop called but obs is not initialized");
+    throw std::runtime_error("Obs not initialized");
+  }
+
+  bool valid = info.Length() == 5 &&
+    info[0].IsString() &&  // Source name
+    info[1].IsNumber() &&  // Pixels left
+    info[2].IsNumber() &&  // Pixels right
+    info[3].IsNumber() &&  // Pixels top
+    info[4].IsNumber();    // Pixels bottom
+
+  if (!valid) {
+    Napi::TypeError::New(info.Env(), "Invalid arguments passed to ObsSetSourceCrop").ThrowAsJavaScriptException();
+    return info.Env().Undefined();  
+  }
+  
+  std::string name = info[0].As<Napi::String>().Utf8Value();
+  int cropLeft = info[1].As<Napi::Number>().Int32Value();
+  int cropRight = info[2].As<Napi::Number>().Int32Value();
+  int cropTop = info[3].As<Napi::Number>().Int32Value();
+  int cropBottom = info[4].As<Napi::Number>().Int32Value();
+
+  obs_sceneitem_crop crop = { cropLeft, cropRight, cropTop, cropBottom };
+  obs->setSourceCrop(name, &crop);
+
   return info.Env().Undefined();
 }
 
@@ -644,6 +678,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("RemoveSourceFromScene", Napi::Function::New(env, ObsRemoveSourceFromScene));
   exports.Set("GetSourcePos", Napi::Function::New(env, ObsGetSourcePos));
   exports.Set("SetSourcePos", Napi::Function::New(env, ObsSetSourcePos));
+  exports.Set("SetSourceCrop", Napi::Function::New(env, ObsSetSourceCrop));
 
   exports.Set("InitPreview", Napi::Function::New(env, ObsInitPreview));
   exports.Set("ConfigurePreview", Napi::Function::New(env, ObsConfigurePreview));
