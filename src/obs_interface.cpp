@@ -629,31 +629,31 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
 
   // Top border
   gs_matrix_push();
-  gs_matrix_translate3f(pos.x, pos.y, 0.0f);
+  gs_matrix_translate3f(pos.x + crop.left, pos.y + crop.top, 0.0f);
   gs_draw_sprite(nullptr, 0, width, 4.0f);
   gs_matrix_pop();
 
   // Bottom border
   gs_matrix_push();
-  gs_matrix_translate3f(pos.x, pos.y + height - 4.0f, 0.0f);
+  gs_matrix_translate3f(pos.x + crop.left, pos.y + crop.top + height - 4.0f, 0.0f);
   gs_draw_sprite(nullptr, 0, width, 4.0f);
   gs_matrix_pop();
 
   // Left border
   gs_matrix_push();
-  gs_matrix_translate3f(pos.x, pos.y, 0.0f);
+  gs_matrix_translate3f(pos.x + crop.left, pos.y + crop.top, 0.0f);
   gs_draw_sprite(nullptr, 0, 4.0f, height);
   gs_matrix_pop();
 
   // Right border
   gs_matrix_push();
-  gs_matrix_translate3f(pos.x + width - 4.0f, pos.y, 0.0f);
+  gs_matrix_translate3f(pos.x + crop.left + width - 4.0f, pos.y + crop.top, 0.0f);
   gs_draw_sprite(nullptr, 0, 4.0f, height);
   gs_matrix_pop();
 
   // Dragging point box (25x25 pixels in bottom-right corner)
   gs_matrix_push();
-  gs_matrix_translate3f(pos.x + width - 25.0f, pos.y + height - 25.0f, 0.0f);
+  gs_matrix_translate3f(pos.x + crop.left + width - 25.0f, pos.y + crop.top + height - 25.0f, 0.0f);
   gs_draw_sprite(nullptr, 0, 25.0f, 25.0f);
   gs_matrix_pop();
 
