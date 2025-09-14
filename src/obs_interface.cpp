@@ -604,8 +604,8 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
 
   // Calculate actual size with scaling
   obs_source_t *src = obs_sceneitem_get_source(item);
-  float width =  obs_source_get_width(src) * scale.x - (crop.left + crop.right);
-  float height = obs_source_get_height(src) * scale.y - (crop.top + crop.bottom);
+  float width =  (obs_source_get_width(src) - crop.left + crop.right) * scale.x;
+  float height = (obs_source_get_height(src) - crop.top + crop.bottom) * scale.y;
 
   if (width <= 0 || height <= 0) {
     // Don't want to call gs_draw_sprite with zero width or height.
