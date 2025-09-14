@@ -602,7 +602,7 @@ bool draw_source_outline(obs_scene_t *scene, obs_sceneitem_t *item, void *p) {
   obs_sceneitem_get_scale(item, &scale);
   obs_sceneitem_get_crop(item, &crop);
 
-  // Calculate actual size with scaling
+  // Calculate actual size, accounting for scaling and cropping.
   obs_source_t *src = obs_sceneitem_get_source(item);
   float width =  (obs_source_get_width(src) - crop.left - crop.right) * scale.x;
   float height = (obs_source_get_height(src) - crop.top - crop.bottom) * scale.y;
