@@ -18,6 +18,6 @@ jobs:
       - name: build
         run: npm run build
       - name: test/err
-        run: node test/errors.js
+        run: npm run test-errors
       - name: test/err
-        run: node test/audio.js
+        run: npm run test-preview
