@@ -17,3 +17,7 @@ jobs:
         run: npm install
       - name: build
         run: npm run build
+      - name: test/err
+        run: node test/errors.js
+      - name: test/err
+        run: node test/audio.js
