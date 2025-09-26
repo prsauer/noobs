@@ -8,6 +8,7 @@
     "node": ">=14.0.0"
   },
   "scripts": {
+    "test-procs": "npm run build && node test/procs.js",
     "build": "node-gyp rebuild && node dist.js",
     "test-errors": "ts-node --project test/tsconfig.json test/errors.ts",
     "test-preview": "ts-node --project test/tsconfig.json test/preview.ts",

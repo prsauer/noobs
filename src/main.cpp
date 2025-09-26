@@ -1,10 +1,36 @@
 #include <napi.h>
 #include <windows.h>
+#include <psapi.h>
 #include <obs.h>
 #include "obs_interface.h"
 #include "utils.h"
 
 ObsInterface* obs = nullptr;
+
+Napi::Value TestProcs(const Napi::CallbackInfo& info) {
+  std::vector<std::string> processNames(1024);
+  int vecIdx = 0;
+  DWORD processes[1024];
+  DWORD bytesNeeded;
+  EnumProcesses(processes, sizeof(processes), &bytesNeeded);
+  for (DWORD i = 0; i < bytesNeeded / sizeof(DWORD); i++) {
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processes[i]);
+    if (hProcess) {
+      DWORD dwFlags = 0; // Use win32 path format
+      CHAR imagePath[MAX_PATH]; // LPSTR can be defined as CHAR, MAX_PATH is 260 bytes
+      DWORD imageSize = MAX_PATH;
+      BOOL imageName = QueryFullProcessImageNameA(hProcess, dwFlags, imagePath, &imageSize);
+      processNames[vecIdx] = imagePath;
+      vecIdx++;
+      CloseHandle(hProcess);
+    }
+  }
+  Napi::Array result = Napi::Array::New(info.Env(), vecIdx);
+  for (size_t i = 0; i < vecIdx; ++i) {
+    result[i] = Napi::String::New(info.Env(), processNames[i]);
+  }
+  return result;
+}
 
 Napi::Value ObsInit(const Napi::CallbackInfo& info) {
   bool valid = info.Length() == 3 &&
@@ -660,6 +686,8 @@ Napi::Value ObsGetDrawSourceOutlineEnabled(const Napi::CallbackInfo& info) {
 
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  exports.Set("TestProcs", Napi::Function::New(env, TestProcs));
+
   exports.Set("Init", Napi::Function::New(env, ObsInit));
   exports.Set("Shutdown", Napi::Function::New(env, ObsShutdown));
   exports.Set("SetRecordingDir", Napi::Function::New(env, ObsSetRecordingDir));
